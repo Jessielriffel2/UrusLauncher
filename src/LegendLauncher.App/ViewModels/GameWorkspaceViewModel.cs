@@ -230,10 +230,16 @@ internal sealed class GameWorkspaceViewModel : ObservableObject, IDisposable
         return item;
     }
 
-    public bool TryActivateProfile(Guid profileId)
+    public bool TryActivateSession(Guid profileId, string platformId, string serverId)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(platformId);
+        ArgumentException.ThrowIfNullOrWhiteSpace(serverId);
+
         GameSessionViewModel? existing = Sessions.FirstOrDefault(session =>
-            session.ProfileId == profileId && session.IsRunning);
+            session.ProfileId == profileId &&
+            string.Equals(session.PlatformId, platformId, StringComparison.OrdinalIgnoreCase) &&
+            string.Equals(session.ServerId, serverId, StringComparison.OrdinalIgnoreCase) &&
+            session.IsRunning);
         if (existing is null)
         {
             return false;

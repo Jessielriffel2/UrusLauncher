@@ -27,6 +27,8 @@ internal sealed class GameSessionViewModel : ObservableObject, IDisposable
 
         Id = Guid.NewGuid();
         ProfileId = profile.Id;
+        PlatformId = platform.Id;
+        ServerId = server.Id;
         ProfileName = profile.DisplayName;
         PlatformName = platform.DisplayName;
         ServerName = server.Name;
@@ -62,6 +64,10 @@ internal sealed class GameSessionViewModel : ObservableObject, IDisposable
     public Guid Id { get; }
 
     public Guid ProfileId { get; }
+
+    public string PlatformId { get; }
+
+    public string ServerId { get; }
 
     public string ProfileName { get; }
 

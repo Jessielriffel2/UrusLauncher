@@ -32,23 +32,25 @@ Self-contained refere-se ao runtime .NET/WPF/WinForms. O Adobe Flash ActiveX leg
 | `.github/workflows/release.yml:15` | Job `build` | Usa somente `contents: read`, actions fixadas por commit, checkout sem credenciais persistidas, .NET 10 e Inno 6.7.1; testa/constrói e transfere o artefato com `upload-artifact@v7.0.1` e `download-artifact@v8.0.1`, ambos nativos em Node 24. |
 | `.github/workflows/release.yml:72` | Job `publish` | Só inicia após `build`, baixa os artefatos validados e recebe `contents: write` apenas para criar o GitHub Release. |
 | `docs/releases/v1.1.0.json:1` | Patch notes fonte histórica | Título e mudanças do primeiro bootstrap com updater nos três idiomas. |
-| `docs/releases/v1.1.1.json:1` | Patch notes fonte atual | Título e mudanças do fallback de rate limit em `pt-BR`, `en-US` e `es-ES`; novas versões exigem arquivo equivalente. |
+| `docs/releases/v1.1.1.json:1` | Patch notes fonte histórica | Título e mudanças do fallback de rate limit em `pt-BR`, `en-US` e `es-ES`. |
+| `docs/releases/v1.1.2.json:1` | Patch notes fonte atual | Correção de acesso entre variantes OAS, Classic Português S100 e sessões por alvo exato nos três idiomas. |
 | `artifacts/urus-distribution/portable/UrusLauncher/` | Payload expandido | Diretório executável usado como origem comum do Inno Setup e do ZIP. |
 | `artifacts/urus-distribution/distribution-manifest.json` | Manifesto | Produto, versão, RID, flag self-contained, data UTC, nomes/tamanhos/hashes e inventário agregado do payload. |
 | `artifacts/urus-distribution/update-manifest.json` | Manifesto de atualização | Contrato estrito consumido pela App com metadados do setup e patch notes localizados. |
 | `artifacts/urus-distribution/RELEASE_NOTES.md` | Notas do release | Corpo trilíngue usado pelo GitHub Release. |
 | `artifacts/urus-distribution/SHA256SUMS.txt` | Checksums | SHA-256 em formato simples para validar instalador, ZIP, manifesto de atualização e notas. |
 
-## Entregáveis 1.0.1
+## Entregáveis 1.1.2
 
 | Tipo | Caminho |
 | --- | --- |
-| Instalador Inno Setup | `artifacts/urus-distribution/UrusLauncher-Setup-1.0.1-win-x64.exe` — 55.911.364 bytes — SHA-256 `8F4C60EA43A2F8C36D49A47812F537BB55F5FA69878F3B949AF2865E15EDB841` |
-| ZIP portátil | `artifacts/urus-distribution/UrusLauncher-1.0.1-portable-win-x64.zip` — 77.366.737 bytes — SHA-256 `E255109957C64A105F03B4EC00CB1C9177D517F0E04CC1EE5441476C42EFA2FF` |
+| Instalador Inno Setup | `artifacts/urus-distribution/UrusLauncher-Setup-1.1.2-win-x64.exe` — 54.591.484 bytes — SHA-256 `C8F3E5386AAF6EFFF75C757C745600C6108A3EA42808CA50599BEF57682101A6` |
+| ZIP portátil | `artifacts/urus-distribution/UrusLauncher-1.1.2-portable-win-x64.zip` — 78.424.108 bytes — SHA-256 `545AAF499165D99E83C6B7FE6CDA68865C869B73A2719FA658419E302BE2AD5B` |
+| Manifesto do updater | `artifacts/urus-distribution/update-manifest.json` — 2.434 bytes — SHA-256 `6E6AE565D4962977E5FF16B97DED984A44446D407A169B990DD6F83A45563137` |
 | Aplicativo principal | `portable/UrusLauncher/UrusLauncher.App.exe` |
 | GameHost isolado | `portable/UrusLauncher/LegendLauncher.GameHost.Legacy.exe` |
 
-O payload expandido final contém 468 arquivos e 183.601.556 bytes. Esses valores e os hashes acima pertencem exatamente à execução 1.0.1, registrada em `distribution-manifest.json` e `SHA256SUMS.txt`; qualquer nova build precisa publicar seus próprios valores. A versão passada em `-Version` também entra nos nomes e metadados do instalador. A entrega 1.0.0 permanece registrada como histórico na iteração 7 de [`design-qa.md`](../../design-qa.md).
+O payload expandido final contém 468 arquivos e 182.338.452 bytes. App e GameHost foram publicados com ProductVersion `1.1.2`/FileVersion `1.1.2.0`; o smoke portátil alcançou a janela “Urus Launcher” por sete segundos sem runtime .NET global. `Get-AuthenticodeSignature` confirmou `NotSigned` no setup, coerente com a limitação pública atual. Esses valores e hashes pertencem exatamente à execução 1.1.2 registrada em `distribution-manifest.json` e `SHA256SUMS.txt`; qualquer nova build precisa publicar seus próprios valores. A entrega 1.0.1 permanece como histórico anterior em [`design-qa.md`](../../design-qa.md).
 
 ## Fluxo de construção
 
@@ -62,18 +64,18 @@ Pré-requisitos do mantenedor:
 Na raiz do repositório:
 
 ```powershell
-.\scripts\build-urus-distribution.ps1 -Version 1.1.1
+.\scripts\build-urus-distribution.ps1 -Version 1.1.2
 ```
 
 O fluxo normal executa testes, publica os dois processos, compõe e valida o payload, faz o smoke do executável portátil, compila o instalador, cria o ZIP e emite manifesto/checksums. A composição não sobrepõe bibliotecas compartilhadas da App com as facades do staging do GameHost. `-SkipTests` existe para iterações locais conscientes; não deve ser usado na distribuição final.
 
-Antes do comando, deve existir `docs/releases/v1.1.1.json` (ou o arquivo da versão passada) com conteúdo não vazio nas três culturas. Não há fallback para notas inventadas no build: versão do parâmetro, JSON fonte, tag, nome do setup e manifesto precisam coincidir.
+Antes do comando, deve existir `docs/releases/v1.1.2.json` (ou o arquivo da versão passada) com conteúdo não vazio nas três culturas. Não há fallback para notas inventadas no build: versão do parâmetro, JSON fonte, tag, nome do setup e manifesto precisam coincidir.
 
 ## Publicação por tag e bootstrap
 
 O workflow `.github/workflows/release.yml` aceita somente tags no formato `vMAJOR.MINOR.PATCH`. O job `build` possui apenas `contents: read`, usa actions fixadas por SHA, desabilita persistência de credenciais no checkout, instala uma versão fixa do Inno Setup, testa e gera os pacotes. Somente os arquivos explícitos são transferidos como artefato temporário para o job `publish`. Esse segundo job possui `contents: write` e usa `gh release create` para publicar setup, ZIP, `update-manifest.json` e `SHA256SUMS.txt`, com `RELEASE_NOTES.md` como corpo. O `GITHUB_TOKEN` é efêmero da execução e não entra no código ou pacote.
 
-A 1.1.0 permanece registrada como a primeira publicação com updater. Como a 1.0.1 não contém esse módulo, seus usuários precisam instalar manualmente a versão pública mais recente, agora a 1.1.1. Usuários da 1.1.0 também podem precisar da instalação manual quando a API estiver limitada por um IP compartilhado; a 1.1.1 passa a recorrer à rota pública `releases/latest/download/update-manifest.json` em respostas `403`/`429`. Esse fallback só descobre o manifesto e não altera o clique obrigatório nem as validações do instalador. Antes de existir um release válido, a consulta retorna falha recuperável e o launcher continua utilizável.
+A 1.1.0 permanece registrada como a primeira publicação com updater. Como a 1.0.1 não contém esse módulo, seus usuários precisam instalar manualmente a versão pública mais recente. A 1.1.1 adicionou a rota pública `releases/latest/download/update-manifest.json` para respostas `403`/`429`, portanto recebe a 1.1.2 dentro do launcher; a instalação exige clique e ausência de sessões ativas. Esse fallback só descobre o manifesto e não altera as validações do instalador.
 
 ## Instalador
 
@@ -114,4 +116,4 @@ O SHA-256 do setup foi recalculado depois da cópia e coincide com o checksum pu
 
 ## Testes e validação
 
-`WindowsDistributionContractTests.cs` valida nomes públicos, configuração per-user/x64, publicação self-contained, proteção do `WindowsBase.dll`, entregáveis, hashing, definição trilíngue, manifesto do updater e relaunch do Inno. `GitHubReleaseContractTests.cs:5` fixa tag, permissões, teste, artefatos e ausência de PAT no workflow. Os hashes/tamanhos acima continuam sendo somente o histórico 1.0.1; não se atribuem valores à 1.1.1 antes de o novo pipeline terminar. Testes de consulta/download/manifesto e fallback de rate limit são detalhados em [atualizacao.md](atualizacao.md).
+`WindowsDistributionContractTests.cs` valida nomes públicos, configuração per-user/x64, publicação self-contained, proteção do `WindowsBase.dll`, entregáveis, hashing, definição trilíngue, manifesto do updater e relaunch do Inno. `GitHubReleaseContractTests.cs:5` fixa tag, permissões, teste, artefatos, ausência de PAT e patch notes 1.1.0/1.1.1/1.1.2. A build canônica 1.1.2 repetiu a suíte Release com **445/445** testes e produziu os hashes/tamanhos registrados acima. Testes de consulta/download/manifesto e fallback de rate limit são detalhados em [atualizacao.md](atualizacao.md).

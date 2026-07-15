@@ -4,7 +4,7 @@
 
 `LegendLauncher.Providers.Oas` integra catálogo, Passport e entrada de servidores OAS aos contratos do [Core](core.md). O módulo normaliza servidores, mantém cache sem dados de conta, autentica cada tentativa em um jar de cookies isolado e entrega somente uma `LaunchSession` final permitida. Senha, `loginKey`, cookies e query de sessão não são persistidos nem aparecem em `ToString()`, exceções ou argumentos de processo.
 
-O protocolo Passport e a resolução até `Loading.swf` foram validados de forma controlada no Reborn turco S115 em 14/07/2026. No QA integrado com a [aplicação](launcher-app.md) e o [GameHost legado](game-host-legacy.md), duas sessões simultâneas e embutidas carregaram até 99%; na build final, uma sessão chegou à interface jogável dentro do launcher.
+O protocolo Passport e a resolução até `Loading.swf` foram validados de forma controlada no Reborn turco S115 em 14/07/2026. Em 15/07/2026, o mesmo backend foi validado no Classic Português S100: Passport aceitou a credencial salva e resolveu uma sessão em `s100sqptclas.creaction-network.com`. No QA integrado com a [aplicação](launcher-app.md) e o [GameHost legado](game-host-legacy.md), duas sessões simultâneas e embutidas carregaram até 99%; na build final anterior, uma sessão Reborn chegou à interface jogável dentro do launcher.
 
 ## Catálogo de servidores
 
@@ -45,6 +45,7 @@ A motivação, alternativas e consequências dessa fronteira estão em [ADR-003 
 3. A senha viaja somente na requisição Passport do `HttpClient`. A ponte curl nunca recebe senha; URI/cookie de sessão entram por `stdin`, não em argumentos, logs ou exceções.
 4. `loginKey` alimenta exclusivamente `oas_user`; `id` pode ser persistido como UID não secreto do perfil. O restante de `val` é ignorado.
 5. A sessão entregue ao consumidor contém a URI `Loading.swf` com query opaca. O provider não duplica token em parâmetros nem o imprime.
+6. A aplicação pode reutilizar a mesma credencial do login entre variantes OAS, mas cada tentativa recebe handler/jar novo e cada variante conserva UID e histórico próprios. Essa compatibilidade não se estende ao provider SevenWan.
 
 ## Dependências, consumidores e referências cruzadas
 
@@ -59,4 +60,4 @@ O projeto depende da BCL (`HttpClient`, `SocketsHttpHandler`, `CookieContainer`,
 - `OasCurlResponseParserTests.cs` cobre status, cookies, redirects, proxy/interim, limites e payloads malformados.
 - `OasLiveSmokeTests.cs` só acessa rede/cofre quando `LEGEND_OAS_LIVE_SMOKE=1`; usa o perfil local já salvo e valida S115 até `Loading.swf` sem iniciar Flash ou registrar segredo. A execução controlada de 14/07/2026 passou.
 
-Suíte padrão permanece determinística e não acessa credenciais reais. O fluxo integrado confirmou duas sessões simultâneas e embutidas carregando até 99%, e a validação manual autenticada da build final confirmou uma sessão S115 na interface jogável. A captura não expôs senha, cookie ou URI de sessão.
+Suíte padrão permanece determinística e não acessa credenciais reais. O fluxo integrado confirmou duas sessões simultâneas e embutidas carregando até 99%, e a validação manual autenticada da build final confirmou uma sessão S115 na interface jogável. A verificação controlada do Classic Português S100 parou antes de iniciar Flash e confirmou somente Passport + resolução segura da sessão; nenhum teste automatizado registra senha, cookie ou URI autenticada.

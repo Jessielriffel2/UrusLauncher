@@ -41,15 +41,18 @@ public sealed class GitHubReleaseContractTests
         Assert.DoesNotContain("github_pat_", source, StringComparison.Ordinal);
     }
 
-    [Fact]
-    public void VersionOneOneZeroHasPatchNotesInEverySupportedLanguage()
+    [Theory]
+    [InlineData("1.1.0")]
+    [InlineData("1.1.1")]
+    [InlineData("1.1.2")]
+    public void PublicVersionHasPatchNotesInEverySupportedLanguage(string version)
     {
-        string path = FindRepositoryFile("docs", "releases", "v1.1.0.json");
+        string path = FindRepositoryFile("docs", "releases", $"v{version}.json");
         using JsonDocument document = JsonDocument.Parse(File.ReadAllBytes(path));
         JsonElement root = document.RootElement;
 
         Assert.Equal(1, root.GetProperty("schemaVersion").GetInt32());
-        Assert.Equal("1.1.0", root.GetProperty("version").GetString());
+        Assert.Equal(version, root.GetProperty("version").GetString());
         foreach (string language in new[] { "pt-BR", "en-US", "es-ES" })
         {
             Assert.False(string.IsNullOrWhiteSpace(

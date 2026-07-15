@@ -179,31 +179,62 @@ public sealed class MainWindowViewModelTests
     }
 
     [Fact]
-    public async Task SwitchingPlatformInvalidatesCredentialUntilProfileIdentityMatchesAgain()
+    public async Task SavedRebornProfileCanLaunchClassicPortugueseS100()
     {
-        AccountProfile profile = AppTestData.Profile("player@example.test", null, "100");
-        var directory = new StubServerDirectory((_, _, _) =>
-            Task.FromResult(AppTestData.Catalog([AppTestData.Server("100")])));
+        AccountProfile profile = AppTestData.Profile("player@example.test", 715, "115") with
+        {
+            PlatformId = OasPlatformCatalog.RebornTurkish.Id,
+            RecentServerIds = ["115"],
+        };
+        var directory = new StubServerDirectory((platform, _, _) =>
+            Task.FromResult(CatalogFor(
+                platform,
+                platform.Id == OasPlatformCatalog.ClassicPortuguese.Id
+                    ? [ServerFor(platform, "100")]
+                    : [ServerFor(platform, "115")])));
         var vault = new InMemoryCredentialVault();
         vault.Seed(profile.CredentialKey, new CredentialSecret(profile.UserName, "vault-secret"));
+        var authentication = new StubAuthenticationService((request, _) =>
+            Task.FromResult(AuthenticationResult.Success(
+                new LaunchSession(
+                    new Uri("https://s100sqptclas.creaction-network.com/client/Loading.swf")),
+                901)));
+        var profiles = new InMemoryProfileStore(profile);
         using MainWindowViewModel viewModel = CreateViewModel(
             directory,
-            new InMemoryProfileStore(profile),
-            vault);
+            profiles,
+            vault,
+            authentication);
 
         await viewModel.InitializeAsync();
-        await Task.Yield();
+        await WaitUntilAsync(() => viewModel.HasSavedCredential && !viewModel.IsLoading);
+        Assert.Equal(OasPlatformCatalog.RebornTurkish.Id, viewModel.SelectedPlatform.Id);
+
+        viewModel.SelectedPlatform = viewModel.Platforms.Single(platform =>
+            platform.Id == OasPlatformCatalog.ClassicPortuguese.Id);
+        await WaitUntilAsync(() =>
+            viewModel.HasSavedCredential &&
+            !viewModel.IsLoading &&
+            viewModel.SelectedServer?.Id == "100");
+
+        Assert.Equal(0, directory.Requests.Last().UserId);
         Assert.True(viewModel.CanStartGame);
 
-        PlatformItemViewModel otherPlatform = viewModel.Platforms
-            .Single(platform => platform.Id == OasPlatformCatalog.Turkish.Id);
-        viewModel.SelectedPlatform = otherPlatform;
-        Assert.False(viewModel.CanStartGame);
+        await viewModel.StartGameAsync();
 
-        viewModel.SelectedPlatform = viewModel.Platforms
-            .Single(platform => platform.Id == profile.PlatformId);
-        await Task.Yield();
-        Assert.True(viewModel.CanStartGame);
+        AuthenticationRequest request = Assert.Single(authentication.Requests);
+        Assert.Equal(OasPlatformCatalog.ClassicPortuguese.Id, request.Platform.Id);
+        Assert.Equal("100", request.Server.Id);
+        Assert.Equal("lorpt.creaction-network.com", request.Server.LaunchUri?.Host);
+        GameSessionViewModel session = Assert.Single(viewModel.Workspace.Sessions);
+        Assert.Equal(profile.Id, session.ProfileId);
+        Assert.Equal(OasPlatformCatalog.ClassicPortuguese.Id, session.PlatformId);
+        Assert.Equal("100", session.ServerId);
+        AccountProfile persisted = Assert.Single(profiles.Values);
+        Assert.Equal(profile.Id, persisted.Id);
+        Assert.Equal("100", persisted.GetLastServerId(OasPlatformCatalog.ClassicPortuguese.Id));
+        Assert.Equal("115", persisted.GetLastServerId(OasPlatformCatalog.RebornTurkish.Id));
+        Assert.True(vault.Contains(profile.CredentialKey));
     }
 
     [Fact]
@@ -262,6 +293,57 @@ public sealed class MainWindowViewModelTests
         await viewModel.StartGameAsync();
         Assert.Single(viewModel.Workspace.Sessions);
         Assert.Single(authentication.Requests);
+    }
+
+    [Fact]
+    public async Task ActiveSessionIsReusedOnlyForExactProfilePlatformAndServer()
+    {
+        AccountProfile profile = AppTestData.Profile("player@example.test", null, "100");
+        var directory = new StubServerDirectory((platform, _, _) =>
+            Task.FromResult(CatalogFor(
+                platform,
+                platform.Id == OasPlatformCatalog.ClassicPortuguese.Id
+                    ? [ServerFor(platform, "100")]
+                    : [ServerFor(platform, "100"), ServerFor(platform, "101")])));
+        var vault = new InMemoryCredentialVault();
+        vault.Seed(profile.CredentialKey, new CredentialSecret(profile.UserName, "vault-secret"));
+        var authentication = SuccessfulAuthentication();
+        using MainWindowViewModel viewModel = CreateViewModel(
+            directory,
+            new InMemoryProfileStore(profile),
+            vault,
+            authentication);
+        await viewModel.InitializeAsync();
+        await WaitUntilAsync(() => viewModel.HasSavedCredential && !viewModel.IsLoading);
+
+        await viewModel.StartGameAsync();
+        await viewModel.StartGameAsync();
+        Assert.Single(authentication.Requests);
+        Assert.Single(viewModel.Workspace.Sessions);
+
+        viewModel.SelectedServer = viewModel.VisibleServers.Single(server => server.Id == "101");
+        Assert.True(viewModel.CanStartGame);
+        await viewModel.StartGameAsync();
+        Assert.Equal(2, authentication.Requests.Count);
+        Assert.Equal(2, viewModel.Workspace.Sessions.Count);
+        Assert.Equal("101", viewModel.Workspace.SelectedSession?.ServerId);
+
+        viewModel.SelectedPlatform = viewModel.Platforms.Single(platform =>
+            platform.Id == OasPlatformCatalog.ClassicPortuguese.Id);
+        await WaitUntilAsync(() =>
+            viewModel.HasSavedCredential &&
+            !viewModel.IsLoading &&
+            viewModel.SelectedServer?.Id == "100");
+        Assert.True(viewModel.CanStartGame);
+        await viewModel.StartGameAsync();
+        Assert.Equal(3, authentication.Requests.Count);
+        Assert.Equal(3, viewModel.Workspace.Sessions.Count);
+        Assert.Equal(OasPlatformCatalog.ClassicPortuguese.Id,
+            viewModel.Workspace.SelectedSession?.PlatformId);
+
+        await viewModel.StartGameAsync();
+        Assert.Equal(3, authentication.Requests.Count);
+        Assert.Equal(3, viewModel.Workspace.Sessions.Count);
     }
 
     [Fact]
@@ -431,6 +513,27 @@ public sealed class MainWindowViewModelTests
                 new LaunchSession(new Uri("https://lobr.creaction-network.com/client/Loading.swf")),
                 777));
         });
+
+    private static ServerCatalog CatalogFor(
+        PlatformDefinition platform,
+        IReadOnlyList<GameServer> servers) =>
+        new(platform.Id, servers, [], null, AppTestData.Now);
+
+    private static GameServer ServerFor(PlatformDefinition platform, string id) =>
+        AppTestData.Server(id) with
+        {
+            LaunchUri = new Uri(
+                $"https://{platform.GameCode}.creaction-network.com/serverlist/s{id}"),
+        };
+
+    private static async Task WaitUntilAsync(Func<bool> condition)
+    {
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        while (!condition())
+        {
+            await Task.Delay(10, timeout.Token);
+        }
+    }
 
     private static void PrepareNewAccount(
         MainWindowViewModel viewModel,

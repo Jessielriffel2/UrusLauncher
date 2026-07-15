@@ -389,13 +389,13 @@ internal sealed partial class MainWindowViewModel : ObservableObject, IDisposabl
 
     public string SelectedProfileLoginSummary => SelectedProfile?.Model.UserName ?? LoginHint;
 
-    public string CredentialStatusText => HasActiveSelectedProfile
+    public string CredentialStatusText => HasActiveSelectedSession
         ? _localization.Get("Credentials_ActiveSession")
         : HasSavedCredential
             ? _localization.Get("Credentials_Stored")
             : _localization.Get("Credentials_Required");
 
-    public string PrimaryActionLabel => HasActiveSelectedProfile
+    public string PrimaryActionLabel => HasActiveSelectedSession
         ? _localization.Get("Action_BackToGame")
         : _localization.Get("Action_EnterAndPlay");
 
@@ -469,7 +469,7 @@ internal sealed partial class MainWindowViewModel : ObservableObject, IDisposabl
     public bool CanStartGame =>
         !_disposed &&
         !IsUpdateOperationActive &&
-        (HasActiveSelectedProfile ||
+        (HasActiveSelectedSession ||
         (
         !IsLoading &&
         !IsLaunching &&
@@ -480,10 +480,20 @@ internal sealed partial class MainWindowViewModel : ObservableObject, IDisposabl
         !string.IsNullOrWhiteSpace(LoginHint) &&
         (PendingPassword.Length > 0 || HasSavedCredential)));
 
-    private bool HasActiveSelectedProfile =>
+    private bool HasActiveSelectedSession =>
         SelectedProfile?.Model is { } selectedProfile &&
+        SelectedServer?.Model is { } selectedServer &&
         Workspace.Sessions.Any(session =>
-            session.ProfileId == selectedProfile.Id && session.IsRunning);
+            session.ProfileId == selectedProfile.Id &&
+            string.Equals(
+                session.PlatformId,
+                SelectedPlatform.Id,
+                StringComparison.OrdinalIgnoreCase) &&
+            string.Equals(
+                session.ServerId,
+                selectedServer.Id,
+                StringComparison.OrdinalIgnoreCase) &&
+            session.IsRunning);
 
     public async Task InitializeAsync()
     {
@@ -540,7 +550,11 @@ internal sealed partial class MainWindowViewModel : ObservableObject, IDisposabl
     internal async Task StartGameAsync()
     {
         if (SelectedProfile?.Model is { } activeProfile &&
-            Workspace.TryActivateProfile(activeProfile.Id))
+            SelectedServer?.Model is { } activeServer &&
+            Workspace.TryActivateSession(
+                activeProfile.Id,
+                SelectedPlatform.Id,
+                activeServer.Id))
         {
             IsWorkspaceVisible = true;
             SetCatalogStatus("Session_AlreadyActive");

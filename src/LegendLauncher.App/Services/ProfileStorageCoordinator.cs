@@ -37,27 +37,30 @@ internal sealed class ProfileStorageCoordinator
         AccountProfile? existingProfile = input.ExistingProfile;
         Guid profileId = existingProfile?.Id ?? Guid.NewGuid();
         bool keepsProviderIdentity = existingProfile is { } existing &&
-            string.Equals(existing.PlatformId, input.PlatformId, StringComparison.OrdinalIgnoreCase) &&
+            ProfilePlatformCompatibility.ShareAccountIdentity(
+                existing.PlatformId,
+                input.PlatformId) &&
             string.Equals(existing.UserName, input.UserName, StringComparison.OrdinalIgnoreCase);
         bool changesProviderIdentity = existingProfile is not null && !keepsProviderIdentity;
         string credentialKey = changesProviderIdentity
             ? CreateRotatedCredentialKey(existingProfile!.CredentialKey)
             : existingProfile?.CredentialKey ?? CredentialKey.ForProfile(profileId);
-        var profile = new AccountProfile(
-            profileId,
-            input.DisplayName,
-            input.PlatformId,
-            input.UserName,
-            credentialKey,
-            keepsProviderIdentity ? existingProfile?.ProviderUserId : null,
-            keepsProviderIdentity ? existingProfile?.LastServerId : null,
-            existingProfile?.CreatedAtUtc ?? now,
-            now)
-        {
-            RecentServerIds = keepsProviderIdentity
-                ? existingProfile?.RecentServerIds ?? []
-                : [],
-        };
+        AccountProfile profile = keepsProviderIdentity
+            ? CreateCompatibleProfile(
+                existingProfile!,
+                input,
+                credentialKey,
+                now)
+            : new AccountProfile(
+                profileId,
+                input.DisplayName,
+                input.PlatformId,
+                input.UserName,
+                credentialKey,
+                null,
+                null,
+                existingProfile?.CreatedAtUtc ?? now,
+                now);
 
         await _profileStore.SaveAsync(profile, cancellationToken).ConfigureAwait(false);
 
@@ -100,6 +103,26 @@ internal sealed class ProfileStorageCoordinator
         }
 
         return new ProfileSaveOutcome(profile, credentialPersisted);
+    }
+
+    private static AccountProfile CreateCompatibleProfile(
+        AccountProfile existingProfile,
+        ProfileSaveInput input,
+        string credentialKey,
+        DateTimeOffset updatedAtUtc)
+    {
+        AccountProfile profileWithSelectedPlatform = existingProfile.WithPlatformLaunchState(
+            input.PlatformId,
+            existingProfile.GetProviderUserId(input.PlatformId),
+            existingProfile.GetRecentServerIds(input.PlatformId),
+            updatedAtUtc);
+
+        return profileWithSelectedPlatform with
+        {
+            DisplayName = input.DisplayName,
+            UserName = input.UserName,
+            CredentialKey = credentialKey,
+        };
     }
 
     private static string CreateRotatedCredentialKey(string previousCredentialKey)

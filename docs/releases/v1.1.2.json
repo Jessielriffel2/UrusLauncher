@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "version": "1.1.2",
+  "title": {
+    "pt-BR": "Classic Português e variantes OAS liberados",
+    "en-US": "Classic Portuguese and OAS variants unlocked",
+    "es-ES": "Classic Portugués y variantes OAS habilitados"
+  },
+  "notes": {
+    "pt-BR": [
+      "Corrigido: perfis salvos no Reborn, Brasil ou outra variante OAS agora podem entrar no Classic Português S100 e nas demais variantes OAS compatíveis.",
+      "A mesma conta OAS preserva a senha no Cofre do Windows, enquanto UID e servidores recentes continuam separados por versão.",
+      "Entrar e jogar agora respeita exatamente perfil, versão e servidor; outro destino abre uma sessão nova e o mesmo destino retorna à sessão existente.",
+      "O launcher não bloqueia servidores sem personagem: depois da autenticação, o próprio jogo abre a criação normal quando necessário.",
+      "Segurança preservada: credenciais OAS nunca são compartilhadas com plataformas SevenWan."
+    ],
+    "en-US": [
+      "Fixed: profiles saved on Reborn, Brazil, or another OAS variant can now enter Classic Portuguese S100 and the other compatible OAS variants.",
+      "The same OAS account keeps its password in Windows Credential Manager, while user IDs and recent servers remain separate per version.",
+      "Enter and play now honors the exact profile, version, and server; another target opens a new session and the same target returns to its existing session.",
+      "The launcher no longer blocks servers without a character: after authentication, the game opens its normal character creation when needed.",
+      "Security is preserved: OAS credentials are never shared with SevenWan platforms."
+    ],
+    "es-ES": [
+      "Corregido: los perfiles guardados en Reborn, Brasil u otra variante OAS ahora pueden entrar en Classic Portugués S100 y en las demás variantes OAS compatibles.",
+      "La misma cuenta OAS conserva la contraseña en el Administrador de credenciales de Windows, mientras el ID de usuario y los servidores recientes siguen separados por versión.",
+      "Entrar y jugar ahora respeta exactamente perfil, versión y servidor; otro destino abre una sesión nueva y el mismo destino vuelve a su sesión existente.",
+      "El launcher ya no bloquea servidores sin personaje: después de autenticarse, el juego abre la creación normal cuando sea necesario.",
+      "Seguridad preservada: las credenciales OAS nunca se comparten con plataformas SevenWan."
+    ]
+  }
+}

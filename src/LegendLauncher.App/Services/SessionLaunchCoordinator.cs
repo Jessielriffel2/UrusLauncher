@@ -107,7 +107,9 @@ internal sealed class SessionLaunchCoordinator
         }
 
         if (input.Profile is null ||
-            !string.Equals(input.Profile.PlatformId, input.Platform.Id, StringComparison.OrdinalIgnoreCase) ||
+            !ProfilePlatformCompatibility.ShareAccountIdentity(
+                input.Profile.PlatformId,
+                input.Platform.Id) ||
             !string.Equals(input.Profile.UserName, input.Login, StringComparison.OrdinalIgnoreCase))
         {
             return null;
@@ -135,23 +137,25 @@ internal sealed class SessionLaunchCoordinator
         AuthenticationResult authentication,
         CancellationToken cancellationToken)
     {
-        bool matchesExistingProfile = input.Profile is not null &&
-            string.Equals(input.Profile.PlatformId, input.Platform.Id, StringComparison.OrdinalIgnoreCase) &&
+        bool reusesExistingProfile = input.Profile is not null &&
+            ProfilePlatformCompatibility.ShareAccountIdentity(
+                input.Profile.PlatformId,
+                input.Platform.Id) &&
             string.Equals(input.Profile.UserName, input.Login, StringComparison.OrdinalIgnoreCase);
         DateTimeOffset now = _timeProvider.GetUtcNow();
         IReadOnlyList<string> recentServerIds = BuildRecentServerIds(
-            matchesExistingProfile ? input.Profile!.RecentServerIds : [],
+            reusesExistingProfile
+                ? input.Profile!.GetRecentServerIds(input.Platform.Id)
+                : [],
             input.Server.Id);
-        AccountProfile effectiveProfile = matchesExistingProfile
-            ? input.Profile! with
-            {
-                ProviderUserId = authentication.ProviderUserId ?? input.Profile.ProviderUserId,
-                LastServerId = input.Server.Id,
-                RecentServerIds = recentServerIds,
-                UpdatedAtUtc = now,
-            }
+        AccountProfile effectiveProfile = reusesExistingProfile
+            ? input.Profile!.WithPlatformLaunchState(
+                input.Platform.Id,
+                authentication.ProviderUserId ?? input.Profile.GetProviderUserId(input.Platform.Id),
+                recentServerIds,
+                now)
             : CreateProfile(input, authentication, recentServerIds, now);
-        if (!matchesExistingProfile && !input.RememberPassword)
+        if (!reusesExistingProfile && !input.RememberPassword)
         {
             return (effectiveProfile, false, true);
         }
@@ -198,7 +202,7 @@ internal sealed class SessionLaunchCoordinator
         DateTimeOffset now)
     {
         Guid profileId = Guid.NewGuid();
-        return new AccountProfile(
+        var profile = new AccountProfile(
             profileId,
             string.IsNullOrWhiteSpace(input.ProfileDisplayName)
                 ? input.Login
@@ -213,6 +217,11 @@ internal sealed class SessionLaunchCoordinator
         {
             RecentServerIds = recentServerIds,
         };
+        return profile.WithPlatformLaunchState(
+            input.Platform.Id,
+            authentication.ProviderUserId,
+            recentServerIds,
+            now);
     }
 
     internal static void TryTerminateProcess(int processId)

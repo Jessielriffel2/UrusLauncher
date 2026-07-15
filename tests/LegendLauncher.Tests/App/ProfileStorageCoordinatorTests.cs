@@ -3,6 +3,7 @@ using LegendLauncher.App.Services;
 using LegendLauncher.Core.Models;
 using LegendLauncher.Infrastructure.Security;
 using LegendLauncher.Providers.Oas;
+using LegendLauncher.Providers.SevenWan;
 
 namespace LegendLauncher.Tests.App;
 
@@ -75,6 +76,96 @@ public sealed class ProfileStorageCoordinatorTests
     }
 
     [Fact]
+    public async Task SaveAsync_RebornToClassicKeepsCredentialAndMaterializesPlatformState()
+    {
+        const string userName = "player@example.test";
+        AccountProfile existing = AppTestData.Profile(userName, 9988, "115") with
+        {
+            PlatformId = OasPlatformCatalog.RebornTurkish.Id,
+            RecentServerIds = ["115", "116"],
+            ProviderUserIdsByPlatform = new Dictionary<string, long>(StringComparer.OrdinalIgnoreCase)
+            {
+                [OasPlatformCatalog.ClassicPortuguese.Id] = 4477,
+            },
+            RecentServerIdsByPlatform =
+                new Dictionary<string, IReadOnlyList<string>>(StringComparer.OrdinalIgnoreCase)
+                {
+                    [OasPlatformCatalog.ClassicPortuguese.Id] = ["100", "101"],
+                },
+        };
+        var store = new InMemoryProfileStore(existing);
+        var vault = new InMemoryCredentialVault();
+        vault.Seed(existing.CredentialKey, new CredentialSecret(userName, "saved-secret"));
+        var coordinator = new ProfileStorageCoordinator(store, vault);
+        var input = new ProfileSaveInput(
+            existing,
+            "Conta Classic",
+            OasPlatformCatalog.ClassicPortuguese.Id,
+            userName,
+            string.Empty,
+            rememberPassword: true);
+
+        ProfileSaveOutcome outcome = await coordinator.SaveAsync(input);
+        AccountProfile stored = Assert.Single(store.Values);
+
+        Assert.Equal(existing.Id, outcome.Profile.Id);
+        Assert.Equal(existing.CredentialKey, outcome.Profile.CredentialKey);
+        Assert.Equal(OasPlatformCatalog.ClassicPortuguese.Id, outcome.Profile.PlatformId);
+        Assert.Equal(4477, outcome.Profile.ProviderUserId);
+        Assert.Equal("100", outcome.Profile.LastServerId);
+        Assert.Equal(["100", "101"], outcome.Profile.RecentServerIds);
+        Assert.Equal(9988, outcome.Profile.GetProviderUserId(OasPlatformCatalog.RebornTurkish.Id));
+        Assert.Equal(
+            ["115", "116"],
+            outcome.Profile.GetRecentServerIds(OasPlatformCatalog.RebornTurkish.Id));
+        Assert.Equal(4477, outcome.Profile.GetProviderUserId(OasPlatformCatalog.ClassicPortuguese.Id));
+        Assert.Equal(
+            ["100", "101"],
+            outcome.Profile.GetRecentServerIds(OasPlatformCatalog.ClassicPortuguese.Id));
+        Assert.Equal(outcome.Profile, stored);
+        Assert.True(vault.Contains(existing.CredentialKey));
+        Assert.Equal(0, vault.SetCount);
+        Assert.Equal(0, vault.DeleteCount);
+        Assert.True(await coordinator.HasSavedCredentialAsync(outcome.Profile));
+    }
+
+    [Fact]
+    public async Task SaveAsync_OasToSevenWanRotatesCredentialAndClearsOasPlatformState()
+    {
+        const string userName = "player@example.test";
+        AccountProfile existing = AppTestData.Profile(userName, 9988, "115") with
+        {
+            PlatformId = OasPlatformCatalog.RebornTurkish.Id,
+            RecentServerIds = ["115", "116"],
+        };
+        var store = new InMemoryProfileStore(existing);
+        var vault = new InMemoryCredentialVault();
+        vault.Seed(existing.CredentialKey, new CredentialSecret(userName, "saved-secret"));
+        var coordinator = new ProfileStorageCoordinator(store, vault);
+        var input = new ProfileSaveInput(
+            existing,
+            "Conta 7wan",
+            SevenWanPlatformCatalog.All[0].Id,
+            userName,
+            string.Empty,
+            rememberPassword: true);
+
+        ProfileSaveOutcome outcome = await coordinator.SaveAsync(input);
+
+        Assert.Equal(existing.Id, outcome.Profile.Id);
+        Assert.NotEqual(existing.CredentialKey, outcome.Profile.CredentialKey);
+        Assert.Null(outcome.Profile.ProviderUserId);
+        Assert.Null(outcome.Profile.LastServerId);
+        Assert.Empty(outcome.Profile.RecentServerIds);
+        Assert.Empty(outcome.Profile.ProviderUserIdsByPlatform);
+        Assert.Empty(outcome.Profile.RecentServerIdsByPlatform);
+        Assert.False(vault.Contains(existing.CredentialKey));
+        Assert.False(vault.Contains(outcome.Profile.CredentialKey));
+        Assert.Equal(1, vault.DeleteCount);
+        Assert.False(await coordinator.HasSavedCredentialAsync(outcome.Profile));
+    }
+
+    [Fact]
     public async Task SaveAsync_OldCredentialDeleteFailureCannotReExposeItToChangedIdentity()
     {
         const string userName = "player@example.test";
@@ -85,8 +176,8 @@ public sealed class ProfileStorageCoordinatorTests
         var coordinator = new ProfileStorageCoordinator(store, vault);
         var input = new ProfileSaveInput(
             existing,
-            "Conta turca",
-            OasPlatformCatalog.RebornTurkish.Id,
+            "Conta 7wan",
+            SevenWanPlatformCatalog.All[0].Id,
             userName,
             string.Empty,
             rememberPassword: true);

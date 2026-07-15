@@ -37,22 +37,23 @@ O processo WPF nunca carrega o Adobe Flash ActiveX. Cada conta aberta permanece 
 | `src/LegendLauncher.App/LauncherComposition.cs:20` | `CreateMainWindowViewModel(...)` | Compõe paths, cache, perfis, cofre, providers, runtime, settings, localização, áudio, workspace e `LauncherUpdateService`; a criação deste último ocorre na linha 50. |
 | `src/LegendLauncher.App/LauncherComposition.cs:79` | `CreateHttpClient()` | Cliente compartilhado com redirects automáticos desativados, descompressão, timeout de conexão e User-Agent versionado. |
 | `src/LegendLauncher.App/Services/PlatformAdapterRegistry.cs:9` | `PlatformAdapterRegistry` | Resolve a combinação canônica de plataforma, diretório e autenticador; impede definições alteradas/duplicadas. |
+| `src/LegendLauncher.App/Services/ProfilePlatformCompatibility.cs:7` | `ShareAccountIdentity(...)` | Considera variantes `oas-*` parte da mesma identidade de conta para reutilizar a credencial; IDs exatos continuam compatíveis e nenhuma credencial OAS atravessa para `sevenwan-*`. |
 | `src/LegendLauncher.App/Services/SessionLaunchCoordinator.cs:41` | `LaunchAsync(...)` | Resolve senha digitada ou salva, autentica, inicia `IGameRuntime` e persiste perfil/UID/histórico/cofre. Saída: `SessionLaunchOutcome` com `GameSession` e o `EffectiveProfile` realmente persistido; se a etapa pós-runtime falhar, encerra o processo ainda não adotado. |
-| `src/LegendLauncher.App/Services/SessionLaunchCoordinator.cs:98` | `ResolveCredentialAsync(...)` | Só aceita credencial cuja chave, plataforma, perfil e usuário correspondam à seleção atual. |
-| `src/LegendLauncher.App/Services/SessionLaunchCoordinator.cs:133` | Persistência pós-abertura | Atualiza UID, último servidor e até cinco recentes e devolve o perfil efetivo usado na sessão. |
-| `src/LegendLauncher.App/Services/ProfileStorageCoordinator.cs:27` | `SaveAsync(...)` | Separa metadados não secretos do cofre; editar um perfil preserva o histórico já jogado, enquanto trocar identidade limpa UID/histórico e rotaciona a chave opaca. A seleção atual nunca vira “último jogado”. |
-| `src/LegendLauncher.App/Services/ServerCatalogPresentation.cs:9` | `ResolveLastPlayedServerId(...)` | Valida perfil/plataforma, usa o primeiro `RecentServerIds` não vazio e recorre a `LastServerId` somente para perfis legados. Saída: ID normalizado ou nulo. |
+| `src/LegendLauncher.App/Services/SessionLaunchCoordinator.cs:98` | `ResolveCredentialAsync(...)` | Aceita a credencial do mesmo login entre variantes OAS, mas exige família compatível e nunca compartilha com SevenWan. |
+| `src/LegendLauncher.App/Services/SessionLaunchCoordinator.cs:133` | Persistência pós-abertura | Atualiza UID e até cinco servidores recentes somente para a plataforma lançada, preserva os estados das demais variantes e devolve o mesmo perfil efetivo. |
+| `src/LegendLauncher.App/Services/ProfileStorageCoordinator.cs:27` | `SaveAsync(...)` | Separa metadados não secretos do cofre; editar o mesmo login entre variantes OAS preserva ID/chave e materializa o estado por plataforma, enquanto mudar login ou família rotaciona a chave opaca. A seleção atual nunca vira “último jogado”. |
+| `src/LegendLauncher.App/Services/ServerCatalogPresentation.cs:9` | `ResolveLastPlayedServerId(...)` | Resolve o histórico específico da plataforma, incluindo fallback legado apenas para a plataforma espelhada. Saída: ID normalizado ou nulo. |
 | `src/LegendLauncher.App/Services/ServerCatalogPresentation.cs:25` | `BuildRows(...)` | Fixa o último realmente usado no topo, calcula entre servidores válidos já abertos o lançamento mais recente por `StartTimeUtc`/`NumericId`, ordena o restante e devolve linhas prontas para exibição. |
 | `src/LegendLauncher.App/Services/ServerCatalogPresentation.cs:60` | `Filter(...)` / `Choose(...)` | Filtra código/nome/ID e recalcula o divisor para o resultado visível; a escolha prioriza ID desejado, último servidor jogável, lançamento mais recente jogável e primeiro servidor jogável. |
 | `src/LegendLauncher.App/ViewModels/ServerRowViewModel.cs:6` | `ServerRowViewModel` | Expõe os papéis independentes `IsCurrent` e `IsLatestReleased`, selos/tooltips localizados, rótulo de seção e disponibilidade. Um servidor pode mostrar os dois selos ao mesmo tempo. |
 | `src/LegendLauncher.App/ViewModels/MainWindowViewModel.cs:12` | `MainWindowViewModel` | Estado e comandos centrais, cancelamento de catálogo/login, seleção, mensagens saneadas e alternância launcher/workspace. |
 | `src/LegendLauncher.App/ViewModels/MainWindowViewModel.cs:72` | `Workspace` e comandos de navegação | Compõe/recebe o workspace; comandos para adicionar conta, voltar ao launcher e abrir o workspace começam por volta da linha 92. |
 | `src/LegendLauncher.App/ViewModels/MainWindowViewModel.cs:349` | `IsWorkspaceVisible` | Seleciona qual das duas superfícies WPF está visível sem encerrar sessões. |
-| `src/LegendLauncher.App/ViewModels/MainWindowViewModel.cs:387` | Estado do perfil ativo | Exibe sessão ativa e troca a ação principal para retornar à aba existente. |
-| `src/LegendLauncher.App/ViewModels/MainWindowViewModel.cs:468` | `CanStartGame` | Aceita retorno a perfil ativo ou exige runtime, servidor, login e senha digitada/salva para nova abertura. |
+| `src/LegendLauncher.App/ViewModels/MainWindowViewModel.cs:392` | Estado da sessão ativa | Exibe sessão ativa e troca a ação principal somente quando perfil, plataforma e servidor selecionados coincidem com uma aba em execução. |
+| `src/LegendLauncher.App/ViewModels/MainWindowViewModel.cs:469` | `CanStartGame` | Reutiliza o alvo exato em execução ou exige runtime, servidor, login e senha digitada/salva para abrir outro alvo. |
 | `src/LegendLauncher.App/ViewModels/MainWindowViewModel.cs:486` | `InitializeAsync()` | Restaura settings/último perfil, perfis e catálogo; usa defaults se settings falharem. |
-| `src/LegendLauncher.App/ViewModels/MainWindowViewModel.cs:528` | `StartGameAsync()` | Evita duplicar perfil ativo; caso contrário autentica, usa o `EffectiveProfile`, registra a sessão no workspace e limpa a senha transitória. Se o workspace não adotar o PID/HWND retornado, encerra o GameHost órfão. |
-| `src/LegendLauncher.App/ViewModels/MainWindowViewModel.Catalog.cs:8` | `LoadServersAsync(...)` | Consulta por plataforma/UID, resolve o histórico do perfil somente quando sua plataforma coincide, cancela a operação anterior e rejeita respostas obsoletas. |
+| `src/LegendLauncher.App/ViewModels/MainWindowViewModel.cs:550` | `StartGameAsync()` | Reutiliza somente perfil+plataforma+servidor idênticos; outro servidor ou variante autentica, usa o `EffectiveProfile`, registra nova sessão e limpa a senha transitória. Se o workspace não adotar o PID/HWND retornado, encerra o GameHost órfão. |
+| `src/LegendLauncher.App/ViewModels/MainWindowViewModel.Catalog.cs:8` | `LoadServersAsync(...)` | Consulta por plataforma e pelo UID específico daquela variante, resolve somente seu histórico, cancela a operação anterior e rejeita respostas obsoletas. |
 | `src/LegendLauncher.App/ViewModels/MainWindowViewModel.Catalog.cs:103` | `ApplyServerFilter()` | Recria a lista visível pela busca, o que também remove ou reposiciona o divisor conforme o último servidor continue ou não no resultado. |
 | `src/LegendLauncher.App/ViewModels/MainWindowViewModel.Profiles.cs:9` | `LoadProfilesAsync(...)` | Ordena perfis por atualização e restaura o ID selecionado em settings. |
 | `src/LegendLauncher.App/ViewModels/MainWindowViewModel.Profiles.cs:168` | `PersistSelectedProfileAsync(...)` | Salva apenas o GUID do último perfil; falha não invalida a seleção em memória. |
@@ -71,14 +72,15 @@ O processo WPF nunca carrega o Adobe Flash ActiveX. Cada conta aberta permanece 
 ### Perfis e credenciais
 
 - A lista aceita vários `AccountProfile` de plataformas/usuários diferentes.
-- Cada perfil guarda apenas metadados, UID opcional, chave opaca do cofre, último servidor e até cinco IDs recentes.
+- Cada perfil guarda apenas metadados, uma chave opaca do cofre e, separadamente por plataforma, UID opcional e até cinco IDs recentes. Os campos antigos espelham a última variante usada para migração compatível.
 - A senha fica no `WindowsCredentialVault` somente quando a opção de lembrar está marcada; o `PasswordBox` e os inputs de sessão são transitórios.
-- Trocar usuário ou plataforma invalida UID e chave antiga. Uma credencial salva recusada exige redigitação e só é substituída após login bem-sucedido.
+- Trocar entre Classic, Brasil, Reborn ou outra variante `oas-*` mantém a credencial do mesmo login, mas não mistura UID nem histórico de servidores. Trocar usuário ou família de provider invalida a identidade e rotaciona a chave antiga.
+- Uma credencial salva recusada exige redigitação e só é substituída após login bem-sucedido.
 - O histórico é atualizado somente depois de autenticação e abertura aceitas.
 
 ### Ordenação do catálogo por perfil
 
-1. Quando o perfil selecionado pertence à plataforma ativa, `RecentServerIds[0]` define o servidor fixado no topo. Esse histórico é atualizado somente após uma abertura aceita; `LastServerId` serve como fallback de compatibilidade para perfis antigos e `catalog.Current` cobre a ausência de ambos.
+1. `RecentServerIdsByPlatform[plataforma][0]` define o servidor fixado no topo. Esse histórico é atualizado somente após uma abertura aceita; os campos legados servem como fallback apenas para sua plataforma espelhada e `catalog.Current` cobre a ausência de ambos.
 2. O item fixado recebe **RECOMENDADO** porque representa o último servidor realmente usado por aquele perfil, e não uma recomendação genérica fornecida pela OAS.
 3. Entre os servidores válidos que já abriram, o lançamento mais recente é escolhido pelo maior `StartTimeUtc`; empate ou datas ausentes usam o maior `NumericId`. Ele recebe **MAIS RECENTE** e vem antes dos demais servidores não fixados, mesmo quando a plataforma ainda é apenas catálogo.
 4. Se houver mais itens depois do servidor fixado, a segunda linha abre a seção **OUTROS SERVIDORES** com um divisor visual. Se o mesmo servidor também for o lançamento mais novo, os selos **RECOMENDADO** e **MAIS RECENTE** coexistem na primeira linha.
@@ -90,7 +92,7 @@ O processo WPF nunca carrega o Adobe Flash ActiveX. Cada conta aberta permanece 
 2. `SessionLaunchCoordinator` obtém a credencial transitória e chama o autenticador do adapter selecionado.
 3. A `LaunchSession` segue por Named Pipe ao GameHost; perfil, usuário e senha não atravessam essa fronteira.
 4. O runtime devolve `GameSession` com PID/HWND e o coordenador devolve o `EffectiveProfile` já atualizado. A App cria o attachment, registra áudio e abre o workspace.
-5. Uma nova conta cria outro processo/sessão. Selecionar um perfil já aberto apenas volta à sua aba.
+5. O launcher só volta a uma aba quando perfil, plataforma e servidor são idênticos. O mesmo perfil pode abrir outro servidor ou outra variante OAS em processo/sessão separado; criar personagem ou carregar um já existente continua sendo decisão do jogo.
 6. Qualquer GameHost iniciado e não adotado é encerrado; fechar aba/processo atualiza os comandos e, quando não resta sessão, a UI retorna ao launcher.
 
 Detalhes de layouts 1/2/4, abas, áudio, detach e HWND estão em [game-session-workspace.md](game-session-workspace.md).
@@ -149,7 +151,7 @@ Detalhes de layouts 1/2/4, abas, áudio, detach e HWND estão em [game-session-w
 
 ## Testes e validação
 
-`tests/LegendLauncher.Tests/App/` cobre view model principal, registry, perfis, histórico, catálogo, coordenação de abertura, cleanup de processo não adotado, settings, áudio, workspace, work area de janelas borderless e validação do attachment HWND/PID. `ServerCatalogPresentationTests.cs` fixa o servidor do perfil no topo, o critério `StartTimeUtc` com desempate por `NumericId`, a coexistência dos papéis, a prioridade de seleção e o divisor recalculado pela busca. `MainWindowLayoutXamlTests.cs` fixa o template com os dois selos e a seção dos demais servidores. Os testes do workspace fixam capacidades 1/2/4, grade adaptativa, seleção visível, deduplicação por perfil, detach/reattach idempotente com rollback, fechamento e mudo global.
+`tests/LegendLauncher.Tests/App/` cobre view model principal, registry, perfis, histórico, catálogo, coordenação de abertura, cleanup de processo não adotado, settings, áudio, workspace, work area de janelas borderless e validação do attachment HWND/PID. `MainWindowViewModelTests.cs` fixa Reborn salvo → Classic Português S100, botão habilitado, alvo exato enviado à autenticação e sessões distintas por plataforma/servidor. `ServerCatalogPresentationTests.cs` fixa o servidor do perfil no topo, o critério `StartTimeUtc` com desempate por `NumericId`, a coexistência dos papéis, a prioridade de seleção e o divisor recalculado pela busca. `MainWindowLayoutXamlTests.cs` fixa o template com os dois selos e a seção dos demais servidores. Os testes do workspace fixam capacidades 1/2/4, grade adaptativa, seleção visível, ativação por alvo exato, detach/reattach idempotente com rollback, fechamento e mudo global.
 
 A localização acrescenta contratos de paridade/referências em `LocalizationCatalogTests.cs`, normalização e troca observável em `LocalizationServiceTests.cs`, default/migração/persistência em `LauncherSettingsServiceTests.cs` e reapresentação das fronteiras em `MainWindowViewModelLocalizationTests.cs`, `GameWorkspaceLocalizationTests.cs` e `ServerRowLocalizationTests.cs`. Este último cobre os dois selos e o divisor em `pt-BR`, `en-US` e `es-ES`. `GameHostLocalizationTests.cs` cobre a propagação normalizada ao processo separado.
 

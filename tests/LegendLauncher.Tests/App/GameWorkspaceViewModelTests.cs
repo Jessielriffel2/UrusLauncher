@@ -67,15 +67,63 @@ public sealed class GameWorkspaceViewModelTests
     }
 
     [Fact]
-    public void ExistingProfileIsFocusedInsteadOfDuplicated()
+    public void ExistingSessionTargetIsFocusedInsteadOfDuplicated()
     {
         using GameWorkspaceViewModel workspace = CreateWorkspace();
         GameSessionViewModel first = AddSession(workspace, 1);
         _ = AddSession(workspace, 2);
 
-        Assert.True(workspace.TryActivateProfile(first.ProfileId));
+        Assert.True(workspace.TryActivateSession(
+            first.ProfileId,
+            first.PlatformId,
+            first.ServerId));
         Assert.Same(first, workspace.SelectedSession);
         Assert.Equal(2, workspace.Sessions.Count);
+    }
+
+    [Fact]
+    public void SameProfileOnDifferentPlatformOrServerIsNotConfusedWithExistingSession()
+    {
+        using GameWorkspaceViewModel workspace = CreateWorkspace();
+        Guid profileId = Guid.NewGuid();
+        GameSessionViewModel brazilS100 = AddSession(
+            workspace,
+            1,
+            profileId,
+            OasPlatformCatalog.Brazil,
+            "100");
+        GameSessionViewModel classicS100 = AddSession(
+            workspace,
+            2,
+            profileId,
+            OasPlatformCatalog.ClassicPortuguese,
+            "100");
+        GameSessionViewModel classicS101 = AddSession(
+            workspace,
+            3,
+            profileId,
+            OasPlatformCatalog.ClassicPortuguese,
+            "101");
+
+        Assert.Equal(OasPlatformCatalog.Brazil.Id, brazilS100.PlatformId);
+        Assert.Equal("100", brazilS100.ServerId);
+        Assert.True(workspace.TryActivateSession(
+            profileId,
+            OasPlatformCatalog.ClassicPortuguese.Id,
+            "100"));
+        Assert.Same(classicS100, workspace.SelectedSession);
+
+        Assert.True(workspace.TryActivateSession(
+            profileId,
+            OasPlatformCatalog.ClassicPortuguese.Id,
+            "101"));
+        Assert.Same(classicS101, workspace.SelectedSession);
+
+        Assert.False(workspace.TryActivateSession(
+            profileId,
+            OasPlatformCatalog.Brazil.Id,
+            "101"));
+        Assert.Same(classicS101, workspace.SelectedSession);
     }
 
     [Fact]
@@ -114,24 +162,32 @@ public sealed class GameWorkspaceViewModelTests
             static (_, _) => null);
     }
 
-    private static GameSessionViewModel AddSession(GameWorkspaceViewModel workspace, int index)
+    private static GameSessionViewModel AddSession(
+        GameWorkspaceViewModel workspace,
+        int index,
+        Guid? profileId = null,
+        PlatformDefinition? platform = null,
+        string? serverId = null)
     {
-        Guid id = Guid.NewGuid();
+        Guid id = profileId ?? Guid.NewGuid();
+        PlatformDefinition targetPlatform = platform ?? OasPlatformCatalog.Brazil;
+        string targetServerId = serverId ??
+            index.ToString(System.Globalization.CultureInfo.InvariantCulture);
         var profile = new AccountProfile(
             id,
             $"Perfil {index}",
-            OasPlatformCatalog.Brazil.Id,
+            targetPlatform.Id,
             $"player{index}@example.test",
             $"LegendLauncherNext/profile/{id:N}",
             index,
-            index.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            targetServerId,
             AppTestData.Now,
             AppTestData.Now);
-        GameServer server = AppTestData.Server(index.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        GameServer server = AppTestData.Server(targetServerId);
         var session = new GameSession(
             900_000 + index,
             (nint)(0x1000 + index),
             AppTestData.Now);
-        return workspace.AddSession(profile, OasPlatformCatalog.Brazil, server, session);
+        return workspace.AddSession(profile, targetPlatform, server, session);
     }
 }

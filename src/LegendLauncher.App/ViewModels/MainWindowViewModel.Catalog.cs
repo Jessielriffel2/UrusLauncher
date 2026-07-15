@@ -22,10 +22,8 @@ internal sealed partial class MainWindowViewModel
         string? requestedLastServerId = ServerCatalogPresentation.ResolveLastPlayedServerId(
             SelectedProfile?.Model,
             requestedPlatform.Id);
-        long requestedUserId = SelectedProfile?.Model is { } profile &&
-            string.Equals(profile.PlatformId, requestedPlatform.Id, StringComparison.OrdinalIgnoreCase)
-                ? profile.ProviderUserId ?? 0
-                : 0;
+        long requestedUserId = SelectedProfile?.Model
+            .GetProviderUserId(requestedPlatform.Id) ?? 0;
 
         IsLoading = true;
         SetCatalogStatus(forceRefresh ? "Catalog_Updating" : "Catalog_Consulting");
@@ -126,8 +124,7 @@ internal sealed partial class MainWindowViewModel
     private void RefreshRecentServers()
     {
         AccountProfile? profile = SelectedProfile?.Model;
-        if (profile is null ||
-            !string.Equals(profile.PlatformId, SelectedPlatform.Id, StringComparison.OrdinalIgnoreCase))
+        if (profile is null)
         {
             RecentServers = [];
             return;
@@ -135,7 +132,7 @@ internal sealed partial class MainWindowViewModel
 
         var resolved = new List<ServerRowViewModel>(capacity: 5);
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        foreach (string serverId in profile.RecentServerIds ?? [])
+        foreach (string serverId in profile.GetRecentServerIds(SelectedPlatform.Id))
         {
             if (string.IsNullOrWhiteSpace(serverId) || !seen.Add(serverId.Trim()))
             {
@@ -181,10 +178,7 @@ internal sealed partial class MainWindowViewModel
         long userId)
     {
         AccountProfile? selectedProfile = SelectedProfile?.Model;
-        long currentUserId = selectedProfile is not null &&
-            string.Equals(selectedProfile.PlatformId, platform.Id, StringComparison.OrdinalIgnoreCase)
-                ? selectedProfile.ProviderUserId ?? 0
-                : 0;
+        long currentUserId = selectedProfile?.GetProviderUserId(platform.Id) ?? 0;
         return ReferenceEquals(_catalogCancellation, cancellation) &&
             ReferenceEquals(SelectedPlatform, platform) &&
             SelectedProfile?.Model.Id == profileId &&

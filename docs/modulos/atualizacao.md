@@ -66,14 +66,15 @@ Não se deve editar manualmente os artefatos gerados. Uma nova versão exige nov
 - Não existe atualização forçada. A consulta automática pode ser repetida manualmente em erro, mas baixar e executar dependem sempre da pessoa.
 - A instalação é bloqueada enquanto houver GameHost ativo para evitar encerrar contas sem aviso.
 
-## Bootstrap e passagem para 1.1.1
+## Bootstrap e passagem para 1.1.2
 
-A versão 1.0.1 não contém este updater e não consegue buscar releases novos. A 1.1.0 permanece no histórico como o primeiro bootstrap com updater, mas sua consulta pode ser limitada pela cota da API em redes que compartilham um IP. A versão pública manual mais recente é a 1.1.1:
+A versão 1.0.1 não contém este updater e não consegue buscar releases novos. A 1.1.0 permanece no histórico como o primeiro bootstrap com updater, mas sua consulta pode ser limitada pela cota da API em redes que compartilham um IP. A 1.1.1 já possui o fallback público e consegue oferecer a 1.1.2:
 
-1. publicar o repositório público e enviar a tag `v1.1.1`;
+1. publicar o repositório público e enviar a tag `v1.1.2`;
 2. deixar o workflow criar o GitHub Release com setup, ZIP, manifesto e checksums;
-3. distribuir o instalador 1.1.1 manualmente aos usuários da 1.0.1 e aos usuários da 1.1.0 cuja rede esteja bloqueada pelo rate limit;
-4. a partir da 1.1.1 instalada, publicar versões posteriores por novas tags; respostas `403`/`429` passam a usar o manifesto público do último release.
+3. distribuir o instalador 1.1.2 manualmente aos usuários da 1.0.1 e aos usuários da 1.1.0 cuja rede esteja bloqueada pelo rate limit;
+4. usuários da 1.1.1 fecham as sessões de jogo e confirmam **Atualizar**; perfis, settings e credenciais permanecem fora da pasta instalada;
+5. versões posteriores continuam sendo publicadas por novas tags, com o mesmo fallback em respostas `403`/`429`.
 
 Antes de existir um primeiro release válido, a consulta pode apresentar falha recuperável; isso não bloqueia as demais funções.
 
@@ -94,7 +95,7 @@ Antes de existir um primeiro release válido, a consulta pode apresentar falha r
 - `UpdateDownloadCleanupTests.cs:6` cobre idade mínima, reconhecimento exato, escopo top-level e tolerância a arquivo em uso/inacessível.
 - `LauncherUpdateViewModelTests.cs:10` cobre consulta automática, escolha explícita, idioma dinâmico, erro e bloqueio com sessão ativa.
 - `LauncherUpdateLayoutTests.cs:3` fixa cartão inferior esquerdo, popup, ações e bindings.
-- `GitHubReleaseContractTests.cs:5` fixa workflow por tag, ausência de PAT incorporado e definições trilíngues versionadas, incluindo a 1.1.1.
+- `GitHubReleaseContractTests.cs:5` fixa workflow por tag, ausência de PAT incorporado e definições trilíngues versionadas, incluindo a 1.1.2.
 - `AppPathsTests.cs:18` fixa o diretório de updates sob a raiz privada do aplicativo.
 
-Na validação da 1.1.1, o conjunto específico do atualizador concluiu **61/61** testes e a suíte completa concluiu **437/437** nos modos Debug e Release.
+Na validação da 1.1.2, a suíte completa concluiu **445/445** nos modos Debug e Release. A build canônica repetiu os **445/445** testes Release antes de gerar setup, ZIP, manifesto e checksums.

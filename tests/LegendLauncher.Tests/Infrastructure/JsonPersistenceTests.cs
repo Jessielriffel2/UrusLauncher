@@ -67,6 +67,16 @@ public sealed class JsonPersistenceTests
             DateTimeOffset.UtcNow)
         {
             RecentServerIds = ["7", "6"],
+            ProviderUserIdsByPlatform = new Dictionary<string, long>
+            {
+                ["oas"] = 42,
+                ["oas-lorpt"] = 84,
+            },
+            RecentServerIdsByPlatform = new Dictionary<string, IReadOnlyList<string>>
+            {
+                ["oas"] = ["7", "6"],
+                ["oas-lorpt"] = ["100", "99"],
+            },
         };
 
         await store.SaveAsync(profile);
@@ -80,6 +90,10 @@ public sealed class JsonPersistenceTests
         Assert.Equal(profile.ProviderUserId, loaded.ProviderUserId);
         Assert.Equal(profile.LastServerId, loaded.LastServerId);
         Assert.Equal(profile.RecentServerIds, loaded.RecentServerIds);
+        Assert.Equal(42, loaded.GetProviderUserId("OAS"));
+        Assert.Equal(84, loaded.GetProviderUserId("oas-lorpt"));
+        Assert.Equal(["100", "99"], loaded.GetRecentServerIds("OAS-LORPT"));
+        Assert.Equal("100", loaded.GetLastServerId("oas-lorpt"));
         var persistedJson = await File.ReadAllTextAsync(filePath);
         Assert.DoesNotContain("password", persistedJson, StringComparison.OrdinalIgnoreCase);
         await store.DeleteAsync(profileId);
@@ -117,6 +131,62 @@ public sealed class JsonPersistenceTests
         Assert.Equal("7", loaded.LastServerId);
         Assert.NotNull(loaded.RecentServerIds);
         Assert.Empty(loaded.RecentServerIds);
+        Assert.NotNull(loaded.ProviderUserIdsByPlatform);
+        Assert.Empty(loaded.ProviderUserIdsByPlatform);
+        Assert.NotNull(loaded.RecentServerIdsByPlatform);
+        Assert.Empty(loaded.RecentServerIdsByPlatform);
+        Assert.Equal(42, loaded.GetProviderUserId("OAS-LOBR"));
+        Assert.Equal(["7"], loaded.GetRecentServerIds("oas-lobr"));
+        Assert.Equal("7", loaded.GetLastServerId("oas-lobr"));
+        Assert.Null(loaded.GetProviderUserId("oas-lorpt"));
+        Assert.Empty(loaded.GetRecentServerIds("oas-lorpt"));
+        Assert.Null(loaded.GetLastServerId("oas-lorpt"));
+    }
+
+    [Fact]
+    public async Task ProfileStore_RoundTripsPlatformStateAndKeepsLegacyMirror()
+    {
+        using var temporaryDirectory = new TemporaryDirectory();
+        var filePath = temporaryDirectory.Combine("profiles.json");
+        var store = new JsonProfileStore(filePath);
+        var profileId = Guid.NewGuid();
+        var createdAtUtc = new DateTimeOffset(2026, 7, 1, 12, 0, 0, TimeSpan.Zero);
+        var updatedAtUtc = new DateTimeOffset(2026, 7, 15, 18, 30, 0, TimeSpan.Zero);
+        var legacyProfile = new AccountProfile(
+            profileId,
+            "Maga",
+            "oas-lortr",
+            "player@example.test",
+            CredentialKey.ForProfile(profileId),
+            88,
+            "115",
+            createdAtUtc,
+            createdAtUtc)
+        {
+            RecentServerIds = ["115", "116"],
+        };
+
+        AccountProfile migrated = legacyProfile.WithPlatformLaunchState(
+            " OAS-LORPT ",
+            99,
+            ["100", "101", "100", " "],
+            updatedAtUtc);
+        await store.SaveAsync(migrated);
+
+        AccountProfile loaded = Assert.IsType<AccountProfile>(await store.GetAsync(profileId));
+        Assert.Equal("OAS-LORPT", loaded.PlatformId);
+        Assert.Equal(99, loaded.ProviderUserId);
+        Assert.Equal("100", loaded.LastServerId);
+        Assert.Equal(["100", "101"], loaded.RecentServerIds);
+        Assert.Equal(updatedAtUtc, loaded.UpdatedAtUtc);
+        Assert.Equal(88, loaded.GetProviderUserId("oas-lortr"));
+        Assert.Equal(99, loaded.GetProviderUserId("oas-lorpt"));
+        Assert.Equal(["115", "116"], loaded.GetRecentServerIds("OAS-LORTR"));
+        Assert.Equal(["100", "101"], loaded.GetRecentServerIds("oas-lorpt"));
+        Assert.Equal("115", loaded.GetLastServerId("oas-lortr"));
+        Assert.Equal("100", loaded.GetLastServerId("oas-lorpt"));
+        Assert.Equal(2, loaded.ProviderUserIdsByPlatform.Count);
+        Assert.Equal(2, loaded.RecentServerIdsByPlatform.Count);
     }
 
     [Fact]

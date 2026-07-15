@@ -1,6 +1,7 @@
 using LegendLauncher.App.Services;
 using LegendLauncher.Core.Models;
 using LegendLauncher.Providers.Oas;
+using LegendLauncher.Providers.SevenWan;
 
 namespace LegendLauncher.Tests.App;
 
@@ -84,7 +85,7 @@ public sealed class SessionLaunchCoordinatorTests
     }
 
     [Fact]
-    public async Task LaunchAsync_DoesNotReadVaultForDifferentPlatformIdentity()
+    public async Task LaunchAsync_UsesSavedCredentialAcrossOasVariantsWithoutDuplicatingProfile()
     {
         AccountProfile profile = AppTestData.Profile("player@example.test", 10, "1") with
         {
@@ -92,18 +93,57 @@ public sealed class SessionLaunchCoordinatorTests
         };
         var store = new InMemoryProfileStore(profile);
         var vault = new InMemoryCredentialVault();
-        vault.Seed(profile.CredentialKey, new CredentialSecret(profile.UserName, "wrong-platform-secret"));
+        vault.Seed(profile.CredentialKey, new CredentialSecret(profile.UserName, "shared-oas-secret"));
         var runtime = new StubGameRuntime();
-        var authentication = SuccessfulAuthentication(providerUserId: 10);
+        var authentication = SuccessfulAuthentication(providerUserId: 99);
         SessionLaunchCoordinator coordinator = CreateCoordinator(store, vault, authentication, runtime);
 
         SessionLaunchOutcome outcome = await coordinator.LaunchAsync(
             Input(profile, typedPassword: string.Empty, rememberPassword: true));
 
+        Assert.Equal(SessionLaunchState.Success, outcome.State);
+        Assert.Equal(SessionCredentialSource.Stored, outcome.CredentialSource);
+        Assert.Equal("shared-oas-secret", authentication.Requests.Single().Secret.Password);
+        Assert.Single(runtime.Sessions);
+        AccountProfile persisted = Assert.Single(store.Values);
+        Assert.Equal(profile.Id, persisted.Id);
+        Assert.Equal(profile.CredentialKey, persisted.CredentialKey);
+        Assert.Equal(OasPlatformCatalog.Brazil.Id, persisted.PlatformId);
+        Assert.Equal(99, persisted.ProviderUserId);
+        Assert.Equal(99, persisted.GetProviderUserId(OasPlatformCatalog.Brazil.Id));
+        Assert.Equal(10, persisted.GetProviderUserId(OasPlatformCatalog.RebornTurkish.Id));
+        Assert.Equal(["3257"], persisted.GetRecentServerIds(OasPlatformCatalog.Brazil.Id));
+        Assert.Equal(["1"], persisted.GetRecentServerIds(OasPlatformCatalog.RebornTurkish.Id));
+        Assert.True(vault.Contains(profile.CredentialKey));
+    }
+
+    [Fact]
+    public async Task LaunchAsync_DoesNotShareOasCredentialWithSevenWanPlatform()
+    {
+        AccountProfile profile = AppTestData.Profile("player@example.test", 10, "1") with
+        {
+            PlatformId = OasPlatformCatalog.RebornTurkish.Id,
+        };
+        var store = new InMemoryProfileStore(profile);
+        var vault = new InMemoryCredentialVault();
+        vault.Seed(profile.CredentialKey, new CredentialSecret(profile.UserName, "oas-only-secret"));
+        var runtime = new StubGameRuntime();
+        var authentication = SuccessfulAuthentication(providerUserId: 10);
+        SessionLaunchCoordinator coordinator = CreateCoordinator(store, vault, authentication, runtime);
+
+        SessionLaunchOutcome outcome = await coordinator.LaunchAsync(
+            Input(
+                profile,
+                typedPassword: string.Empty,
+                rememberPassword: true,
+                platform: SevenWanPlatformCatalog.All[0]));
+
         Assert.Equal(SessionLaunchState.CredentialRequired, outcome.State);
         Assert.Equal(SessionCredentialSource.None, outcome.CredentialSource);
         Assert.Empty(authentication.Requests);
         Assert.Empty(runtime.Sessions);
+        Assert.Equal(profile, Assert.Single(store.Values));
+        Assert.True(vault.Contains(profile.CredentialKey));
     }
 
     [Fact]
@@ -278,10 +318,11 @@ public sealed class SessionLaunchCoordinatorTests
         string typedPassword,
         bool rememberPassword,
         string serverId = "3257",
-        string profileDisplayName = "Conta") =>
+        string profileDisplayName = "Conta",
+        PlatformDefinition? platform = null) =>
         new(
             profile,
-            OasPlatformCatalog.Brazil,
+            platform ?? OasPlatformCatalog.Brazil,
             AppTestData.Server(serverId),
             profileDisplayName,
             profile?.UserName ?? "new@example.test",

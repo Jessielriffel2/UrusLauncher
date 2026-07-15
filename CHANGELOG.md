@@ -2,6 +2,21 @@
 
 As mudanças relevantes do Urus Launcher são registradas aqui. As versões públicas seguem versionamento semântico e são publicadas em `vMAJOR.MINOR.PATCH`.
 
+## 1.1.2 — 15/07/2026
+
+### Corrigido
+
+- Perfis OAS salvos deixam de perder a credencial ao trocar entre Reborn, Brasil, Classic Português e as demais variantes OAS.
+- O botão **Entrar e jogar** passa a habilitar e autenticar exatamente a versão e o servidor escolhidos, incluindo Classic Português S100.
+- UID, último servidor e histórico recente deixam de vazar de uma variante OAS para outra.
+- Uma sessão aberta só é reutilizada quando perfil, plataforma e servidor coincidem; outro destino abre outra sessão.
+
+### Compatibilidade e segurança
+
+- Perfis 1.1.1 são migrados em memória e persistidos com estado separado por plataforma, mantendo o mesmo ID e a mesma chave do Cofre do Windows.
+- Credenciais continuam isoladas entre OAS e SevenWan.
+- O launcher não decide se a conta possui personagem: depois do login, cada servidor abre o fluxo normal do jogo, inclusive criação de personagem.
+
 ## 1.1.1 — 15/07/2026
 
 ### Corrigido

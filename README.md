@@ -14,16 +14,16 @@ Launcher Windows para Legend Online, escrito do zero em C#/.NET 10 e distribuíd
 | Apoio voluntário | Modal PayPal/PIX localizado, abertura manual e lembrete avaliado somente ao abrir, com intervalo de cinco horas |
 | Catálogo oficial OAS e fallback em cache | Implementado |
 | Busca, disponibilidade e selos do catálogo | Implementado; último servidor do perfil fica no topo como recomendado, lançamento mais recente recebe selo próprio e os demais formam uma seção separada |
-| Múltiplos perfis/contas | Implementado |
-| Workspace multissessão com abas | Implementado; barra única de 44 px, controles/abas de 34 px, abas roláveis e `+ CONTA` sempre visível; um GameHost isolado por perfil ativo |
+| Múltiplos perfis/contas | Implementado; o mesmo login OAS pode alternar entre Brasil, Classic, Reborn e demais variantes sem perder a senha, mantendo UID/histórico separados por versão |
+| Workspace multissessão com abas | Implementado; barra única de 44 px, controles/abas de 34 px, abas roláveis e `+ CONTA` sempre visível; um GameHost isolado por perfil + versão + servidor |
 | Layouts simultâneos 1, 2 e 4 | Implementados; grade adaptativa 1×1, 1×2 ou 2×2, sem limitar o número de abas |
 | Desacoplar/acoplar sessão | Implementado sem reiniciar o jogo, com rollback e shutdown idempotente |
 | Janela principal responsiva | Implementada em 1420×820, com mínimo 1180×700, cabeçalho recolhido no workspace, setup rolável e status/ação/legenda fixos |
 | Maximização em chrome próprio | Implementada pela área útil do monitor, sem cobrir a barra de tarefas; tamanho normal/restaurado é limitado em DIPs ao monitor atual |
 | Som global dos jogos | Implementado por PID, com padrão mudo, preferência persistida e descarte seguro de callbacks |
-| Último servidor por perfil | Implementado; fixado no topo como **RECOMENDADO**, independentemente para cada perfil |
+| Último servidor por perfil | Implementado; fixado no topo como **RECOMENDADO**, independentemente para cada perfil e variante |
 | Senhas no Windows Credential Manager | Implementado |
-| Autenticação Passport OAS | Implementada; QA abriu o Reborn turco S115 até a interface jogável dentro do launcher |
+| Autenticação Passport OAS | Implementada nas oito variantes; QA abriu o Reborn turco S115 até a interface jogável e validou Passport + sessão do Classic Português S100 |
 | GameHost Flash x64 separado | Implementado, isolado por sessão e encerrado quando o processo pai desaparece; jogabilidade real confirmada no S115 |
 | Execução direta sem `H2Proxy.exe` | Implementada |
 | Distribuição Windows | Pipeline self-contained `win-x64`, instalador Inno Setup por usuário, ZIP portátil, manifesto e SHA-256 implementados |
@@ -39,13 +39,13 @@ Launcher Windows para Legend Online, escrito do zero em C#/.NET 10 e distribuíd
 - Composição visual fiel ao mock de referência em 1584×992: contas à esquerda, catálogo ao centro e sessão à direita, com adaptação para outros tamanhos.
 - MVVM simples, com responsabilidades separadas entre launcher, apresentação do catálogo, perfis, abertura e workspace multissessão.
 - Localização dinâmica por 203 chaves em cada catálogo incorporado `pt-BR`, `en-US` e `es-ES`. Bindings observáveis atualizam launcher, workspace, atualizações, modal de apoio e janelas desacopladas sem reiniciar sessões; mensagens calculadas preservam chave/argumentos para serem reapresentadas na cultura ativa.
-- O catálogo é ordenado por perfil: `RecentServerIds[0]`, gravado após uma abertura aceita, aparece primeiro com **RECOMENDADO**; `LastServerId` é somente fallback para perfis antigos. O servidor válido já lançado mais recentemente, calculado por `StartTimeUtc` e desempate por `NumericId`, recebe **MAIS RECENTE**; um divisor localizado introduz os demais servidores e é recalculado durante a busca. Os dois selos podem coexistir.
+- O catálogo é ordenado por perfil e plataforma: `RecentServerIdsByPlatform[plataforma][0]`, gravado após uma abertura aceita, aparece primeiro com **RECOMENDADO**; os campos escalares são somente espelho/fallback de perfis antigos. O servidor válido já lançado mais recentemente, calculado por `StartTimeUtc` e desempate por `NumericId`, recebe **MAIS RECENTE**; um divisor localizado introduz os demais servidores e é recalculado durante a busca. Os dois selos podem coexistir.
 - `HttpClient` para catálogo/Passport e curl nativo do Windows somente na entrada pós-login que a Cloudflare bloqueia no transporte .NET.
 - Windows Credential Manager para senhas; o JSON local contém somente perfis e catálogo não sensíveis.
 - GitHub Releases público para atualização opcional: o aplicativo consulta somente `Jessielriffel2/UrusLauncher`; se a API responder `403` ou `429` por rate limit, a versão 1.1.1+ tenta o manifesto público do último release. Redirects continuam restritos a HTTPS/GitHub, o download vai para `%LocalAppData%\LegendLauncherNext\updates` e o setup só é executado depois de validar tamanho e SHA-256.
 - WinForms/AxHost apenas no `LegendLauncher.GameHost.Legacy`, um processo x64 separado do launcher.
 - Named Pipe restrito ao usuário e aos processos esperados para entregar a sessão autenticada ao GameHost sem expô-la na linha de comando.
-- Um HWND-proxy pertencente ao WPF incorpora a janela validada do GameHost; o ActiveX continua no processo separado. Cada perfil ativo tem PID/HWND próprios.
+- Um HWND-proxy pertencente ao WPF incorpora a janela validada do GameHost; o ActiveX continua no processo separado. Cada destino ativo (perfil + versão + servidor) tem PID/HWND próprios.
 - A barra do workspace ocupa uma única linha de 44 px. Abas e controles têm 34 px; as abas rolam horizontalmente, `+ CONTA` permanece fora da rolagem e 150 px ficam reservados para os três botões compartilhados da janela principal.
 - Abas rastreiam todas as sessões; layouts 1/2/4 controlam apenas quantas superfícies ficam visíveis. Na grade, 1/2/3–4 sessões ocupam 1×1/1×2/2×2. Uma sessão pode ser desacoplada e reanexada sem novo login.
 - A janela principal abre em 1420×820, aceita até 1180×700, recolhe o cabeçalho de 96 px no workspace e compartilha os botões de minimizar/maximizar/fechar entre launcher e jogo. Na coluna de sessão, somente o setup rola; status de compatibilidade, ação principal e legenda permanecem fixos.
@@ -64,7 +64,7 @@ O GameHost separado reduz o impacto de uma falha do ActiveX, mas **não é uma s
 Os arquivos mutáveis do projeto ficam em `%LocalAppData%\LegendLauncherNext`:
 
 - `cache\server-catalogs.json`: último catálogo não sensível por plataforma;
-- `data\profiles.json`: nome do perfil, plataforma, usuário, UID opcional do provider, chave opaca do cofre e último servidor;
+- `data\profiles.json`: nome do perfil, plataforma mais recente, usuário, chave opaca do cofre e UID/histórico recente separados por plataforma;
 - `data\settings.json`: mudo global, layout 1/2/4, GUID do último perfil selecionado, código de idioma e horário UTC da última exibição do pedido de apoio; todos são não sensíveis;
 - `updates\`: downloads `.part` e instaladores de atualização validados; artefatos oficiais com mais de 24 horas podem ser limpos na abertura;
 - Windows Credential Manager: usuário e senha, em alvos exclusivos com prefixo `LegendLauncherNext/`.
@@ -110,9 +110,9 @@ Os patch notes de cada versão nascem de `docs/releases/vX.Y.Z.json` em `pt-BR`,
 
 **Limite de confiança:** SHA-256 detecta corrupção e divergência de artefato, mas não substitui assinatura de código. Os pacotes atuais não possuem Authenticode e o Windows pode exibir SmartScreen. Uma futura assinatura deve acontecer antes do hash final. Consulte [atualizacao.md](docs/modulos/atualizacao.md), [ADR-008](docs/decisoes/ADR-008-atualizacoes-github-releases.md) e [SECURITY.md](SECURITY.md).
 
-### Bootstrap e atualização manual para 1.1.1
+### Bootstrap e atualização para 1.1.2
 
-A versão 1.0.1 não possui atualizador e não consegue descobrir releases novos; seus usuários precisam instalar manualmente a versão pública mais recente, hoje a 1.1.1. A 1.1.0 foi o primeiro bootstrap com updater, mas sua consulta ainda pode esbarrar na cota da API em redes de IP compartilhado; nesse caso, a passagem para 1.1.1 também é manual. A partir da 1.1.1 instalada, versões superiores continuam aparecendo no launcher e a consulta dispõe do fallback público de manifesto para respostas `403`/`429`.
+A versão 1.0.1 não possui atualizador e precisa receber manualmente o instalador público mais recente, agora 1.1.2. A 1.1.0 foi o primeiro bootstrap, mas sua consulta pode esbarrar na cota da API em redes de IP compartilhado; nesse caso, a passagem também é manual. A 1.1.1 já possui o fallback público de manifesto e oferece a 1.1.2 dentro do launcher. A instalação continua bloqueada enquanto houver uma conta jogando; feche as sessões e clique em **Atualizar** para preservar perfis, settings e senhas.
 
 ## Desenvolvimento
 
@@ -139,19 +139,19 @@ O projeto continua com o caminho-fonte `src\LegendLauncher.App`, mas o build ger
 Com Inno Setup 6 instalado:
 
 ```powershell
-.\scripts\build-urus-distribution.ps1 -Version 1.1.1
+.\scripts\build-urus-distribution.ps1 -Version 1.1.2
 ```
 
 O script executa a suíte Release, publica App e GameHost self-contained para `win-x64`, valida o payload e produz:
 
-- `artifacts\urus-distribution\UrusLauncher-Setup-1.1.1-win-x64.exe`;
-- `artifacts\urus-distribution\UrusLauncher-1.1.1-portable-win-x64.zip`;
+- `artifacts\urus-distribution\UrusLauncher-Setup-1.1.2-win-x64.exe`;
+- `artifacts\urus-distribution\UrusLauncher-1.1.2-portable-win-x64.zip`;
 - `artifacts\urus-distribution\distribution-manifest.json`;
 - `artifacts\urus-distribution\update-manifest.json`;
 - `artifacts\urus-distribution\RELEASE_NOTES.md`;
 - `artifacts\urus-distribution\SHA256SUMS.txt`.
 
-Antes da build, deve existir `docs\releases\v1.1.1.json` (ou o arquivo da versão solicitada) com título e notas não vazias nos três idiomas. Para publicar no repositório público, envie uma tag exatamente no formato `vMAJOR.MINOR.PATCH`. O workflow separa build (`contents: read`) de publicação (`contents: write`), usa actions fixadas por commit e entrega ao job de release somente os artefatos validados. Nenhum PAT é incorporado ao aplicativo.
+Antes da build, deve existir `docs\releases\v1.1.2.json` (ou o arquivo da versão solicitada) com título e notas não vazias nos três idiomas. Para publicar no repositório público, envie uma tag exatamente no formato `vMAJOR.MINOR.PATCH`. O workflow separa build (`contents: read`) de publicação (`contents: write`), usa actions fixadas por commit e entrega ao job de release somente os artefatos validados. Nenhum PAT é incorporado ao aplicativo.
 
 O instalador é per-user, sem elevação, e usa `%LocalAppData%\Programs\Urus Launcher`; oferece inglês, português brasileiro e espanhol e atalho de desktop opcional. O ZIP contém a pasta inteira `UrusLauncher`: extraia antes de executar `UrusLauncher.App.exe`.
 
@@ -184,7 +184,9 @@ Tentar jogar novamente com um perfil que já está em execução apenas selecion
 
 O Adobe Flash ActiveX é legado e descontinuado. Ele nunca é carregado no processo WPF, não é registrado globalmente e não deve ser redistribuído sem permissão de licença. URIs de abertura são limitadas a HTTPS e origens aprovadas, e senha/sessão não entram em argumentos de processo nem em mensagens de diagnóstico.
 
-Testes automatizados cobrem composição de catálogo, perfis, cofre, autenticação, transporte compatível, políticas de URI, settings, localização e propagação da cultura, pedido de apoio/intervalo/PIX/QR, áudio por PID e descarte concorrente, layouts 1/2/4, detach/reattach, maximização taskbar-aware, cleanup de sessão não adotada e protocolo launcher/GameHost. O updater possui contratos próprios para API/manifesto, fallback de rate limit, allowlist e redirects, limites, download progressivo, SHA-256, confinamento, limpeza de setups antigos, bloqueio/revalidação de sessões, UI localizada e workflow build/publish com permissões separadas. `LocalizationCatalogTests.cs` fixa 203 chaves equivalentes nos três idiomas. A validação histórica 1.0.1 permanece documentada em [`design-qa.md`](design-qa.md); números e hashes da 1.1.1 só devem ser registrados depois de a nova build/release terminar.
+Testes automatizados cobrem composição de catálogo, perfis, cofre, migração de estado por plataforma, autenticação OAS cruzada, isolamento SevenWan, alvo exato de sessão, transporte compatível, políticas de URI, settings, localização e propagação da cultura, pedido de apoio/intervalo/PIX/QR, áudio por PID e descarte concorrente, layouts 1/2/4, detach/reattach, maximização taskbar-aware, cleanup de sessão não adotada e protocolo launcher/GameHost. O updater possui contratos próprios para API/manifesto, fallback de rate limit, allowlist e redirects, limites, download progressivo, SHA-256, confinamento, limpeza de setups antigos, bloqueio/revalidação de sessões, UI localizada e workflow build/publish com permissões separadas. `LocalizationCatalogTests.cs` fixa 203 chaves equivalentes nos três idiomas. A validação histórica 1.0.1 permanece documentada em [`design-qa.md`](design-qa.md); números e hashes da build 1.1.2 estão registrados na documentação de distribuição.
+
+A validação 1.1.2 concluiu **445/445** testes em Debug, **445/445** em Release e repetiu **445/445** durante o build canônico. O smoke self-contained chegou à janela principal por sete segundos; os hashes exatos do setup, ZIP e manifesto estão em [distribuicao-windows.md](docs/modulos/distribuicao-windows.md).
 
 O layout novo compila e preserva as funções documentadas do launcher. A captura autenticada da build final foi comparada lado a lado com a referência e aprovada em [`design-qa.md`](design-qa.md).
 

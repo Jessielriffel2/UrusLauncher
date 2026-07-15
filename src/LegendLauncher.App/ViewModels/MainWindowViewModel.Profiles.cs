@@ -222,7 +222,9 @@ internal sealed partial class MainWindowViewModel
 
     private bool IsSelectedProfileIdentity(AccountProfile profile) =>
         SelectedProfile?.Model.Id == profile.Id &&
-        string.Equals(profile.PlatformId, SelectedPlatform.Id, StringComparison.OrdinalIgnoreCase) &&
+        ProfilePlatformCompatibility.ShareAccountIdentity(
+            profile.PlatformId,
+            SelectedPlatform.Id) &&
         string.Equals(profile.UserName, LoginHint.Trim(), StringComparison.OrdinalIgnoreCase);
 
     private async Task LoadSavedCredentialStateAsync(AccountProfile profile)

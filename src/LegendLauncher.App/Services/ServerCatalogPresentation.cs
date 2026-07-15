@@ -10,15 +10,12 @@ internal static class ServerCatalogPresentation
         AccountProfile? profile,
         string platformId)
     {
-        if (profile is null ||
-            !string.Equals(profile.PlatformId, platformId, StringComparison.OrdinalIgnoreCase))
+        if (profile is null)
         {
             return null;
         }
 
-        string? recentServerId = (profile.RecentServerIds ?? [])
-            .FirstOrDefault(static serverId => !string.IsNullOrWhiteSpace(serverId));
-        string? resolved = recentServerId ?? profile.LastServerId;
+        string? resolved = profile.GetLastServerId(platformId);
         return string.IsNullOrWhiteSpace(resolved) ? null : resolved.Trim();
     }
 

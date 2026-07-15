@@ -25,6 +25,7 @@ O módulo não lê nem migra dados do cliente antigo. Chaves do cofre devem come
 | `src/LegendLauncher.Infrastructure/Persistence/JsonServerCatalogCache.cs:43` | `SetAsync(...)` | Atualiza atomicamente somente a entrada da plataforma recebida. |
 | `src/LegendLauncher.Infrastructure/Persistence/JsonProfileStore.cs:12` | `JsonProfileStore` | Implementa `IProfileStore`; valida `Guid` e namespace da chave do cofre antes de salvar metadados não secretos. |
 | `src/LegendLauncher.Infrastructure/Persistence/JsonProfileRepository.cs:9` | `JsonProfileRepository<TProfile,TKey>` | Repositório genérico que lista, localiza, inclui/substitui e exclui perfis sobre o store atômico. |
+| `src/LegendLauncher.App/Services/ProfileStorageCoordinator.cs:23` | `SaveAsync(...)` | Salva a identidade não secreta e coordena o cofre. Trocas entre variantes `oas-*` do mesmo login conservam perfil/chave e materializam UID e servidores recentes por plataforma; mudança de login ou família de provider rotaciona a chave. |
 | `src/LegendLauncher.Infrastructure/Security/CredentialKey.cs:7` | `CredentialKey` | Define o namespace do launcher. `ForProfile(Guid)` cria alvo estável e `Validate(string)` rejeita chave vazia, externa, longa ou com controle. |
 | `src/LegendLauncher.Infrastructure/Security/WindowsCredentialVault.cs:14` | `WindowsCredentialVault` | Implementa `ICredentialVault` com credenciais genéricas do Windows, sem enumerar outros alvos. |
 | `src/LegendLauncher.Infrastructure/Security/WindowsCredentialVault.cs:18` | `GetAsync(...)` | Lê usuário/senha por chave validada; devolve `null` para alvo ausente e zera cópias temporárias do blob. |
@@ -41,7 +42,7 @@ O módulo não lê nem migra dados do cliente antigo. Chaves do cofre devem come
 ## Entradas, saídas e armazenamento
 
 - `%LocalAppData%\LegendLauncherNext\cache\server-catalogs.json` armazena catálogos não sensíveis por plataforma.
-- `%LocalAppData%\LegendLauncherNext\data\profiles.json` armazena perfis sem senha: identidade, UID opcional do provider, chave opaca e último servidor.
+- `%LocalAppData%\LegendLauncherNext\data\profiles.json` armazena perfis sem senha: identidade, chave opaca e, por variante OAS, UID opcional e histórico recente de servidores. Os campos escalares legados espelham a plataforma selecionada para leitura compatível com versões anteriores.
 - `%LocalAppData%\LegendLauncherNext\data\settings.json` armazena somente mudo global, layout 1/2/4, GUID do último perfil selecionado, `languageCode` normalizado para `pt-BR`, `en-US` ou `es-ES` e `lastDonationPromptUtc`. PID, HWND, login, senha, cookie, token e URI autenticada não são persistidos.
 - `%LocalAppData%\LegendLauncherNext\updates` recebe `.part` durante download e o instalador final somente após validação. Não contém perfil, senha, cookie ou token.
 - O Windows Credential Manager guarda `CredentialSecret` em alvos próprios; o JSON não recebe senha.
@@ -50,6 +51,7 @@ O módulo não lê nem migra dados do cliente antigo. Chaves do cofre devem come
 ## Segurança e comportamento de falha
 
 - O cofre nunca enumera credenciais e rejeita qualquer chave fora do namespace novo.
+- O mesmo login pode reutilizar a chave somente entre variantes `oas-*`; trocar o login ou atravessar para outra família (por exemplo, `sevenwan-*`) rotaciona a chave e exclui a credencial anterior. UID e histórico continuam isolados por plataforma mesmo quando a senha OAS é compartilhada.
 - Buffers gerenciados que contêm a senha são zerados após uso; mensagens nativas não incluem chave, usuário ou segredo.
 - Escritas JSON usam temporário no mesmo diretório e substituição, reduzindo risco de arquivo parcial.
 - `LauncherSettingsService`, compartilhado pelo [workspace](game-session-workspace.md), pela [localização](localizacao.md) e pelo [pedido de doação](donation-prompt.md), reutiliza `AtomicJsonFileStore`; documento ausente/corrompido usa defaults e a próxima atualização substitui o conteúdo inválido. Settings antigos sem idioma usam `pt-BR` e sem timestamp permitem a primeira exibição.
@@ -74,4 +76,4 @@ O módulo não lê nem migra dados do cliente antigo. Chaves do cofre devem come
 
 ## Testes
 
-`tests/LegendLauncher.Tests/Infrastructure/` cobre paths — inclusive `UpdatesDirectory` nas linhas 18 e 35 de `AppPathsTests.cs` —, leitura/escrita/atualização atômicas, concorrência por arquivo, cache, CRUD de perfis, validação de chaves e descoberta segura do runtime. `tests/LegendLauncher.Tests/App/LauncherSettingsServiceTests.cs` cobre defaults, atualizações independentes, compatibilidade e recuperação de JSON corrompido. Os testes do updater usam diretórios temporários isolados e nunca acessam Downloads, perfis ou credenciais reais do usuário.
+`tests/LegendLauncher.Tests/Infrastructure/` cobre paths — inclusive `UpdatesDirectory` nas linhas 18 e 35 de `AppPathsTests.cs` —, leitura/escrita/atualização atômicas, concorrência por arquivo, cache, CRUD de perfis, validação de chaves e descoberta segura do runtime. `tests/LegendLauncher.Tests/App/ProfileStorageCoordinatorTests.cs` cobre materialização Reborn→Classic, preservação da credencial entre variantes OAS e isolamento OAS→7wan; `LauncherSettingsServiceTests.cs` cobre defaults, atualizações independentes, compatibilidade e recuperação de JSON corrompido. Os testes do updater usam diretórios temporários isolados e nunca acessam Downloads, perfis ou credenciais reais do usuário.
