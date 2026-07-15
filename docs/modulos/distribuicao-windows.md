@@ -40,17 +40,17 @@ Self-contained refere-se ao runtime .NET/WPF/WinForms. O Adobe Flash ActiveX leg
 | `artifacts/urus-distribution/RELEASE_NOTES.md` | Notas do release | Corpo trilíngue usado pelo GitHub Release. |
 | `artifacts/urus-distribution/SHA256SUMS.txt` | Checksums | SHA-256 em formato simples para validar instalador, ZIP, manifesto de atualização e notas. |
 
-## Entregáveis 1.1.2
+## Entregáveis públicos 1.1.2
 
 | Tipo | Caminho |
 | --- | --- |
-| Instalador Inno Setup | `artifacts/urus-distribution/UrusLauncher-Setup-1.1.2-win-x64.exe` — 54.591.484 bytes — SHA-256 `C8F3E5386AAF6EFFF75C757C745600C6108A3EA42808CA50599BEF57682101A6` |
-| ZIP portátil | `artifacts/urus-distribution/UrusLauncher-1.1.2-portable-win-x64.zip` — 78.424.108 bytes — SHA-256 `545AAF499165D99E83C6B7FE6CDA68865C869B73A2719FA658419E302BE2AD5B` |
-| Manifesto do updater | `artifacts/urus-distribution/update-manifest.json` — 2.434 bytes — SHA-256 `6E6AE565D4962977E5FF16B97DED984A44446D407A169B990DD6F83A45563137` |
+| Instalador Inno Setup | `GitHub Release/UrusLauncher-Setup-1.1.2-win-x64.exe` — 54.574.762 bytes — SHA-256 `894C4F2390C4EE87C244E48B3D1EA6925C3AC7005E27D87044EB2484D5709C2D` |
+| ZIP portátil | `GitHub Release/UrusLauncher-1.1.2-portable-win-x64.zip` — 78.151.266 bytes — SHA-256 `2175826CA11FBCC60C1C19C8CD3AA16CCF94DEB1E1478027B3E3B71DF23CE4C7` |
+| Manifesto do updater | `GitHub Release/update-manifest.json` — 2.434 bytes — SHA-256 `13EB69C59CFC2A3DC4A6830DD2EBD514C74F8B357E15464B59F757A50B59B2EA` |
 | Aplicativo principal | `portable/UrusLauncher/UrusLauncher.App.exe` |
 | GameHost isolado | `portable/UrusLauncher/LegendLauncher.GameHost.Legacy.exe` |
 
-O payload expandido final contém 468 arquivos e 182.338.452 bytes. App e GameHost foram publicados com ProductVersion `1.1.2`/FileVersion `1.1.2.0`; o smoke portátil alcançou a janela “Urus Launcher” por sete segundos sem runtime .NET global. `Get-AuthenticodeSignature` confirmou `NotSigned` no setup, coerente com a limitação pública atual. Esses valores e hashes pertencem exatamente à execução 1.1.2 registrada em `distribution-manifest.json` e `SHA256SUMS.txt`; qualquer nova build precisa publicar seus próprios valores. A entrega 1.0.1 permanece como histórico anterior em [`design-qa.md`](../../design-qa.md).
+Os artefatos públicos foram gerados pelo workflow da tag `v1.1.2`, no commit `8aadfc410ed9163a1facd8c90825d9c62b1ea7b5`. App e GameHost foram publicados com ProductVersion `1.1.2+8aadfc410ed9163a1facd8c90825d9c62b1ea7b5`/FileVersion `1.1.2.0`; o workflow aprovou **445/445** testes e o smoke portátil alcançou a janela “Urus Launcher” por sete segundos sem runtime .NET global. A composição validada contém 468 arquivos e 182.338.452 bytes de payload expandido. `Get-AuthenticodeSignature` confirmou `NotSigned` no setup público baixado, coerente com a limitação atual. Os tamanhos e hashes da tabela são exatamente os publicados no GitHub Release e em `SHA256SUMS.txt`; qualquer nova build precisa publicar seus próprios valores. A entrega 1.0.1 permanece como histórico anterior em [`design-qa.md`](../../design-qa.md).
 
 ## Fluxo de construção
 
@@ -87,12 +87,12 @@ O Inno consome recursivamente o payload já validado pelo pipeline. Antes da com
 
 O ZIP contém a pasta `UrusLauncher` inteira, não um executável single-file. Para uso portátil, extraia a pasta e execute `UrusLauncher.App.exe`; mover somente esse EXE quebra as dependências e o GameHost.
 
-O script de build **não copia automaticamente** instalador ou ZIP para `Downloads`. Os artefatos canônicos ficam em `artifacts/urus-distribution`. No handoff 1.1.2, foram copiados explicitamente para `Downloads`:
+O script de build **não copia automaticamente** instalador ou ZIP para `Downloads`. A saída local fica em `artifacts/urus-distribution`; o updater consome os artefatos públicos do GitHub Release. No handoff 1.1.2, o setup oficial e sua lista oficial de checksums foram baixados explicitamente para `Downloads`:
 
 - `%USERPROFILE%\Downloads\UrusLauncher-Setup-1.1.2-win-x64.exe`;
 - `%USERPROFILE%\Downloads\UrusLauncher-SHA256SUMS-1.1.2.txt`.
 
-O SHA-256 do setup foi recalculado depois da cópia e coincidiu com `C8F3E5386AAF6EFFF75C757C745600C6108A3EA42808CA50599BEF57682101A6`. O ZIP portátil continua disponível na saída canônica e no GitHub Release, mas não integra esse handoff em `Downloads`. O pipeline e o diretório canônico não dependem de `Downloads`.
+O SHA-256 do setup foi recalculado depois do download e coincidiu com `894C4F2390C4EE87C244E48B3D1EA6925C3AC7005E27D87044EB2484D5709C2D`. O ZIP portátil continua disponível no GitHub Release e pode ser reproduzido pela saída local, mas não integra esse handoff em `Downloads`. O pipeline e o diretório local de build não dependem de `Downloads`.
 
 ## Segurança e limites
 
