@@ -24,10 +24,10 @@ public sealed class GitHubReleaseContractTests
             "actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1",
             source);
         Assert.Contains(
-            "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
+            "actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4",
             source);
         Assert.Contains(
-            "actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0",
+            "actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53",
             source);
         Assert.Contains("choco install innosetup --version=6.7.1", source);
         Assert.Contains("needs: build", source);
