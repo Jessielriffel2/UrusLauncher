@@ -11,6 +11,7 @@ internal sealed class GameAudioService : IDisposable
     private readonly Timer _timer;
     private bool _isMuted = true;
     private int _isApplying;
+    private int _refreshRequested;
     private bool _disposed;
 
     public GameAudioService()
@@ -85,38 +86,52 @@ internal sealed class GameAudioService : IDisposable
 
     internal void RefreshNow()
     {
-        if (Interlocked.Exchange(ref _isApplying, 1) != 0)
+        Interlocked.Exchange(ref _refreshRequested, 1);
+        if (Interlocked.CompareExchange(ref _isApplying, 1, 0) != 0)
         {
             return;
         }
 
-        try
+        while (true)
         {
-            HashSet<int> snapshot;
-            bool muted;
-            lock (_gate)
+            Interlocked.Exchange(ref _refreshRequested, 0);
+            ApplyCurrentState();
+            if (Volatile.Read(ref _refreshRequested) != 0)
             {
-                if (_disposed || _processIds.Count == 0)
-                {
-                    return;
-                }
-
-                snapshot = [.. _processIds];
-                muted = _isMuted;
+                continue;
             }
 
-            try
+            Volatile.Write(ref _isApplying, 0);
+            if (Volatile.Read(ref _refreshRequested) == 0 ||
+                Interlocked.CompareExchange(ref _isApplying, 1, 0) != 0)
             {
-                _applyMute(snapshot, muted);
-            }
-            catch (Exception exception) when (IsRecoverableAudioFailure(exception))
-            {
-                // Audio-session discovery is best effort and must never terminate the launcher.
+                return;
             }
         }
-        finally
+    }
+
+    private void ApplyCurrentState()
+    {
+        HashSet<int> snapshot;
+        bool muted;
+        lock (_gate)
         {
-            Volatile.Write(ref _isApplying, 0);
+            if (_disposed || _processIds.Count == 0)
+            {
+                return;
+            }
+
+            snapshot = [.. _processIds];
+            muted = _isMuted;
+        }
+
+        try
+        {
+            _applyMute(snapshot, muted);
+        }
+        catch (Exception exception) when (IsRecoverableAudioFailure(exception))
+        {
+            // Audio-session discovery is best effort and must never terminate the launcher.
         }
     }
 

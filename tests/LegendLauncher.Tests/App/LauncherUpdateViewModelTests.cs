@@ -10,7 +10,23 @@ namespace LegendLauncher.Tests.App;
 public sealed class LauncherUpdateViewModelTests
 {
     [Fact]
-    public async Task CheckShowsAvailableReleaseWithoutDownloadingOrLaunching()
+    public async Task LauncherInitializationChecksAndPreparesUpdateAutomatically()
+    {
+        var updates = new StubLauncherUpdateService(CreateRelease());
+        using MainWindowViewModel viewModel = CreateViewModel(
+            updates,
+            new LocalizationService("pt-BR"));
+
+        await viewModel.InitializeAsync();
+
+        Assert.Equal(1, updates.CheckCount);
+        Assert.Equal(1, updates.DownloadCount);
+        Assert.Equal(0, updates.LaunchCount);
+        Assert.True(viewModel.IsUpdateReadyToInstall);
+    }
+
+    [Fact]
+    public async Task CheckDownloadsAndPreparesReleaseWithoutLaunching()
     {
         var updates = new StubLauncherUpdateService(CreateRelease());
         var localization = new LocalizationService("pt-BR");
@@ -19,11 +35,12 @@ public sealed class LauncherUpdateViewModelTests
         await viewModel.CheckForUpdatesAsync();
 
         Assert.True(viewModel.IsUpdateCardVisible);
-        Assert.True(viewModel.IsUpdateAvailable);
+        Assert.True(viewModel.IsUpdateReadyToInstall);
         Assert.Contains("1.1.0", viewModel.UpdateTitleText, StringComparison.Ordinal);
         Assert.Equal("Notas em português.", viewModel.UpdateNotesText);
+        Assert.Equal("INSTALAR", viewModel.UpdateActionText);
         Assert.True(viewModel.InstallUpdateCommand.CanExecute(null));
-        Assert.Equal(0, updates.DownloadCount);
+        Assert.Equal(1, updates.DownloadCount);
         Assert.Equal(0, updates.LaunchCount);
     }
 
@@ -38,13 +55,16 @@ public sealed class LauncherUpdateViewModelTests
         await viewModel.CheckForUpdatesAsync();
 
         Assert.True(viewModel.IsUpdateCardVisible);
-        Assert.False(viewModel.IsUpdateAvailable);
+        Assert.False(viewModel.IsUpdateReadyToInstall);
         Assert.Equal("Launcher is up to date", viewModel.UpdateTitleText);
+        Assert.Contains("1.0.1", viewModel.UpdateDetailText, StringComparison.Ordinal);
+        Assert.True(viewModel.IsUpdateCheckActionVisible);
+        Assert.Equal("CHECK AGAIN", viewModel.UpdateCheckActionText);
         Assert.False(viewModel.InstallUpdateCommand.CanExecute(null));
     }
 
     [Fact]
-    public async Task InstallDownloadsAndLaunchesOnlyAfterExplicitAction()
+    public async Task InstallLaunchesPreparedInstallerOnlyAfterExplicitAction()
     {
         var updates = new StubLauncherUpdateService(CreateRelease());
         using MainWindowViewModel viewModel = CreateViewModel(
@@ -54,8 +74,9 @@ public sealed class LauncherUpdateViewModelTests
         viewModel.UpdateInstallerStarted += (_, _) => installerStarted = true;
         await viewModel.CheckForUpdatesAsync();
 
-        Assert.Equal(0, updates.DownloadCount);
+        Assert.Equal(1, updates.DownloadCount);
         Assert.Equal(0, updates.LaunchCount);
+        Assert.False(installerStarted);
 
         await viewModel.InstallUpdateAsync();
 
@@ -77,13 +98,47 @@ public sealed class LauncherUpdateViewModelTests
         await viewModel.InstallUpdateAsync();
 
         Assert.False(viewModel.InstallUpdateCommand.CanExecute(null));
-        Assert.Contains("Feche", viewModel.UpdateDetailText, StringComparison.Ordinal);
-        Assert.Equal(0, updates.DownloadCount);
+        Assert.Contains("feche", viewModel.UpdateDetailText, StringComparison.OrdinalIgnoreCase);
+        Assert.True(viewModel.IsUpdateReadyToInstall);
+        Assert.Equal(1, updates.DownloadCount);
         Assert.Equal(0, updates.LaunchCount);
     }
 
     [Fact]
-    public async Task SessionStartedDuringDownloadPreventsInstallerLaunch()
+    public async Task PendingGameLaunchBlocksInstallerUntilAuthenticationFinishes()
+    {
+        var authenticationCompletion = new TaskCompletionSource<AuthenticationResult>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        var authentication = new StubAuthenticationService(
+            (_, _) => authenticationCompletion.Task);
+        var updates = new StubLauncherUpdateService(CreateRelease());
+        using MainWindowViewModel viewModel = CreateViewModel(
+            updates,
+            new LocalizationService("pt-BR"),
+            authentication);
+        await viewModel.InitializeAsync();
+        viewModel.ProfileLabel = "Conta temporária";
+        viewModel.LoginHint = "temporary@example.test";
+        viewModel.PendingPassword = "typed-secret";
+
+        Task launch = viewModel.StartGameAsync();
+
+        Assert.True(viewModel.IsLaunching);
+        Assert.False(viewModel.InstallUpdateCommand.CanExecute(null));
+        Assert.Contains("Aguarde", viewModel.UpdateDetailText, StringComparison.Ordinal);
+        await viewModel.InstallUpdateAsync();
+        Assert.Equal(0, updates.LaunchCount);
+
+        authenticationCompletion.SetResult(
+            AuthenticationResult.Failure("invalid_credentials"));
+        await launch;
+
+        Assert.False(viewModel.IsLaunching);
+        Assert.True(viewModel.InstallUpdateCommand.CanExecute(null));
+    }
+
+    [Fact]
+    public async Task SessionStartedDuringAutomaticDownloadLeavesInstallBlocked()
     {
         MainWindowViewModel? viewModel = null;
         var updates = new StubLauncherUpdateService(
@@ -94,12 +149,17 @@ public sealed class LauncherUpdateViewModelTests
             new LocalizationService("pt-BR")))
         {
             await viewModel.CheckForUpdatesAsync();
+
+            Assert.Equal(1, updates.DownloadCount);
+            Assert.Equal(0, updates.LaunchCount);
+            Assert.True(viewModel.IsUpdateReadyToInstall);
+            Assert.False(viewModel.InstallUpdateCommand.CanExecute(null));
+            Assert.Contains("feche", viewModel.UpdateDetailText, StringComparison.OrdinalIgnoreCase);
+
             await viewModel.InstallUpdateAsync();
 
             Assert.Equal(1, updates.DownloadCount);
             Assert.Equal(0, updates.LaunchCount);
-            Assert.True(viewModel.IsUpdateAvailable);
-            Assert.Contains("Feche", viewModel.UpdateDetailText, StringComparison.Ordinal);
         }
     }
 
@@ -129,9 +189,28 @@ public sealed class LauncherUpdateViewModelTests
 
         await viewModel.CheckForUpdatesAsync();
 
-        Assert.True(viewModel.IsUpdateRetryVisible);
+        Assert.True(viewModel.IsUpdateCheckActionVisible);
         Assert.Contains("No se pudo", viewModel.UpdateTitleText, StringComparison.Ordinal);
         Assert.True(viewModel.CheckForUpdatesCommand.CanExecute(null));
+    }
+
+    [Fact]
+    public async Task AutomaticDownloadFailureIsRecoverableAndNeverLaunches()
+    {
+        var updates = new StubLauncherUpdateService(
+            CreateRelease(),
+            downloadException: new HttpRequestException("download unavailable"));
+        using MainWindowViewModel viewModel = CreateViewModel(
+            updates,
+            new LocalizationService("en-US"));
+
+        await viewModel.CheckForUpdatesAsync();
+
+        Assert.True(viewModel.IsUpdateCheckActionVisible);
+        Assert.False(viewModel.IsUpdateReadyToInstall);
+        Assert.Contains("Could not prepare", viewModel.UpdateTitleText, StringComparison.Ordinal);
+        Assert.Equal(1, updates.DownloadCount);
+        Assert.Equal(0, updates.LaunchCount);
     }
 
     [Fact]
@@ -153,12 +232,13 @@ public sealed class LauncherUpdateViewModelTests
 
     private static MainWindowViewModel CreateViewModel(
         ILauncherUpdateService updateService,
-        LocalizationService localization)
+        LocalizationService localization,
+        StubAuthenticationService? authentication = null)
     {
         var profiles = new InMemoryProfileStore();
         var vault = new InMemoryCredentialVault();
         var profileStorage = new ProfileStorageCoordinator(profiles, vault);
-        var authentication = new StubAuthenticationService((_, _) =>
+        authentication ??= new StubAuthenticationService((_, _) =>
             Task.FromResult(AuthenticationResult.Failure("unused")));
         var launcher = new SessionLaunchCoordinator(
             vault,
@@ -218,7 +298,8 @@ public sealed class LauncherUpdateViewModelTests
     private sealed class StubLauncherUpdateService(
         LauncherUpdateRelease? release,
         Exception? checkException = null,
-        Action? afterDownload = null) : ILauncherUpdateService
+        Action? afterDownload = null,
+        Exception? downloadException = null) : ILauncherUpdateService
     {
         public int CheckCount { get; private set; }
 
@@ -244,6 +325,11 @@ public sealed class LauncherUpdateViewModelTests
         {
             cancellationToken.ThrowIfCancellationRequested();
             DownloadCount++;
+            if (downloadException is not null)
+            {
+                return Task.FromException<DownloadedLauncherInstaller>(downloadException);
+            }
+
             progress?.Report(1);
             afterDownload?.Invoke();
             return Task.FromResult(new DownloadedLauncherInstaller(

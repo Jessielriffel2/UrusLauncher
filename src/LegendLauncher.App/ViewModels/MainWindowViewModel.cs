@@ -440,6 +440,8 @@ internal sealed partial class MainWindowViewModel : ObservableObject, IDisposabl
             SaveProfileCommand.NotifyCanExecuteChanged();
             DeleteProfileCommand.NotifyCanExecuteChanged();
             SelectRecentServerCommand.NotifyCanExecuteChanged();
+            InstallUpdateCommand.NotifyCanExecuteChanged();
+            OnPropertyChanged(nameof(UpdateDetailText));
             NotifyGameReadiness();
         }
     }
@@ -509,6 +511,7 @@ internal sealed partial class MainWindowViewModel : ObservableObject, IDisposabl
             SetStatusMessage("Settings_LoadFailed");
         }
 
+        BeginUpdateCheck();
         await EvaluateDonationPromptOnOpeningAsync(settings).ConfigureAwait(true);
 
         try
@@ -521,12 +524,7 @@ internal sealed partial class MainWindowViewModel : ObservableObject, IDisposabl
             SetStatusMessage("Profiles_LoadFailed");
             CatalogStatusBrush = ErrorBrush;
         }
-
         await LoadServersAsync(forceRefresh: false).ConfigureAwait(true);
-        if (!_disposed)
-        {
-            BeginUpdateCheck();
-        }
     }
 
     public void Dispose()

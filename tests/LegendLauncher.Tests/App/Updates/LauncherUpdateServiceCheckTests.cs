@@ -6,6 +6,37 @@ namespace LegendLauncher.Tests.App.Updates;
 
 public sealed class LauncherUpdateServiceCheckTests
 {
+    [Theory]
+    [InlineData("1.1.2", true)]
+    [InlineData("1.1.3", false)]
+    public async Task VersionComparisonHandlesPublished113Handoff(
+        string currentVersion,
+        bool shouldOfferUpdate)
+    {
+        using var directory = new TemporaryUpdateDirectory();
+        using var handler = new QueueHttpMessageHandler();
+        JsonObject manifest = UpdateTestData.CreateManifest("1.1.3");
+        JsonObject releaseDocument = UpdateTestData.CreateRelease(manifest, "v1.1.3");
+        UpdateTestData.EnqueueCheck(handler, manifest, releaseDocument);
+        var starter = new RecordingUpdateProcessStarter();
+        var service = CreateService(handler, directory, starter);
+
+        LauncherUpdateRelease? release = await service.CheckForUpdateAsync(
+            Version.Parse(currentVersion));
+
+        Assert.Equal(shouldOfferUpdate, release is not null);
+        if (shouldOfferUpdate)
+        {
+            Assert.Equal(new Version(1, 1, 3), release!.Version);
+            Assert.Equal("v1.1.3", release.TagName);
+            Assert.Equal(
+                "UrusLauncher-Setup-1.1.3-win-x64.exe",
+                release.Installer.Name);
+        }
+
+        Assert.Equal(0, starter.CallCount);
+    }
+
     [Fact]
     public async Task NewerReleaseReturnsValidatedLocalizedState()
     {

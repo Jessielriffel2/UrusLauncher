@@ -11,7 +11,7 @@ Os códigos canônicos persistidos são `pt-BR`, `en-US` e `es-ES`. Códigos das
 | Referência aproximada | Tipo/função | Responsabilidade, entrada e saída |
 | --- | --- | --- |
 | `src/LegendLauncher.App/Localization/LocalizationService.cs:9` | `LanguageOption` | Opção imutável do seletor com código canônico e nome nativo; `ToString()` devolve o nome para que templates WPF compactos nunca exibam a representação técnica do record. |
-| `src/LegendLauncher.App/Localization/LocalizationService.cs:14` | `LocalizationService` | Fonte global observável da cultura e dos 203 textos de cada catálogo. Recebe um código opcional e expõe idioma, cultura, indexador, formatação e eventos de atualização. |
+| `src/LegendLauncher.App/Localization/LocalizationService.cs:14` | `LocalizationService` | Fonte global observável da cultura e dos 204 textos de cada catálogo. Recebe um código opcional e expõe idioma, cultura, indexador, formatação e eventos de atualização. |
 | `src/LegendLauncher.App/Localization/LocalizationService.cs:53` | `Get(...)` / `Format(...)` | Resolve uma chave no catálogo ativo; chave ausente tenta `pt-BR` e por fim retorna um marcador visível. `Format` usa a cultura ativa para números e datas. |
 | `src/LegendLauncher.App/Localization/LocalizationService.cs:69` | `SetLanguage(...)` | Normaliza e aplica o idioma, atualiza a cultura das threads quando habilitado e notifica `LanguageCode`, `Culture`, `Item[]` e `LanguageChanged`. Saída: se houve troca efetiva. |
 | `src/LegendLauncher.App/Localization/LocalizationService.cs:96` | `EnableThreadCultureUpdates()` | Faz a cultura selecionada valer para a thread atual e novas threads do launcher. |
@@ -19,16 +19,16 @@ Os códigos canônicos persistidos são `pt-BR`, `en-US` e `es-ES`. Códigos das
 | `src/LegendLauncher.App/Localization/LocalizationService.cs:137` | `LoadCatalogs()` | Lê os três JSONs incorporados ao assembly, rejeitando recurso ausente, vazio ou com chave/valor em branco. |
 | `src/LegendLauncher.App/Localization/LocalizedMessage.cs:3` | `LocalizedMessage` | Guarda chave e argumentos, não o texto já traduzido. Permite que um status visível seja resolvido novamente depois da troca de idioma. |
 | `src/LegendLauncher.App/Localization/LocalizeExtension.cs:7` | `LocalizeExtension` | Markup extension WPF que cria um `Binding` de uma via para o indexador da instância global. A notificação `Item[]` atualiza inclusive janelas já abertas. |
-| `src/LegendLauncher.App/Localization/Resources/pt-BR.json:1` | Catálogo português | Catálogo padrão e fallback com 203 chaves. |
-| `src/LegendLauncher.App/Localization/Resources/en-US.json:1` | Catálogo inglês | Traduções em inglês americano com as mesmas 203 chaves. |
-| `src/LegendLauncher.App/Localization/Resources/es-ES.json:1` | Catálogo espanhol | Traduções em espanhol com as mesmas 203 chaves. |
+| `src/LegendLauncher.App/Localization/Resources/pt-BR.json:1` | Catálogo português | Catálogo padrão e fallback com 204 chaves. |
+| `src/LegendLauncher.App/Localization/Resources/en-US.json:1` | Catálogo inglês | Traduções em inglês americano com as mesmas 204 chaves. |
+| `src/LegendLauncher.App/Localization/Resources/es-ES.json:1` | Catálogo espanhol | Traduções em espanhol com as mesmas 204 chaves. |
 | `src/LegendLauncher.App/Localization/Resources/*.json:2` | Marca e slogan | `App_WindowTitle` mantém “Urus Launcher”; `Brand_Subtitle` oferece “Jogue do seu jeito”, “Play your way” e “Juega a tu manera”. As antigas chaves de prévia foram removidas. |
 | `src/LegendLauncher.App/App.xaml.cs:9` | `App.OnStartup(...)` | Lê `settings.json` antes de criar a janela, aplica o idioma salvo ou `pt-BR` em falha e então habilita as culturas de thread. |
 | `src/LegendLauncher.App/MainWindow.xaml:110` | Seletor de idioma | Combobox compacto no cabeçalho, ligado a `Languages` e `SelectedLanguage`. Usa os handlers explícitos já validados no seletor de versões para abrir por clique, Enter, Espaço, F4 ou Alt+Seta para baixo. |
 | `src/LegendLauncher.App/Views/Game/GameWorkspaceView.xaml:200` | Seletor no workspace | Mantém a troca de idioma disponível na barra compacta; os handlers equivalentes ficam em `GameWorkspaceView.xaml.cs:13`. |
 | `src/LegendLauncher.App/Views/Donation/DonationPromptView.xaml:1` | Pedido de apoio | Usa 26 chaves `Donation_*` para conteúdo PayPal/PIX, feedback de cópia, tooltips e nomes de automação; a troca atualiza o modal mesmo enquanto ele está aberto. |
-| `src/LegendLauncher.App/Localization/Resources/*.json:182` | Atualização | As 23 chaves `Update_*` cobrem estados, ações, progresso, erro, tooltip, popup e acessibilidade nos três idiomas. |
-| `src/LegendLauncher.App/ViewModels/MainWindowViewModel.Updates.cs:110` | Notas localizadas | Resolve status pelo catálogo e escolhe os patch notes da versão pelo código ativo; propriedades são notificadas novamente quando o idioma muda. |
+| `src/LegendLauncher.App/Localization/Resources/*.json:182` | Atualização | As 24 chaves `Update_*` cobrem consulta, versão atual, download, `ReadyToInstall`, instalação, falha, nova verificação, tooltip, popup e acessibilidade nos três idiomas. |
+| `src/LegendLauncher.App/ViewModels/MainWindowViewModel.Updates.cs:85` | Status e ações localizados | Resolve título/detalhe para cada estado, **INSTALAR**, nova verificação/retry e patch notes pelo código ativo; propriedades são notificadas novamente quando o idioma muda. |
 | `src/LegendLauncher.App/ViewModels/MainWindowViewModel.Localization.cs:6` | Estado de localização da janela | Expõe idiomas, seleção e textos localizados; reapresenta status, servidor selecionado, runtime e linhas existentes quando `LanguageChanged` é emitido. |
 | `src/LegendLauncher.App/ViewModels/MainWindowViewModel.Localization.cs:111` | `PersistLanguageAsync(...)` | Grava a preferência sem interromper a execução se o arquivo não puder ser atualizado. |
 | `src/LegendLauncher.App/ViewModels/GameWorkspaceViewModel.cs:24` | Localização do workspace | Usa a mesma instância para mudo/rodapé e notifica os bindings na troca; remove o handler durante `Dispose`. |
@@ -44,7 +44,7 @@ Os códigos canônicos persistidos são `pt-BR`, `en-US` e `es-ES`. Códigos das
 4. `PropertyChanged("Item[]")` atualiza bindings XAML. `LanguageChanged` atualiza propriedades calculadas, o workspace e as linhas de servidor já materializadas, inclusive **RECOMENDADO/RECOMMENDED**, **MAIS RECENTE/NEWEST/MÁS RECIENTE** e **OUTROS SERVIDORES/OTHER SERVERS/OTROS SERVIDORES**.
 5. Um novo GameHost recebe a cultura vigente pelo ambiente e a aplica antes de montar mensagens e formulários WinForms. GameHosts já em execução continuam jogando; o chrome WPF ao redor deles muda imediatamente.
 6. O pedido de apoio usa o mesmo `LocalizeExtension`: título, instruções do QR, PIX, ação de copiar, feedback de sucesso/falha e acessibilidade mudam ao vivo. PayPal, PIX, URL, hash e CNPJ são dados invariantes.
-7. O cartão do updater reapresenta estado, ações, tooltip e acessibilidade; se um release estiver disponível, `GetNotes(languageCode)` troca imediatamente o patch note entre `pt-BR`, `en-US` e `es-ES` sem nova consulta ou download.
+7. O cartão do updater reapresenta consulta, download automático, `ReadyToInstall`, instalação, `Current` e `Failed`, além de ações, tooltip e acessibilidade. **INSTALAR/INSTALL/INSTALAR** continua sendo o único consentimento de execução; `Current` oferece **VERIFICAR NOVAMENTE/CHECK AGAIN/VERIFICAR DE NUEVO** e `Failed` oferece **TENTAR DE NOVO/TRY AGAIN/REINTENTAR**. `GetNotes(languageCode)` troca imediatamente os patch notes entre `pt-BR`, `en-US` e `es-ES` sem nova consulta ou download.
 
 ## Persistência e comportamento de falha
 
@@ -74,6 +74,6 @@ O módulo usa `System.Globalization`, `System.Text.Json`, recursos incorporados 
 - `ServerRowLocalizationTests.cs:16` cobre recomendado, lançamento mais recente, divisor dos demais servidores, disponibilidade, fallbacks, endereço ausente, abertura futura e refresh das propriedades traduzíveis.
 - `GameHostLocalizationTests.cs` cobre normalização das famílias, presença das mensagens nos três idiomas e propagação por variável de ambiente sem iniciar processo.
 - `MainWindowLayoutXamlTests.cs` e `GameWorkspaceXamlTests.cs` fixam os handlers de abertura por mouse/teclado nos dois seletores de idioma.
-- `DonationPromptAssetTests.cs` fixa as referências localizadas de PayPal/PIX, incluindo feedback de cópia e nomes de automação; a suíte valida 203 chaves equivalentes em cada idioma.
-- `LauncherUpdateViewModelTests.cs:103` cobre a troca ao vivo dos patch notes; `LauncherUpdateLayoutTests.cs:22` fixa textos e nomes de automação do cartão/popup.
+- `DonationPromptAssetTests.cs` fixa as referências localizadas de PayPal/PIX, incluindo feedback de cópia e nomes de automação; a suíte valida 204 chaves equivalentes em cada idioma.
+- `LauncherUpdateViewModelTests.cs:184` cobre a troca ao vivo dos patch notes; `LauncherUpdateLayoutTests.cs:22` fixa textos, ações e nomes de automação do cartão/popup. `LocalizationCatalogTests.cs:97` fixa **INSTALAR**, nova verificação e os estados formatados nos três idiomas. O conjunto focado da revisão concluiu **82/82**; a suíte completa passou **461/461** em Debug e **461/461** em Release.
 - `LocalizationCatalogTests.cs:82` exige “Urus Launcher”, os três slogans e ausência de chaves/marcadores públicos de Next, preview, prévia, technical ou testes.

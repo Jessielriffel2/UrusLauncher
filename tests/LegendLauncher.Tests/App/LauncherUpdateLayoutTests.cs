@@ -19,7 +19,7 @@ public sealed class LauncherUpdateLayoutTests
     }
 
     [Fact]
-    public void UpdateCardRequiresExplicitActionAndShowsLocalizedNotes()
+    public void UpdateCardInstallsOnlyPreparedDownloadAndAllowsAnotherCheck()
     {
         string source = File.ReadAllText(FindRepositoryFile(
             "src",
@@ -31,7 +31,10 @@ public sealed class LauncherUpdateLayoutTests
         Assert.Contains("IsUpdateCardVisible", source);
         Assert.Contains("UpdateViewNotesText", source);
         Assert.Contains("ToggleUpdateNotesCommand", source);
+        Assert.Contains("IsUpdateReadyToInstall", source);
         Assert.Contains("InstallUpdateCommand", source);
+        Assert.Contains("IsUpdateCheckActionVisible", source);
+        Assert.Contains("CheckForUpdatesCommand", source);
         Assert.Contains("UpdateNotesText", source);
         Assert.Contains(
             "Value=\"{Binding UpdateProgress, Mode=OneWay}\"",
@@ -39,6 +42,7 @@ public sealed class LauncherUpdateLayoutTests
             StringComparison.Ordinal);
         Assert.Contains("Update_CardAutomation", source);
         Assert.Contains("Update_NotesAutomation", source);
+        Assert.DoesNotContain("IsUpdateAvailable", source, StringComparison.Ordinal);
         Assert.DoesNotContain("WebBrowser", source, StringComparison.Ordinal);
         Assert.DoesNotContain("WebView", source, StringComparison.Ordinal);
     }

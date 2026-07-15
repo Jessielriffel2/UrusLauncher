@@ -94,6 +94,29 @@ public sealed partial class LocalizationCatalogTests
             Assert.DoesNotMatch(LegacyVisibleBrandRegex(), value));
     }
 
+    [Theory]
+    [InlineData("pt-BR", "INSTALAR", "VERIFICAR NOVAMENTE")]
+    [InlineData("en-US", "INSTALL", "CHECK AGAIN")]
+    [InlineData("es-ES", "INSTALAR", "VERIFICAR DE NUEVO")]
+    public void UpdateCatalogSeparatesPreparedDownloadFromUserInstallation(
+        string languageCode,
+        string expectedInstallAction,
+        string expectedCheckAgainAction)
+    {
+        var localization = new LocalizationService(languageCode);
+
+        Assert.Equal(expectedInstallAction, localization.Get("Update_Action"));
+        Assert.Equal(expectedCheckAgainAction, localization.Get("Update_CheckAgain"));
+        Assert.Contains(
+            "1.1.3",
+            localization.Format("Update_CurrentDetail", "1.1.3"),
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "1.1.3",
+            localization.Format("Update_ReadyTitle", "1.1.3"),
+            StringComparison.Ordinal);
+    }
+
     private static string[] GetPlaceholderSignature(string value) =>
         CompositePlaceholderRegex()
             .Matches(value)

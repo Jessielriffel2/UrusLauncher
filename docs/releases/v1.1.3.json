@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "version": "1.1.3",
+  "title": {
+    "pt-BR": "Atualização baixada e pronta para instalar",
+    "en-US": "Update downloaded and ready to install",
+    "es-ES": "Actualización descargada y lista para instalar"
+  },
+  "notes": {
+    "pt-BR": [
+      "Ao abrir, o launcher consulta o release público e baixa automaticamente uma versão superior para o diretório privado do usuário, sem depender da máquina de desenvolvimento.",
+      "O setup é validado por origem, versão, nome, tamanho e SHA-256 e fica no estado pronto; somente o clique em INSTALAR autoriza sua execução.",
+      "O download não bloqueia catálogo, login ou jogo. A instalação continua bloqueada enquanto houver conta em jogo ou login ainda em abertura.",
+      "Um setup já baixado é reaproveitado somente depois de nova conferência de tamanho e SHA-256; arquivo divergente é removido e baixado novamente.",
+      "O download agora tolera até uma hora em redes lentas, e uma única instância por sessão do Windows evita disputa pelo update ou contas abertas em outro processo.",
+      "Trocas de mudo solicitadas durante uma aplicação de áudio são reaplicadas imediatamente depois, sem esperar o próximo ciclo.",
+      "O cartão atualizado agora mostra a versão instalada e permite VERIFICAR NOVAMENTE sem reiniciar o launcher."
+    ],
+    "en-US": [
+      "On startup, the launcher checks the public release and automatically downloads a newer version into the user's private directory, without depending on the development machine.",
+      "The setup is validated by origin, version, name, size, and SHA-256 and remains ready; only clicking INSTALL authorizes its execution.",
+      "Downloading does not block the catalog, sign-in, or gameplay. Installation remains blocked while a game account is active or a sign-in is still opening.",
+      "An already downloaded setup is reused only after its size and SHA-256 are verified again; a mismatching file is removed and downloaded again.",
+      "Downloads now tolerate up to one hour on slow networks, and one launcher instance per Windows session prevents update contention or accounts running in another process.",
+      "Mute changes requested during an active audio apply are replayed immediately afterward instead of waiting for the next cycle.",
+      "The up-to-date card now shows the installed version and allows CHECK AGAIN without restarting the launcher."
+    ],
+    "es-ES": [
+      "Al abrirse, el launcher consulta el release público y descarga automáticamente una versión superior en el directorio privado del usuario, sin depender del equipo de desarrollo.",
+      "El setup se valida por origen, versión, nombre, tamaño y SHA-256 y queda listo; solo el clic en INSTALAR autoriza su ejecución.",
+      "La descarga no bloquea el catálogo, el inicio de sesión ni el juego. La instalación sigue bloqueada mientras haya una cuenta en juego o un inicio de sesión aún abriéndose.",
+      "Un setup ya descargado se reutiliza solo después de volver a comprobar su tamaño y SHA-256; si no coincide, se elimina y se descarga nuevamente.",
+      "La descarga ahora tolera hasta una hora en redes lentas, y una sola instancia por sesión de Windows evita disputas por la actualización o cuentas abiertas en otro proceso.",
+      "Los cambios de silencio solicitados durante una aplicación de audio se repiten inmediatamente después, sin esperar el siguiente ciclo.",
+      "La tarjeta actualizada ahora muestra la versión instalada y permite VERIFICAR DE NUEVO sin reiniciar el launcher."
+    ]
+  }
+}

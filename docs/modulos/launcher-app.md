@@ -2,7 +2,7 @@
 
 ## Objetivo do módulo
 
-`LegendLauncher.App` é o projeto-fonte do executável WPF x64 distribuído como **Urus Launcher** / `UrusLauncher.App.exe`. Ele apresenta perfis, plataformas e servidores, mantém a interface responsiva durante I/O, coordena autenticação/persistência e alterna entre duas superfícies: o launcher de três colunas inspirado no mock 1584×992 e o workspace multissessão descrito em [game-session-workspace.md](game-session-workspace.md). Toda a interface própria pode alternar dinamicamente entre português brasileiro, inglês e espanhol conforme [localizacao.md](localizacao.md). A mesma janela hospeda o [pedido de doação](donation-prompt.md) e o cartão opcional de [atualização](atualizacao.md), sem bloquear catálogo, login ou jogo.
+`LegendLauncher.App` é o projeto-fonte do executável WPF x64 distribuído como **Urus Launcher** / `UrusLauncher.App.exe`. Ele apresenta perfis, plataformas e servidores, mantém a interface responsiva durante I/O, coordena autenticação/persistência e alterna entre duas superfícies: o launcher de três colunas inspirado no mock 1584×992 e o workspace multissessão descrito em [game-session-workspace.md](game-session-workspace.md). Toda a interface própria pode alternar dinamicamente entre português brasileiro, inglês e espanhol conforme [localizacao.md](localizacao.md). A mesma janela hospeda o [pedido de doação](donation-prompt.md) e o cartão de [atualização](atualizacao.md), que consulta e prepara releases em segundo plano sem bloquear catálogo, login ou jogo e nunca executa o setup sem **INSTALAR**.
 
 O processo WPF nunca carrega o Adobe Flash ActiveX. Cada conta aberta permanece em seu próprio `LegendLauncher.GameHost.Legacy`; a App recebe PID/HWND validados e incorpora somente a janela externa sob um proxy Win32 pertencente ao launcher. Isso preserva o isolamento de processo, mas não constitui uma sandbox. O fluxo é direto e não inicia `H2Proxy.exe`.
 
@@ -11,7 +11,7 @@ O processo WPF nunca carrega o Adobe Flash ActiveX. Cada conta aberta permanece 
 | Referência aproximada | Tipo/função | Responsabilidade, entrada e saída |
 | --- | --- | --- |
 | `src/LegendLauncher.App/App.xaml:1` | `App` e recursos globais | Define `MainWindow` e incorpora `Themes/Colors.xaml`, `Controls.xaml` e `WindowStyles.xaml`. |
-| `src/LegendLauncher.App/App.xaml.cs:9` | `OnStartup(...)` | Lê o idioma em settings antes de criar a janela, aplica fallback `pt-BR` em falhas e habilita a cultura ativa para as threads do processo. |
+| `src/LegendLauncher.App/App.xaml.cs:16` | `OnStartup(...)` / `OnExit(...)` | Mantém um mutex local à sessão; a primeira instância lê/aplica idioma e cria a janela, enquanto outra tentativa localiza o mesmo executável na sessão, restaura apenas se minimizado, ativa a janela existente e encerra. Na saída, libera o mutex. |
 | `src/LegendLauncher.App/LegendLauncher.App.csproj:13` | Marca e artefato | Empacota o PNG Urus, define `AssemblyName=UrusLauncher.App`, mantém `RootNamespace=LegendLauncher.App`, aplica metadados “Urus Launcher” e usa `urus-launcher.ico`. |
 | `src/LegendLauncher.App/Assets/Branding/urus-logo.png` | Logo público | Monograma “U” transparente original usado no cabeçalho e janela desacoplada; o contrato completo está em [branding.md](branding.md). |
 | `src/LegendLauncher.App/MainWindow.xaml:1` | `MainWindow` | Chrome próprio em 1420×820, mínimo 1180×700 e caption row de 44 px. Contém launcher e `GameWorkspaceView` na mesma janela. |
@@ -60,9 +60,9 @@ O processo WPF nunca carrega o Adobe Flash ActiveX. Cada conta aberta permanece 
 | `src/LegendLauncher.App/ViewModels/MainWindowViewModel.Localization.cs:6` | Localização do view model | Expõe o seletor, guarda status por chave/argumentos e reapresenta propriedades calculadas e linhas do catálogo quando o idioma muda. |
 | `src/LegendLauncher.App/ViewModels/MainWindowViewModel.Localization.cs:111` | `PersistLanguageAsync(...)` | Persiste a cultura canônica sem bloquear nem interromper a sessão em falha de I/O. |
 | `src/LegendLauncher.App/ViewModels/MainWindowViewModel.Donation.cs:8` | Cadência e comandos de apoio | Avalia o intervalo de cinco horas somente na abertura (linha 23), oferece abertura manual (linha 42), fechamento e persistência tolerante a falhas. |
-| `src/LegendLauncher.App/ViewModels/MainWindowViewModel.Updates.cs:127` | Inicialização e comandos do updater | Cria consulta, instalação e popup de notas; reage a sessões ativas e expõe estados localizados. |
-| `src/LegendLauncher.App/ViewModels/MainWindowViewModel.Updates.cs:159` | `CheckForUpdatesAsync()` | Consulta uma vez por abertura e apresenta release superior sem baixar nada. |
-| `src/LegendLauncher.App/ViewModels/MainWindowViewModel.Updates.cs:199` | `InstallUpdateAsync()` | Depois do clique, bloqueia/revalida sessões, baixa/verifica o setup e sinaliza à janela para encerrar após iniciar o instalador. |
+| `src/LegendLauncher.App/ViewModels/MainWindowViewModel.Updates.cs:135` | Inicialização e comandos do updater | Cria consulta, instalação e popup de notas; reage a sessões ativas e expõe estados localizados. |
+| `src/LegendLauncher.App/ViewModels/MainWindowViewModel.Updates.cs:167` | `CheckForUpdatesAsync()` | Consulta cedo uma vez por abertura, baixa e valida automaticamente um release superior e chega a `ReadyToInstall` sem executar o setup. |
+| `src/LegendLauncher.App/ViewModels/MainWindowViewModel.Updates.cs:223` | `InstallUpdateAsync()` | Exige setup preparado, nenhuma sessão e clique explícito em **INSTALAR**; então sinaliza à janela para encerrar somente após iniciar o instalador. |
 | `src/LegendLauncher.App/Views/Updates/UpdateStatusView.xaml:19` | Cartão e popup de atualização | Status compacto, progresso, retry e novidades; o popup localizado começa na linha 100. |
 | `src/LegendLauncher.App/Services/LauncherSettingsService.cs:96` | `SaveDonationPromptShownAsync(...)` | Atualiza atomicamente o instante UTC da última exibição sem apagar idioma, perfil, mudo ou layout. |
 | `src/LegendLauncher.App/Localization/LocalizeExtension.cs:7` | `LocalizeExtension` | Liga textos XAML ao indexador observável do serviço global para atualização sem recriar janelas. |
@@ -113,14 +113,16 @@ Detalhes de layouts 1/2/4, abas, áudio, detach e HWND estão em [game-session-w
 - O assembly/arquivo público é `UrusLauncher.App.exe`; namespaces, projetos e diretório de dados permanecem `LegendLauncher.*`/`LegendLauncherNext` como detalhes internos compatíveis.
 - `scripts/build-urus-distribution.ps1` gera payload self-contained, instalador Inno e ZIP portátil. Veja [branding.md](branding.md), [distribuicao-windows.md](distribuicao-windows.md) e [ADR-007](../decisoes/ADR-007-identidade-e-distribuicao-urus.md).
 
-### Atualização opcional
+### Atualização preparada automaticamente e instalação opcional
 
-- Depois da inicialização normal, a App consulta uma vez o último release público esperado. A consulta é assíncrona; falha de rede ou release ausente não bloqueia as demais funções.
-- O cartão inferior esquerdo informa busca, versão atual/disponível, erro ou progresso. As notas acompanham imediatamente o idioma selecionado.
-- Encontrar uma versão não baixa o setup. A pessoa pode ignorar, ler as novidades ou clicar **Atualizar** quando não houver conta em jogo.
-- Depois do clique, novas sessões ficam bloqueadas, o módulo valida contrato/URL e baixa para `%LocalAppData%\LegendLauncherNext\updates`; a ausência de sessões e nome, bytes e SHA-256 são revalidados antes da execução.
+- Logo depois de restaurar settings/idioma em cada abertura, antes de perfis e catálogo, a App consulta uma vez o último release público esperado. A consulta é assíncrona; falha de rede ou release ausente não bloqueia as demais funções.
+- O cartão inferior esquerdo informa busca, versão instalada, download, `ReadyToInstall`, erro ou instalação. Em `Current` e `Failed`, oferece **VERIFICAR NOVAMENTE**/**TENTAR DE NOVO**. Estado, ações e notas acompanham imediatamente o idioma selecionado.
+- Encontrar uma versão superior inicia download e validação automáticos em `%LocalAppData%\LegendLauncherNext\updates`. O jogo permanece disponível durante consulta/download, inclusive para abrir novas sessões.
+- O download possui janela total de uma hora para máquinas em conexões lentas. Uma única instância por sessão evita que dois processos disputem o mesmo `.part` ou que um instalador ignore contas abertas em outra App.
+- Um setup com nome, bytes e SHA-256 exatamente iguais é reutilizado; cache divergente é removido e baixado novamente como `.part`. O arquivo final só chega a `ReadyToInstall` depois das validações estritas.
+- **INSTALAR** é o único consentimento para executar o setup e fica desabilitado enquanto houver conta em jogo ou login/abertura em andamento. Quando a abertura termina e as sessões são fechadas, a pessoa pode instalar o arquivo já preparado sem novo download; caminho, nome, bytes e SHA-256 são revalidados antes da execução.
 - O instalador fecha e relança o launcher. Perfis, settings e credenciais permanecem fora da pasta instalada e não são substituídos.
-- A 1.0.1 não contém este fluxo: o bootstrap da 1.1.0 precisa de instalação manual uma vez. O contrato completo está em [atualizacao.md](atualizacao.md) e [ADR-008](../decisoes/ADR-008-atualizacoes-github-releases.md).
+- A preparação automática entra na 1.1.3; versões 1.1.1/1.1.2 ainda usam o antigo clique **Atualizar** para chegar a ela uma vez. O contrato completo está em [atualizacao.md](atualizacao.md) e [ADR-008](../decisoes/ADR-008-atualizacoes-github-releases.md).
 
 ### Apoio voluntário
 
@@ -159,7 +161,7 @@ A localização acrescenta contratos de paridade/referências em `LocalizationCa
 
 `BrandingAssetTests.cs`, os contratos de layout/localização e `GameHostLocalizationTests.cs` fixam PNG RGBA/ICO, remoção dos marks antigos, nome/slogan, `UrusLauncher.App.exe`, metadados, Pack URIs e distinção entre a marca Urus e o jogo Legend Online. `WindowsDistributionContractTests.cs` fixa o pipeline self-contained, nomes versionados, configuração Inno e hashing compatível com Windows PowerShell. A suíte funcional completa passou com **364/364 testes antes da pequena correção de hashing** e não foi repetida depois; os contratos específicos alterados passaram em saída isolada (**2/2**). A entrega atual é a 1.0.1, com smoke portátil de sete segundos, instalação silenciosa sem dados de perfil/conta/senha e desinstalação completa validados. Por pedido do usuário, esta alteração não recebeu QA visual manual pelo agente; a conferência visual será feita diretamente pelo usuário. O histórico de validação está em [`design-qa.md`](../../design-qa.md).
 
-`LauncherUpdateViewModelTests.cs:10` cobre consulta, consentimento, progresso, troca dinâmica de idioma, falha e bloqueio durante sessões. `LauncherUpdateLayoutTests.cs:3` fixa a posição inferior esquerda, popup e bindings. Os contratos de rede, manifesto, download e execução ficam no subdiretório `tests/LegendLauncher.Tests/App/Updates/`; o workflow e as notas fonte são cobertos por `GitHubReleaseContractTests.cs:5`.
+`LauncherUpdateViewModelTests.cs:10` cobre consulta/download automáticos na abertura, jogo disponível durante a preparação, `ReadyToInstall`, consentimento exclusivo por **INSTALAR**, nova verificação, troca dinâmica de idioma, falha e bloqueio da instalação durante sessão ativa ou login ainda em abertura. `LauncherUpdateLayoutTests.cs:3` fixa a posição inferior esquerda, popup, ações e bindings. Os contratos de rede, manifesto, cache exato, download, validação e execução ficam no subdiretório `tests/LegendLauncher.Tests/App/Updates/`; `WindowsDistributionContractTests.cs` fixa a guarda de instância única; o workflow e as notas fonte, incluindo a 1.1.3, são cobertos por `GitHubReleaseContractTests.cs:5`. O conjunto focado concluiu **82/82** e a suíte completa desta revisão concluiu **461/461** em Debug e **461/461** em Release.
 
 - `GameWorkspaceXamlTests.cs:13` fixa a barra única de 44 px, controles/abas de 34 px, a reserva de 150 px, abas roláveis e `+ CONTA` fora do scroller.
 - `BorderlessWindowCommandsTests.cs:12` e `:26` fixam a ação maximize/restore e o glifo para cada `WindowState`.

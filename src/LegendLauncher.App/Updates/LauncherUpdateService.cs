@@ -30,7 +30,7 @@ internal sealed class LauncherUpdateService : ILauncherUpdateService
         _processStarter = processStarter ?? new UpdateProcessStarter();
         _checkTimeout = ValidateTimeout(checkTimeout ?? TimeSpan.FromSeconds(15), nameof(checkTimeout));
         _downloadTimeout = ValidateTimeout(
-            downloadTimeout ?? TimeSpan.FromMinutes(5),
+            downloadTimeout ?? TimeSpan.FromHours(1),
             nameof(downloadTimeout));
         UpdateDownloadCleanup.DeleteStaleArtifacts(
             _downloadDirectory,
@@ -159,6 +159,21 @@ internal sealed class LauncherUpdateService : ILauncherUpdateService
         string partialPath = finalPath + ".part";
         DeleteIfExists(partialPath);
         progress?.Report(0);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        if (await TryReuseCachedInstallerAsync(
+            finalPath,
+            release.Installer.Bytes,
+            release.Installer.Sha256,
+            cancellationToken).ConfigureAwait(false))
+        {
+            progress?.Report(1);
+            return new DownloadedLauncherInstaller(
+                finalPath,
+                release.Installer.Name,
+                release.Installer.Bytes,
+                release.Installer.Sha256);
+        }
 
         try
         {
@@ -234,6 +249,41 @@ internal sealed class LauncherUpdateService : ILauncherUpdateService
         {
             DeleteIfExists(partialPath);
             throw;
+        }
+    }
+
+    private static async Task<bool> TryReuseCachedInstallerAsync(
+        string filePath,
+        long expectedBytes,
+        string expectedSha256,
+        CancellationToken cancellationToken)
+    {
+        if (!File.Exists(filePath))
+        {
+            return false;
+        }
+
+        try
+        {
+            await using (FileStream cachedInstaller = OpenInstallerForVerification(filePath))
+            {
+                await VerifyDownloadedInstallerAsync(
+                    cachedInstaller,
+                    expectedBytes,
+                    expectedSha256,
+                    cancellationToken).ConfigureAwait(false);
+            }
+
+            return true;
+        }
+        catch (InvalidDataException)
+        {
+            DeleteIfExists(filePath);
+            return false;
+        }
+        catch (FileNotFoundException)
+        {
+            return false;
         }
     }
 

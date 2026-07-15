@@ -83,16 +83,16 @@
                             Style="{StaticResource UpdateCompactButtonStyle}"
                             Content="{Binding UpdateViewNotesText}"
                             Command="{Binding ToggleUpdateNotesCommand}"
-                            Visibility="{Binding IsUpdateAvailable, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                            Visibility="{Binding IsUpdateReadyToInstall, Converter={StaticResource BooleanToVisibilityConverter}}" />
                     <Button Style="{StaticResource UpdateCompactButtonStyle}"
                             Content="{Binding UpdateActionText}"
                             Command="{Binding InstallUpdateCommand}"
                             ToolTip="{loc:Localize Update_ActionTooltip}"
-                            Visibility="{Binding IsUpdateAvailable, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                            Visibility="{Binding IsUpdateReadyToInstall, Converter={StaticResource BooleanToVisibilityConverter}}" />
                     <Button Style="{StaticResource UpdateCompactButtonStyle}"
-                            Content="{Binding UpdateRetryText}"
+                            Content="{Binding UpdateCheckActionText}"
                             Command="{Binding CheckForUpdatesCommand}"
-                            Visibility="{Binding IsUpdateRetryVisible, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                            Visibility="{Binding IsUpdateCheckActionVisible, Converter={StaticResource BooleanToVisibilityConverter}}" />
                 </StackPanel>
             </Grid>
         </Border>

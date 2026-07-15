@@ -2,6 +2,28 @@
 
 As mudanças relevantes do Urus Launcher são registradas aqui. As versões públicas seguem versionamento semântico e são publicadas em `vMAJOR.MINOR.PATCH`.
 
+## 1.1.3 — 15/07/2026
+
+### Atualização preparada em segundo plano
+
+- A consulta ao GitHub começa no início da abertura e uma versão superior é baixada e validada automaticamente no diretório privado do usuário.
+- O cartão separa claramente **Baixando**, **Pronta para instalar** e **Abrindo instalador**.
+- O setup nunca é executado automaticamente: somente o clique explícito em **Instalar** inicia a instalação.
+- Download e verificação não bloqueiam catálogo, login ou jogo; somente a instalação exige que não haja sessão ativa nem login em andamento.
+- O estado **Launcher atualizado** informa a versão instalada e oferece **Verificar novamente** sem reiniciar o aplicativo.
+
+### Portabilidade e eficiência
+
+- Um setup já preparado é reaproveitado apenas depois de conferir novamente tamanho e SHA-256; cache inválido é removido e baixado outra vez.
+- O download aceita até uma hora em redes lentas, sem depender da velocidade observada na máquina de desenvolvimento.
+- O launcher passa a manter uma única instância por sessão do Windows e traz a janela existente para frente, evitando disputa de arquivos e instalação enquanto outra instância mantém contas abertas.
+- Instalador, App e updater continuam por usuário, sem caminhos do computador de desenvolvimento, contas, perfis ou senhas incorporados.
+- A execução permanece limitada ao release público, repositório, hosts, tag, nome, bytes e SHA-256 esperados.
+
+### Corrigido
+
+- Mudanças de mudo solicitadas durante uma aplicação de áudio em andamento deixam de ser perdidas e são reaplicadas imediatamente após o callback atual.
+
 ## 1.1.2 — 15/07/2026
 
 ### Corrigido

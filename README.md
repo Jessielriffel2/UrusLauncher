@@ -27,7 +27,7 @@ Launcher Windows para Legend Online, escrito do zero em C#/.NET 10 e distribuíd
 | GameHost Flash x64 separado | Implementado, isolado por sessão e encerrado quando o processo pai desaparece; jogabilidade real confirmada no S115 |
 | Execução direta sem `H2Proxy.exe` | Implementada |
 | Distribuição Windows | Pipeline self-contained `win-x64`, instalador Inno Setup por usuário, ZIP portátil, manifesto e SHA-256 implementados |
-| Atualizações públicas | Verificação opcional por GitHub Releases ao abrir, notas trilíngues, download somente após clique e validação de nome/tamanho/SHA-256 antes da instalação |
+| Atualizações públicas | Consulta antecipada por GitHub Releases ao abrir, download/validação automática por usuário, cache verificado e instalação somente após clique explícito |
 | Ruffle | Avaliação futura |
 | Favoritos/múltiplos servidores fixados por conta | Melhoria futura |
 | Login social | Melhoria futura |
@@ -38,11 +38,12 @@ Launcher Windows para Legend Online, escrito do zero em C#/.NET 10 e distribuíd
 - Identidade pública **Urus Launcher** com monograma “U” original, sem touro/escudo/trade dress, slogan localizado e executável principal `UrusLauncher.App.exe`. Namespaces/projetos `LegendLauncher.*` permanecem internos.
 - Composição visual fiel ao mock de referência em 1584×992: contas à esquerda, catálogo ao centro e sessão à direita, com adaptação para outros tamanhos.
 - MVVM simples, com responsabilidades separadas entre launcher, apresentação do catálogo, perfis, abertura e workspace multissessão.
-- Localização dinâmica por 203 chaves em cada catálogo incorporado `pt-BR`, `en-US` e `es-ES`. Bindings observáveis atualizam launcher, workspace, atualizações, modal de apoio e janelas desacopladas sem reiniciar sessões; mensagens calculadas preservam chave/argumentos para serem reapresentadas na cultura ativa.
+- Localização dinâmica por 204 chaves em cada catálogo incorporado `pt-BR`, `en-US` e `es-ES`. Bindings observáveis atualizam launcher, workspace, atualizações, modal de apoio e janelas desacopladas sem reiniciar sessões; mensagens calculadas preservam chave/argumentos para serem reapresentadas na cultura ativa.
 - O catálogo é ordenado por perfil e plataforma: `RecentServerIdsByPlatform[plataforma][0]`, gravado após uma abertura aceita, aparece primeiro com **RECOMENDADO**; os campos escalares são somente espelho/fallback de perfis antigos. O servidor válido já lançado mais recentemente, calculado por `StartTimeUtc` e desempate por `NumericId`, recebe **MAIS RECENTE**; um divisor localizado introduz os demais servidores e é recalculado durante a busca. Os dois selos podem coexistir.
 - `HttpClient` para catálogo/Passport e curl nativo do Windows somente na entrada pós-login que a Cloudflare bloqueia no transporte .NET.
 - Windows Credential Manager para senhas; o JSON local contém somente perfis e catálogo não sensíveis.
-- GitHub Releases público para atualização opcional: o aplicativo consulta somente `Jessielriffel2/UrusLauncher`; se a API responder `403` ou `429` por rate limit, a versão 1.1.1+ tenta o manifesto público do último release. Redirects continuam restritos a HTTPS/GitHub, o download vai para `%LocalAppData%\LegendLauncherNext\updates` e o setup só é executado depois de validar tamanho e SHA-256.
+- GitHub Releases público para atualização preparada: o aplicativo consulta somente `Jessielriffel2/UrusLauncher`; se a API responder `403` ou `429` por rate limit, a versão 1.1.1+ tenta o manifesto público do último release. Na 1.1.3+, uma versão superior é baixada e validada em `%LocalAppData%\LegendLauncherNext\updates`, mas o setup só é executado depois do clique explícito em **Instalar**.
+- Uma única instância do Urus Launcher fica ativa por sessão do Windows; tentar abri-lo novamente restaura/traz a janela existente para frente. Assim, perfis multissessão permanecem no mesmo processo e duas instâncias não disputam o cache do updater.
 - WinForms/AxHost apenas no `LegendLauncher.GameHost.Legacy`, um processo x64 separado do launcher.
 - Named Pipe restrito ao usuário e aos processos esperados para entregar a sessão autenticada ao GameHost sem expô-la na linha de comando.
 - Um HWND-proxy pertencente ao WPF incorpora a janela validada do GameHost; o ActiveX continua no processo separado. Cada destino ativo (perfil + versão + servidor) tem PID/HWND próprios.
@@ -94,25 +95,25 @@ Título, instruções, feedback, tooltips e acessibilidade existem em `pt-BR`, `
 
 ## Atualizações públicas
 
-Em cada abertura, o launcher consulta uma vez e de forma assíncrona o último release público de `Jessielriffel2/UrusLauncher`. Um cartão discreto no canto inferior esquerdo mostra a busca, informa quando a versão atual já é a mais nova ou apresenta uma versão superior. Falha de internet, ausência do primeiro release ou documento inválido não bloqueia catálogo, login ou jogo; o cartão permite tentar novamente.
+Em cada abertura, o launcher inicia antecipadamente e de forma assíncrona uma consulta ao último release público de `Jessielriffel2/UrusLauncher`. Um cartão discreto no canto inferior esquerdo mostra a busca e a versão instalada. Quando está atualizado ou ocorre uma falha recuperável, a pessoa pode consultar novamente sem reiniciar o programa.
 
-Desde a 1.1.1, se a API pública do GitHub responder especificamente `403` ou `429` por limite compartilhado, a consulta tenta `https://github.com/Jessielriffel2/UrusLauncher/releases/latest/download/update-manifest.json`. Essa rota alternativa descobre apenas o mesmo manifesto público: não baixa o instalador, não ignora o clique em **Atualizar** e não reduz as validações de repositório, versão, origem, nome, tamanho ou SHA-256. Isso melhora o comportamento em empresas, provedores e redes nas quais muitas máquinas compartilham um IP.
+Desde a 1.1.1, se a API pública do GitHub responder especificamente `403` ou `429` por limite compartilhado, a consulta tenta `https://github.com/Jessielriffel2/UrusLauncher/releases/latest/download/update-manifest.json`. Essa rota alternativa descobre apenas o mesmo manifesto público e não reduz as validações de repositório, versão, origem, nome, tamanho ou SHA-256. Isso melhora o comportamento em empresas, provedores e redes nas quais muitas máquinas compartilham um IP.
 
-Encontrar uma versão nova **não baixa nem executa nada automaticamente**. A pessoa pode:
+Na 1.1.3+, encontrar uma versão superior inicia automaticamente o download e a validação no diretório privado do usuário. Isso não executa código e não bloqueia catálogo, login ou jogo. Depois, a pessoa pode:
 
 - continuar usando a versão instalada;
 - abrir as novidades no idioma atual;
-- clicar em **Atualizar** quando não houver conta em jogo.
+- clicar em **Instalar** quando não houver conta em jogo.
 
-Durante download/instalação, novas sessões ficam bloqueadas. A ausência de sessões é verificada antes e novamente depois do download. O setup é salvo primeiro como `.part` em `%LocalAppData%\LegendLauncherNext\updates`; URLs/repositório, tag, versão, nome, tamanho e SHA-256 são validados antes da execução. O instalador então fecha a App e relança a versão instalada. Perfis, settings e credenciais permanecem fora da pasta de instalação.
+O setup é salvo primeiro como `.part` em `%LocalAppData%\LegendLauncherNext\updates`; URLs/repositório, tag, versão, nome, tamanho e SHA-256 são validados antes de ele ficar **pronto para instalar**. Um setup final já existente só é reaproveitado após nova conferência de tamanho e SHA-256. A janela total de download é de uma hora para tolerar conexões lentas. A instalação é bloqueada enquanto houver sessão ativa ou login em andamento, e o arquivo é revalidado imediatamente antes da execução. O instalador então fecha a App e relança a versão instalada. Perfis, settings e credenciais permanecem fora da pasta de instalação.
 
 Os patch notes de cada versão nascem de `docs/releases/vX.Y.Z.json` em `pt-BR`, `en-US` e `es-ES`. O pipeline usa a mesma fonte para gerar `update-manifest.json` e o corpo do GitHub Release, evitando notas divergentes.
 
 **Limite de confiança:** SHA-256 detecta corrupção e divergência de artefato, mas não substitui assinatura de código. Os pacotes atuais não possuem Authenticode e o Windows pode exibir SmartScreen. Uma futura assinatura deve acontecer antes do hash final. Consulte [atualizacao.md](docs/modulos/atualizacao.md), [ADR-008](docs/decisoes/ADR-008-atualizacoes-github-releases.md) e [SECURITY.md](SECURITY.md).
 
-### Bootstrap e atualização para 1.1.2
+### Bootstrap e atualização para 1.1.3
 
-A versão 1.0.1 não possui atualizador e precisa receber manualmente o instalador público mais recente, agora 1.1.2. A 1.1.0 foi o primeiro bootstrap, mas sua consulta pode esbarrar na cota da API em redes de IP compartilhado; nesse caso, a passagem também é manual. A 1.1.1 já possui o fallback público de manifesto e oferece a 1.1.2 dentro do launcher. A instalação continua bloqueada enquanto houver uma conta jogando; feche as sessões e clique em **Atualizar** para preservar perfis, settings e senhas.
+A versão 1.0.1 não possui atualizador e precisa receber manualmente o instalador público mais recente. A 1.1.0 foi o primeiro bootstrap, mas sua consulta pode esbarrar na cota da API em redes de IP compartilhado; nesse caso, a passagem também é manual. As versões 1.1.1 e 1.1.2 detectam a 1.1.3 pelo fluxo anterior: nessa passagem única, a pessoa ainda clica em **Atualizar** para baixar e instalar. Depois de instalada a 1.1.3, versões futuras são baixadas e validadas automaticamente e ficam aguardando o clique em **Instalar**. Perfis, settings e senhas permanecem preservados.
 
 ## Desenvolvimento
 
@@ -139,19 +140,19 @@ O projeto continua com o caminho-fonte `src\LegendLauncher.App`, mas o build ger
 Com Inno Setup 6 instalado:
 
 ```powershell
-.\scripts\build-urus-distribution.ps1 -Version 1.1.2
+.\scripts\build-urus-distribution.ps1 -Version 1.1.3
 ```
 
 O script executa a suíte Release, publica App e GameHost self-contained para `win-x64`, valida o payload e produz:
 
-- `artifacts\urus-distribution\UrusLauncher-Setup-1.1.2-win-x64.exe`;
-- `artifacts\urus-distribution\UrusLauncher-1.1.2-portable-win-x64.zip`;
+- `artifacts\urus-distribution\UrusLauncher-Setup-1.1.3-win-x64.exe`;
+- `artifacts\urus-distribution\UrusLauncher-1.1.3-portable-win-x64.zip`;
 - `artifacts\urus-distribution\distribution-manifest.json`;
 - `artifacts\urus-distribution\update-manifest.json`;
 - `artifacts\urus-distribution\RELEASE_NOTES.md`;
 - `artifacts\urus-distribution\SHA256SUMS.txt`.
 
-Antes da build, deve existir `docs\releases\v1.1.2.json` (ou o arquivo da versão solicitada) com título e notas não vazias nos três idiomas. Para publicar no repositório público, envie uma tag exatamente no formato `vMAJOR.MINOR.PATCH`. O workflow separa build (`contents: read`) de publicação (`contents: write`), usa actions fixadas por commit e entrega ao job de release somente os artefatos validados. Nenhum PAT é incorporado ao aplicativo.
+Antes da build, deve existir `docs\releases\v1.1.3.json` (ou o arquivo da versão solicitada) com título e notas não vazias nos três idiomas. Para publicar no repositório público, envie uma tag exatamente no formato `vMAJOR.MINOR.PATCH`. O workflow separa build (`contents: read`) de publicação (`contents: write`), usa actions fixadas por commit e entrega ao job de release somente os artefatos validados. Nenhum PAT é incorporado ao aplicativo.
 
 O instalador é per-user, sem elevação, e usa `%LocalAppData%\Programs\Urus Launcher`; oferece inglês, português brasileiro e espanhol e atalho de desktop opcional. O ZIP contém a pasta inteira `UrusLauncher`: extraia antes de executar `UrusLauncher.App.exe`.
 
@@ -184,9 +185,9 @@ Tentar jogar novamente com um perfil que já está em execução apenas selecion
 
 O Adobe Flash ActiveX é legado e descontinuado. Ele nunca é carregado no processo WPF, não é registrado globalmente e não deve ser redistribuído sem permissão de licença. URIs de abertura são limitadas a HTTPS e origens aprovadas, e senha/sessão não entram em argumentos de processo nem em mensagens de diagnóstico.
 
-Testes automatizados cobrem composição de catálogo, perfis, cofre, migração de estado por plataforma, autenticação OAS cruzada, isolamento SevenWan, alvo exato de sessão, transporte compatível, políticas de URI, settings, localização e propagação da cultura, pedido de apoio/intervalo/PIX/QR, áudio por PID e descarte concorrente, layouts 1/2/4, detach/reattach, maximização taskbar-aware, cleanup de sessão não adotada e protocolo launcher/GameHost. O updater possui contratos próprios para API/manifesto, fallback de rate limit, allowlist e redirects, limites, download progressivo, SHA-256, confinamento, limpeza de setups antigos, bloqueio/revalidação de sessões, UI localizada e workflow build/publish com permissões separadas. `LocalizationCatalogTests.cs` fixa 203 chaves equivalentes nos três idiomas. A validação histórica 1.0.1 permanece documentada em [`design-qa.md`](design-qa.md); números e hashes da build 1.1.2 estão registrados na documentação de distribuição.
+Testes automatizados cobrem composição de catálogo, perfis, cofre, migração de estado por plataforma, autenticação OAS cruzada, isolamento SevenWan, alvo exato de sessão, transporte compatível, políticas de URI, settings, localização e propagação da cultura, pedido de apoio/intervalo/PIX/QR, áudio por PID e descarte concorrente, layouts 1/2/4, detach/reattach, maximização taskbar-aware, cleanup de sessão não adotada e protocolo launcher/GameHost. O updater possui contratos próprios para API/manifesto, fallback de rate limit, allowlist e redirects, download automático sem execução, cache revalidado, SHA-256, confinamento, instalação sob clique, caminho por usuário e workflow build/publish com permissões separadas. `LocalizationCatalogTests.cs` fixa 204 chaves equivalentes nos três idiomas. A validação histórica 1.0.1 permanece documentada em [`design-qa.md`](design-qa.md); resultados e hashes públicos ficam registrados na documentação de distribuição.
 
-A validação 1.1.2 concluiu **445/445** testes em Debug, **445/445** em Release e repetiu **445/445** durante o build canônico. O smoke self-contained chegou à janela principal por sete segundos; os hashes exatos do setup, ZIP e manifesto estão em [distribuicao-windows.md](docs/modulos/distribuicao-windows.md).
+A validação 1.1.3 concluiu **461/461** testes em Debug e **461/461** em Release. O build canônico repete a suíte antes do smoke self-contained e da criação do setup, ZIP, manifesto e checksums; os resultados finais ficam em [distribuicao-windows.md](docs/modulos/distribuicao-windows.md).
 
 O layout novo compila e preserva as funções documentadas do launcher. A captura autenticada da build final foi comparada lado a lado com a referência e aprovada em [`design-qa.md`](design-qa.md).
 

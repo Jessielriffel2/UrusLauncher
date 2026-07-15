@@ -74,6 +74,61 @@ public sealed class WindowsDistributionContractTests
         Assert.DoesNotContain("Get-FileHash", source, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void DistributedSources_DoNotEmbedADeveloperWindowsProfilePath()
+    {
+        string root = FindRepositoryRoot();
+        string[] productionRoots =
+        [
+            Path.Combine(root, "src"),
+            Path.Combine(root, "scripts"),
+            Path.Combine(root, "installer"),
+            Path.Combine(root, ".github"),
+        ];
+        string[] allowedExtensions = [".cs", ".xaml", ".json", ".ps1", ".iss", ".yml"];
+
+        string[] filesWithAbsoluteUserPath = productionRoots
+            .Where(Directory.Exists)
+            .SelectMany(path => Directory.EnumerateFiles(path, "*", SearchOption.AllDirectories))
+            .Where(path => allowedExtensions.Contains(
+                Path.GetExtension(path),
+                StringComparer.OrdinalIgnoreCase))
+            .Where(path => !path.Contains(
+                $"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}",
+                StringComparison.OrdinalIgnoreCase))
+            .Where(path => !path.Contains(
+                $"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}",
+                StringComparison.OrdinalIgnoreCase))
+            .Where(path =>
+            {
+                string source = File.ReadAllText(path);
+                return source.Contains("C:\\Users\\", StringComparison.OrdinalIgnoreCase) ||
+                    source.Contains("C:/Users/", StringComparison.OrdinalIgnoreCase);
+            })
+            .Select(path => Path.GetRelativePath(root, path))
+            .ToArray();
+
+        Assert.Empty(filesWithAbsoluteUserPath);
+    }
+
+    [Fact]
+    public void AppUsesASessionLocalSingleInstanceGuard()
+    {
+        string root = FindRepositoryRoot();
+        string source = File.ReadAllText(Path.Combine(
+            root,
+            "src",
+            "LegendLauncher.App",
+            "App.xaml.cs"));
+
+        Assert.Contains(@"Local\UrusLauncher.App.SingleInstance", source, StringComparison.Ordinal);
+        Assert.Contains("new Mutex(", source, StringComparison.Ordinal);
+        Assert.Contains("TryActivateExistingInstance();", source, StringComparison.Ordinal);
+        Assert.Contains("candidate.SessionId == currentSessionId", source, StringComparison.Ordinal);
+        Assert.Contains("if (IsIconic(window))", source, StringComparison.Ordinal);
+        Assert.Contains("_singleInstanceMutex.ReleaseMutex();", source, StringComparison.Ordinal);
+    }
+
     private static int CountOccurrences(string source, string value)
     {
         int count = 0;

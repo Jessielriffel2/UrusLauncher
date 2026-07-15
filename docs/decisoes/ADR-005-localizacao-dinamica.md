@@ -12,7 +12,7 @@ Uma tradução puramente estática não atualizaria janelas abertas. Guardar fra
 ## Decisão
 
 1. Suportar três culturas canônicas: `pt-BR`, `en-US` e `es-ES`. Entradas das famílias `pt`, `en` e `es` são normalizadas; entrada ausente ou não suportada usa `pt-BR`.
-2. Manter paridade integral entre os três catálogos JSON incorporados ao assembly `LegendLauncher.App`; após o fluxo de atualização, cada catálogo possui 203 chaves. Arquivos externos não participam do runtime.
+2. Manter paridade integral entre os três catálogos JSON incorporados ao assembly `LegendLauncher.App`; após o fluxo de atualização preparada, cada catálogo possui 204 chaves. Arquivos externos não participam do runtime.
 3. Usar uma única instância `LocalizationService.Current`, inicializada pelo `App` antes da janela principal. O serviço expõe indexador, `Get`, `Format`, cultura e eventos observáveis.
 4. Textos estáticos WPF usam `LocalizeExtension`, que devolve um binding para o indexador. A troca emite `PropertyChanged("Item[]")`, atualizando a janela principal, workspace e janelas desacopladas existentes.
 5. Textos de estado usam `LocalizedMessage` com chave e argumentos. O texto é resolvido no getter, permitindo reapresentar o mesmo estado na nova cultura.

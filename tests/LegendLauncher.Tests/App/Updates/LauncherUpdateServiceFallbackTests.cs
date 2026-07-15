@@ -7,6 +7,27 @@ namespace LegendLauncher.Tests.App.Updates;
 
 public sealed class LauncherUpdateServiceFallbackTests
 {
+    [Fact]
+    public async Task Version112Detects113ThroughPublicManifestFallback()
+    {
+        using var directory = new TemporaryUpdateDirectory();
+        using var handler = new QueueHttpMessageHandler();
+        JsonObject manifest = UpdateTestData.CreateManifest("1.1.3");
+        handler.Enqueue(new HttpResponseMessage(HttpStatusCode.Forbidden));
+        handler.Enqueue(UpdateTestData.Response(UpdateTestData.Serialize(manifest)));
+        var service = CreateService(handler, directory);
+
+        LauncherUpdateRelease? release = await service.CheckForUpdateAsync(
+            new Version(1, 1, 2));
+
+        Assert.NotNull(release);
+        Assert.Equal(new Version(1, 1, 3), release.Version);
+        Assert.Equal("v1.1.3", release.TagName);
+        Assert.Equal(
+            "UrusLauncher-Setup-1.1.3-win-x64.exe",
+            release.Installer.Name);
+    }
+
     [Theory]
     [InlineData(HttpStatusCode.Forbidden)]
     [InlineData(HttpStatusCode.TooManyRequests)]

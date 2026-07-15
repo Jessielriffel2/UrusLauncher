@@ -81,4 +81,43 @@ public sealed class GameAudioServiceTests
         Exception? exception = Record.Exception(() => service.SetMuted(false));
         Assert.Null(exception);
     }
+
+    [Fact]
+    public void RefreshRequestedDuringAnActiveApplyIsReplayed()
+    {
+        using var firstApplyStarted = new ManualResetEventSlim();
+        using var releaseFirstApply = new ManualResetEventSlim();
+        using var replayedApply = new ManualResetEventSlim();
+        int applyCount = 0;
+        using var service = new GameAudioService(
+            (_, muted) =>
+            {
+                if (Interlocked.Increment(ref applyCount) == 1)
+                {
+                    firstApplyStarted.Set();
+                    releaseFirstApply.Wait(TimeSpan.FromSeconds(2));
+                    return;
+                }
+
+                if (!muted)
+                {
+                    replayedApply.Set();
+                }
+            },
+            TimeSpan.FromHours(1));
+
+        service.RegisterProcess(7001);
+        try
+        {
+            Assert.True(firstApplyStarted.Wait(TimeSpan.FromSeconds(2)));
+            service.SetMuted(false);
+        }
+        finally
+        {
+            releaseFirstApply.Set();
+        }
+
+        Assert.True(replayedApply.Wait(TimeSpan.FromSeconds(2)));
+        Assert.False(service.IsMuted);
+    }
 }

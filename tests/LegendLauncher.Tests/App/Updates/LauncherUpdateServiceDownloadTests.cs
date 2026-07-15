@@ -32,6 +32,67 @@ public sealed class LauncherUpdateServiceDownloadTests
     }
 
     [Fact]
+    public async Task ValidCachedInstallerIsReusedWithoutNetworkAccess()
+    {
+        using var directory = new TemporaryUpdateDirectory();
+        using var handler = new QueueHttpMessageHandler();
+        LauncherUpdateRelease release = UpdateTestData.CreateReleaseModel();
+        string finalPath = Path.Combine(directory.Path, release.Installer.Name);
+        await File.WriteAllBytesAsync(finalPath, UpdateTestData.InstallerBytes);
+        var service = CreateService(handler, directory);
+        var progressValues = new List<double>();
+
+        DownloadedLauncherInstaller installer = await service.DownloadInstallerAsync(
+            release,
+            new ImmediateProgress(progressValues.Add));
+
+        Assert.Equal(finalPath, installer.FilePath);
+        Assert.Equal(new[] { 0d, 1d }, progressValues);
+        Assert.Empty(handler.RequestedUris);
+        Assert.Equal(UpdateTestData.InstallerBytes, await File.ReadAllBytesAsync(finalPath));
+    }
+
+    [Fact]
+    public async Task InvalidCachedInstallerIsRemovedAndFreshCopyIsDownloaded()
+    {
+        using var directory = new TemporaryUpdateDirectory();
+        using var handler = new QueueHttpMessageHandler();
+        handler.Enqueue(UpdateTestData.Response(UpdateTestData.InstallerBytes));
+        LauncherUpdateRelease release = UpdateTestData.CreateReleaseModel();
+        string finalPath = Path.Combine(directory.Path, release.Installer.Name);
+        await File.WriteAllBytesAsync(
+            finalPath,
+            new byte[checked((int)release.Installer.Bytes)]);
+        var service = CreateService(handler, directory);
+
+        DownloadedLauncherInstaller installer = await service.DownloadInstallerAsync(release);
+
+        Assert.Equal(finalPath, installer.FilePath);
+        Assert.Single(handler.RequestedUris);
+        Assert.Equal(UpdateTestData.InstallerBytes, await File.ReadAllBytesAsync(finalPath));
+        Assert.False(File.Exists(finalPath + ".part"));
+    }
+
+    [Fact]
+    public async Task CancellationBeforeCachedInstallerVerificationPropagatesWithoutNetworkAccess()
+    {
+        using var directory = new TemporaryUpdateDirectory();
+        using var handler = new QueueHttpMessageHandler();
+        using var cancellation = new CancellationTokenSource();
+        LauncherUpdateRelease release = UpdateTestData.CreateReleaseModel();
+        string finalPath = Path.Combine(directory.Path, release.Installer.Name);
+        await File.WriteAllBytesAsync(finalPath, UpdateTestData.InstallerBytes);
+        var service = CreateService(handler, directory);
+        cancellation.Cancel();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
+            service.DownloadInstallerAsync(release, cancellationToken: cancellation.Token));
+
+        Assert.Empty(handler.RequestedUris);
+        Assert.True(File.Exists(finalPath));
+    }
+
+    [Fact]
     public async Task DownloadFollowsAllowedRedirect()
     {
         using var directory = new TemporaryUpdateDirectory();

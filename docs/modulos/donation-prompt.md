@@ -27,7 +27,7 @@ O recurso não interfere em login, catálogo ou sessões abertas. Permanecer com
 | `src/LegendLauncher.App/Services/LauncherSettingsService.cs:7` | `LauncherSettingsSnapshot` | Inclui `LastDonationPromptUtc` não sensível junto das demais preferências. |
 | `src/LegendLauncher.App/Services/LauncherSettingsService.cs:96` | `SaveDonationPromptShownAsync(...)` | Converte para UTC e atualiza somente o horário do pedido por leitura-modificação-gravação atômica. |
 | `src/LegendLauncher.App/Assets/paypal-donation-qr.jpeg` | QR PayPal | Recurso WPF binário copiado sem transformação; 62.216 bytes e SHA-256 fixo. |
-| `src/LegendLauncher.App/Localization/Resources/*.json:156` | Textos de apoio | 26 chaves `Donation_*` dentro dos 203 textos de cada catálogo: título, explicação, brincadeira dos diamantes, instruções PayPal/PIX, feedback de cópia, fechamento e automação em `pt-BR`, `en-US` e `es-ES`. |
+| `src/LegendLauncher.App/Localization/Resources/*.json:156` | Textos de apoio | 26 chaves `Donation_*` dentro dos 204 textos de cada catálogo: título, explicação, brincadeira dos diamantes, instruções PayPal/PIX, feedback de cópia, fechamento e automação em `pt-BR`, `en-US` e `es-ES`. |
 
 ## Fluxo automático e manual
 
@@ -61,5 +61,5 @@ Todos os textos controlados pelo modal usam os catálogos incorporados `pt-BR`, 
 - `tests/LegendLauncher.Tests/App/DonationPromptTests.cs:12` cobre primeira abertura, antes/exatamente/depois de cinco horas, timestamp futuro, abertura manual, fechamento e avaliação única por abertura.
 - `tests/LegendLauncher.Tests/App/DonationPromptAssetTests.cs:18` fixa bytes/hash/empacotamento do QR; os casos seguintes fixam painel branco sem clip, entrada manual, overlay no topo, Escape, foco cíclico e ações de fechamento. A partir da linha 124, o contrato exige painel PIX acessível, chave selecionável, feedback localizado e cópia exata do CNPJ.
 - Os testes de settings verificam que timestamp, idioma, perfil, mudo e layout sobrevivem a atualizações independentes.
-- Os contratos de localização verificam as 203 chaves e referências XAML nos três idiomas.
+- Os contratos de localização verificam as 204 chaves e referências XAML nos três idiomas.
 - Os contratos `DonationPromptTests` e `DonationPromptAssetTests` somam 14/14 casos aprovados. Na etapa específica do PIX, a suíte completa possuía 345 testes; depois dos contratos de branding/distribuição, a contagem final é **358/358**. O QA visual real do modal PayPal e a pendência de confirmação manual específica do bloco PIX estão registrados em [`design-qa.md`](../../design-qa.md).

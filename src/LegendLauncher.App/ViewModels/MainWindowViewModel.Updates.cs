@@ -12,6 +12,7 @@ internal sealed partial class MainWindowViewModel
     private Version _currentVersion = null!;
     private CancellationTokenSource? _updateCancellation;
     private LauncherUpdateRelease? _availableUpdate;
+    private DownloadedLauncherInstaller? _downloadedInstaller;
     private LauncherUpdateState _updateState;
     private bool _isUpdateNotesOpen;
     private double _updateProgress;
@@ -28,19 +29,21 @@ internal sealed partial class MainWindowViewModel
 
     public bool IsUpdateCardVisible => _updateState != LauncherUpdateState.Idle;
 
-    public bool IsUpdateAvailable => _updateState == LauncherUpdateState.Available;
+    public bool IsUpdateReadyToInstall =>
+        _updateState == LauncherUpdateState.ReadyToInstall;
 
     public bool IsUpdateChecking => _updateState == LauncherUpdateState.Checking;
 
     public bool IsUpdateDownloading => _updateState == LauncherUpdateState.Downloading;
 
-    private bool IsUpdateOperationActive => _updateState is
-        LauncherUpdateState.Downloading or
-        LauncherUpdateState.Installing;
+    public bool IsUpdateCheckActionVisible => _updateState is
+        LauncherUpdateState.Current or
+        LauncherUpdateState.Failed;
+
+    private bool IsUpdateOperationActive =>
+        _updateState == LauncherUpdateState.Installing;
 
     public bool IsUpdateProgressVisible => _updateState == LauncherUpdateState.Downloading;
-
-    public bool IsUpdateRetryVisible => _updateState == LauncherUpdateState.Failed;
 
     public bool IsUpdateNotesOpen
     {
@@ -70,8 +73,8 @@ internal sealed partial class MainWindowViewModel
     public Brush UpdateStatusBrush => _updateState switch
     {
         LauncherUpdateState.Current => OnlineBrush,
-        LauncherUpdateState.Available or
         LauncherUpdateState.Downloading or
+        LauncherUpdateState.ReadyToInstall or
         LauncherUpdateState.Installing => WarningBrush,
         LauncherUpdateState.Failed => ErrorBrush,
         _ => MutedBrush,
@@ -83,10 +86,10 @@ internal sealed partial class MainWindowViewModel
     {
         LauncherUpdateState.Checking => _localization.Get("Update_CheckingTitle"),
         LauncherUpdateState.Current => _localization.Get("Update_CurrentTitle"),
-        LauncherUpdateState.Available => _localization.Format(
-            "Update_AvailableTitle",
-            _availableUpdate?.Version.ToString(3) ?? string.Empty),
         LauncherUpdateState.Downloading => _localization.Get("Update_DownloadingTitle"),
+        LauncherUpdateState.ReadyToInstall => _localization.Format(
+            "Update_ReadyTitle",
+            _availableUpdate?.Version.ToString(3) ?? string.Empty),
         LauncherUpdateState.Installing => _localization.Get("Update_InstallingTitle"),
         LauncherUpdateState.Failed => _localization.Get("Update_FailedTitle"),
         _ => string.Empty,
@@ -95,13 +98,15 @@ internal sealed partial class MainWindowViewModel
     public string UpdateDetailText => _updateState switch
     {
         LauncherUpdateState.Checking => _localization.Get("Update_CheckingDetail"),
-        LauncherUpdateState.Current => _localization.Get("Update_CurrentDetail"),
-        LauncherUpdateState.Available when Workspace.HasSessions =>
-            _localization.Get("Update_CloseSessions"),
-        LauncherUpdateState.Available => _localization.Get("Update_AvailableDetail"),
+        LauncherUpdateState.Current => _localization.Format(
+            "Update_CurrentDetail",
+            _currentVersion.ToString(3)),
         LauncherUpdateState.Downloading => _localization.Format(
             "Update_DownloadingDetail",
             Math.Round(UpdateProgress)),
+        LauncherUpdateState.ReadyToInstall when IsLaunching || Workspace.HasSessions =>
+            _localization.Get("Update_CloseSessions"),
+        LauncherUpdateState.ReadyToInstall => _localization.Get("Update_ReadyDetail"),
         LauncherUpdateState.Installing => _localization.Get("Update_InstallingDetail"),
         LauncherUpdateState.Failed => _localization.Get("Update_FailedDetail"),
         _ => string.Empty,
@@ -116,7 +121,10 @@ internal sealed partial class MainWindowViewModel
 
     public string UpdateActionText => _localization.Get("Update_Action");
 
-    public string UpdateRetryText => _localization.Get("Update_Retry");
+    public string UpdateCheckActionText => _localization.Get(
+        _updateState == LauncherUpdateState.Current
+            ? "Update_CheckAgain"
+            : "Update_Retry");
 
     public string UpdateViewNotesText => _localization.Get("Update_ViewNotes");
 
@@ -165,7 +173,9 @@ internal sealed partial class MainWindowViewModel
 
         CancellationTokenSource cancellation = ReplaceUpdateCancellation();
         _availableUpdate = null;
+        _downloadedInstaller = null;
         IsUpdateNotesOpen = false;
+        UpdateProgress = 0;
         SetUpdateState(LauncherUpdateState.Checking);
         try
         {
@@ -177,17 +187,31 @@ internal sealed partial class MainWindowViewModel
                 return;
             }
 
+            if (release is null)
+            {
+                SetUpdateState(LauncherUpdateState.Current);
+                return;
+            }
+
             _availableUpdate = release;
-            SetUpdateState(release is null
-                ? LauncherUpdateState.Current
-                : LauncherUpdateState.Available);
+            SetUpdateState(LauncherUpdateState.Downloading);
+            var progress = new Progress<double>(value => UpdateProgress = value * 100);
+            _downloadedInstaller = await _updateService
+                .DownloadInstallerAsync(release, progress, cancellation.Token)
+                .ConfigureAwait(true);
+            if (cancellation.IsCancellationRequested || _disposed)
+            {
+                return;
+            }
+
+            SetUpdateState(LauncherUpdateState.ReadyToInstall);
         }
         catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
         {
         }
         catch (Exception exception) when (IsExpectedUpdateException(exception))
         {
-            System.Diagnostics.Debug.WriteLine($"Update check failed: {exception.Message}");
+            System.Diagnostics.Debug.WriteLine($"Update preparation failed: {exception.Message}");
             SetUpdateState(LauncherUpdateState.Failed);
         }
         finally
@@ -198,7 +222,10 @@ internal sealed partial class MainWindowViewModel
 
     internal async Task InstallUpdateAsync()
     {
-        if (_availableUpdate is null || Workspace.HasSessions)
+        if (_downloadedInstaller is null ||
+            _updateState != LauncherUpdateState.ReadyToInstall ||
+            IsLaunching ||
+            Workspace.HasSessions)
         {
             OnPropertyChanged(nameof(UpdateDetailText));
             return;
@@ -206,28 +233,11 @@ internal sealed partial class MainWindowViewModel
 
         CancellationTokenSource cancellation = ReplaceUpdateCancellation();
         IsUpdateNotesOpen = false;
-        UpdateProgress = 0;
-        SetUpdateState(LauncherUpdateState.Downloading);
+        SetUpdateState(LauncherUpdateState.Installing);
         try
         {
-            var progress = new Progress<double>(value => UpdateProgress = value * 100);
-            DownloadedLauncherInstaller installer = await _updateService
-                .DownloadInstallerAsync(_availableUpdate, progress, cancellation.Token)
-                .ConfigureAwait(true);
-            if (cancellation.IsCancellationRequested || _disposed)
-            {
-                return;
-            }
-
-            if (Workspace.HasSessions)
-            {
-                SetUpdateState(LauncherUpdateState.Available);
-                return;
-            }
-
-            SetUpdateState(LauncherUpdateState.Installing);
             await _updateService
-                .LaunchInstallerAsync(installer, cancellation.Token)
+                .LaunchInstallerAsync(_downloadedInstaller, cancellation.Token)
                 .ConfigureAwait(true);
             UpdateInstallerStarted?.Invoke(this, EventArgs.Empty);
         }
@@ -254,13 +264,15 @@ internal sealed partial class MainWindowViewModel
     private bool CanInstallUpdate() =>
         !_disposed &&
         _availableUpdate is not null &&
-        _updateState == LauncherUpdateState.Available &&
+        _downloadedInstaller is not null &&
+        _updateState == LauncherUpdateState.ReadyToInstall &&
+        !IsLaunching &&
         !Workspace.HasSessions;
 
     private void SetUpdateState(LauncherUpdateState state)
     {
         _updateState = state;
-        if (state != LauncherUpdateState.Available)
+        if (state != LauncherUpdateState.ReadyToInstall)
         {
             IsUpdateNotesOpen = false;
         }
@@ -271,11 +283,11 @@ internal sealed partial class MainWindowViewModel
     private void RefreshUpdateProperties()
     {
         OnPropertyChanged(nameof(IsUpdateCardVisible));
-        OnPropertyChanged(nameof(IsUpdateAvailable));
+        OnPropertyChanged(nameof(IsUpdateReadyToInstall));
         OnPropertyChanged(nameof(IsUpdateChecking));
         OnPropertyChanged(nameof(IsUpdateDownloading));
         OnPropertyChanged(nameof(IsUpdateProgressVisible));
-        OnPropertyChanged(nameof(IsUpdateRetryVisible));
+        OnPropertyChanged(nameof(IsUpdateCheckActionVisible));
         OnPropertyChanged(nameof(UpdateStatusBrush));
         OnPropertyChanged(nameof(UpdateEyebrowText));
         OnPropertyChanged(nameof(UpdateTitleText));
@@ -283,7 +295,7 @@ internal sealed partial class MainWindowViewModel
         OnPropertyChanged(nameof(UpdateNotesText));
         OnPropertyChanged(nameof(UpdateNotesTitleText));
         OnPropertyChanged(nameof(UpdateActionText));
-        OnPropertyChanged(nameof(UpdateRetryText));
+        OnPropertyChanged(nameof(UpdateCheckActionText));
         OnPropertyChanged(nameof(UpdateViewNotesText));
         OnPropertyChanged(nameof(UpdateCloseNotesText));
         OnPropertyChanged(nameof(UpdateSessionWarningText));
@@ -344,8 +356,8 @@ internal sealed partial class MainWindowViewModel
         Idle,
         Checking,
         Current,
-        Available,
         Downloading,
+        ReadyToInstall,
         Installing,
         Failed,
     }

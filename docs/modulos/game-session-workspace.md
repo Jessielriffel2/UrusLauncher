@@ -16,7 +16,7 @@ O módulo oferece abas por conta, seleção rápida, layouts de uma, duas ou qua
 | `src/LegendLauncher.App/Services/LauncherSettingsService.cs:60` | Métodos de atualização | `SaveLastSelectedProfileAsync`, `SaveGamePreferencesAsync` e `SaveLanguageAsync` (linha 79) alteram campos independentes sem apagar as demais preferências. |
 | `src/LegendLauncher.App/Services/GameAudioService.cs:3` | `GameAudioService` | Mantém o conjunto de PIDs dos GameHosts e reaplica o estado global de mudo em intervalo de 750 ms, cobrindo sessões de áudio que aparecem depois do processo. Falhas recuperáveis de Core Audio são capturadas sem derrubar o launcher. |
 | `src/LegendLauncher.App/Services/GameAudioService.cs:47` | `SetMuted` / `RegisterProcess` / `UnregisterProcess` | Altera o estado global e controla quais processos pertencem ao workspace; não afeta áudio de outros aplicativos. |
-| `src/LegendLauncher.App/Services/GameAudioService.cs:86` | `RefreshNow()` / `Dispose()` | Serializa aplicações concorrentes; `Dispose` (linha 123) para o timer e aguarda callbacks já iniciados antes de liberar o serviço. |
+| `src/LegendLauncher.App/Services/GameAudioService.cs:87` | `RefreshNow()` / `Dispose()` | Serializa aplicações concorrentes e coalesce uma solicitação recebida durante callback ativo para reaplicá-la em seguida; `Dispose` para o timer e aguarda callbacks já iniciados antes de liberar o serviço. |
 | `src/LegendLauncher.App/Services/CoreAudioInterop.cs:5` | `CoreAudioSessionController.TrySetMute` | Enumera as sessões do endpoint de renderização padrão via Core Audio e chama `ISimpleAudioVolume.SetMute` somente quando o PID pertence ao conjunto registrado. Mudanças/dispositivos ausentes são tratados como falha recuperável. |
 | `src/LegendLauncher.App/ViewModels/GameSessionViewModel.cs:8` | `GameSessionViewModel` | Associa perfil, IDs persistentes de plataforma/servidor e seus rótulos ao `GameSession`, observa a saída do processo, expõe títulos de aba/superfície e controla os estados selecionado, desacoplado e em execução. A notificação de saída volta à `Dispatcher` WPF antes de alterar propriedades. |
 | `src/LegendLauncher.App/ViewModels/GameSessionViewModel.cs:116` | `Terminate()` | Encerra a árvore do GameHost daquela sessão; falha do Windows não impede a remoção do estado local. |
@@ -73,7 +73,7 @@ O módulo oferece abas por conta, seleção rápida, layouts de uma, duas ou qua
 
 `%LocalAppData%\LegendLauncherNext\data\settings.json` contém apenas `IsGameMuted`, o valor 1/2/4 de `LayoutMode`, `LastSelectedProfileId` e `LanguageCode`. Não contém login, senha, cookie, token, URI de sessão, PID nem HWND. Escritas usam a primitiva atômica de [Infrastructure](infrastructure.md); falha de persistência mantém a preferência somente durante a execução e não interrompe uma partida.
 
-O áudio é global apenas dentro do workspace: todos os PIDs GameHost registrados recebem o mesmo estado. O padrão mudo reduz sobreposição sonora ao abrir várias contas. Uma sessão desacoplada continua registrada; outros processos do sistema não são alterados. Falhas recuperáveis de descoberta/aplicação são best effort, e `Dispose` aguarda callbacks do timer em voo.
+O áudio é global apenas dentro do workspace: todos os PIDs GameHost registrados recebem o mesmo estado. O padrão mudo reduz sobreposição sonora ao abrir várias contas. Uma sessão desacoplada continua registrada; outros processos do sistema não são alterados. Se uma troca de mudo chegar enquanto o callback anterior ainda aplica o estado, ela é coalescida e repetida imediatamente depois, sem aguardar o próximo tick de 750 ms. Falhas recuperáveis de descoberta/aplicação são best effort, e `Dispose` aguarda callbacks do timer em voo.
 
 ## Segurança e ciclo de vida
 
@@ -91,7 +91,7 @@ O módulo usa WPF, `HwndHost`, Win32 `user32`, Core Audio e `AtomicJsonFileStore
 ## Testes
 
 - `GameWorkspaceViewModelTests.cs` cobre capacidades 1/2/4, grade adaptativa 1×1/1×2/2×2, manutenção da seleção visível, detach/reattach sem remoção, identidade de sessão por perfil/plataforma/servidor, coexistência da mesma conta em alvos diferentes, mudo e fechamento.
-- `GameAudioServiceTests.cs` cobre registro/desregistro de PIDs, reaplicação do mudo global, captura de falhas recuperáveis e descarte aguardando callback em voo.
+- `GameAudioServiceTests.cs` cobre registro/desregistro de PIDs, reaplicação do mudo global, replay determinístico quando a solicitação chega durante callback ativo, captura de falhas recuperáveis e descarte aguardando callback em voo.
 - `LauncherSettingsServiceTests.cs` cobre defaults, atualizações independentes, migração de settings antigos, normalização da cultura e recuperação de JSON corrompido.
 - `GameWorkspaceLocalizationTests.cs` mantém mudo, rodapé e singular/plural sincronizados com `pt-BR`, `en-US` e `es-ES`, verifica as notificações e confirma que `Dispose` remove a assinatura global sem alterar sessões.
 - `GameWindowAttachmentTests.cs` cobre estilos idempotentes, validação HWND/PID, ownership do proxy e guarda de detach.
