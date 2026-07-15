@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "version": "1.1.0",
+  "title": {
+    "pt-BR": "Atualizações dentro do Urus Launcher",
+    "en-US": "Updates inside Urus Launcher",
+    "es-ES": "Actualizaciones dentro de Urus Launcher"
+  },
+  "notes": {
+    "pt-BR": [
+      "Novo: o launcher procura uma versão pública mais recente ao ser aberto.",
+      "Novo: um cartão discreto mostra a busca, a versão encontrada, o progresso e estas notas.",
+      "Você decide: nenhum instalador é baixado ou executado antes de clicar em Atualizar.",
+      "Segurança: nome, tamanho e SHA-256 do instalador são conferidos antes da execução.",
+      "Segurança: novas sessões são bloqueadas durante a instalação e o pipeline público usa permissões separadas.",
+      "Corrigido: a barra de progresso agora inicia corretamente nos pacotes portátil e instalável.",
+      "Corrigido: o pipeline de distribuição agora calcula hashes também no Windows PowerShell."
+    ],
+    "en-US": [
+      "New: the launcher checks for a newer public version whenever it opens.",
+      "New: a compact card shows the check, available version, progress, and these notes.",
+      "You decide: no installer is downloaded or launched before you click Update.",
+      "Security: installer name, size, and SHA-256 are verified before execution.",
+      "Security: new sessions are blocked during installation and the public pipeline uses separated permissions.",
+      "Fixed: the progress bar now starts correctly in portable and installed packages.",
+      "Fixed: the distribution pipeline now calculates hashes in Windows PowerShell too."
+    ],
+    "es-ES": [
+      "Nuevo: el launcher busca una versión pública más reciente cada vez que se abre.",
+      "Nuevo: una tarjeta compacta muestra la búsqueda, la versión, el progreso y estas notas.",
+      "Tú decides: ningún instalador se descarga ni ejecuta antes de pulsar Actualizar.",
+      "Seguridad: se comprueban el nombre, el tamaño y el SHA-256 antes de ejecutar.",
+      "Seguridad: las nuevas sesiones se bloquean durante la instalación y el pipeline usa permisos separados.",
+      "Corregido: la barra de progreso ahora se inicia correctamente en los paquetes portátil e instalable.",
+      "Corregido: el pipeline de distribución ahora calcula hashes también en Windows PowerShell."
+    ]
+  }
+}

@@ -1,0 +1,119 @@
+<Window x:Class="LegendLauncher.App.Views.Game.DetachedGameWindow"
+        x:Name="DetachedRoot"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:hosting="clr-namespace:LegendLauncher.App.GameHosting"
+        xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
+        xmlns:loc="clr-namespace:LegendLauncher.App.Localization"
+        Title="{Binding Session.DetachedTitle}"
+        Width="1120"
+        Height="720"
+        MinWidth="760"
+        MinHeight="500"
+        WindowStartupLocation="CenterOwner"
+        WindowStyle="None"
+        ResizeMode="CanResize"
+        Background="#01050C"
+        Foreground="{StaticResource TextPrimaryBrush}"
+        FontFamily="Segoe UI Variable Text, Segoe UI"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True">
+    <shell:WindowChrome.WindowChrome>
+        <shell:WindowChrome CaptionHeight="48"
+                            ResizeBorderThickness="6"
+                            CornerRadius="8"
+                            GlassFrameThickness="0"
+                            UseAeroCaptionButtons="False" />
+    </shell:WindowChrome.WindowChrome>
+
+    <Border CornerRadius="8" BorderBrush="#33465C" BorderThickness="1" ClipToBounds="True">
+        <Grid Background="{StaticResource WindowBackgroundBrush}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="48" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="34" />
+            </Grid.RowDefinitions>
+
+            <Grid Grid.Row="0" Background="#E0061322">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Grid Margin="16,0,16,0" VerticalAlignment="Center" ClipToBounds="True">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="24" />
+                        <ColumnDefinition Width="10" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Image Source="/UrusLauncher.App;component/Assets/Branding/urus-logo.png"
+                           Width="24" Height="24" />
+                    <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Session.DetachedTitle}"
+                                   FontSize="14"
+                                   FontWeight="SemiBold"
+                                   TextTrimming="CharacterEllipsis" />
+                        <TextBlock Text="{loc:Localize Detached_IsolatedSubtitle}"
+                                   FontSize="8.5"
+                                   Foreground="{StaticResource TextMutedBrush}"
+                                   Margin="0,2,0,0"
+                                   TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+                </Grid>
+
+                <StackPanel Grid.Column="1"
+                            Orientation="Horizontal"
+                            VerticalAlignment="Center"
+                            Margin="0,0,16,0">
+                    <Button Style="{StaticResource SecondaryButtonStyle}"
+                            Height="32" Padding="14,0" Margin="0,0,10,0"
+                            Command="{Binding Workspace.ToggleMuteCommand}"
+                            shell:WindowChrome.IsHitTestVisibleInChrome="True">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{Binding Workspace.MuteGlyph}" FontFamily="Segoe Fluent Icons"
+                                       FontSize="14" Foreground="#FF6B87" Margin="0,0,8,0" />
+                            <TextBlock Text="{Binding Workspace.MuteLabel}" FontSize="10" />
+                        </StackPanel>
+                    </Button>
+                    <Button Content="{loc:Localize Session_DockLabel}"
+                            Style="{StaticResource SecondaryButtonStyle}"
+                            Height="32" Padding="16,0" Margin="0,0,10,0"
+                            Click="ReattachButton_OnClick"
+                            shell:WindowChrome.IsHitTestVisibleInChrome="True" />
+                    <Button Content="{loc:Localize Session_EndLabel}"
+                            Style="{StaticResource SecondaryButtonStyle}"
+                            Height="32" Padding="16,0"
+                            Foreground="{StaticResource DangerBrush}"
+                            Click="CloseSessionButton_OnClick"
+                            shell:WindowChrome.IsHitTestVisibleInChrome="True" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
+                    <Button Content="&#xE921;" Style="{StaticResource WindowCaptionButtonStyle}"
+                            Height="48"
+                            Click="MinimizeButton_OnClick" AutomationProperties.Name="{loc:Localize Window_Minimize}" />
+                    <Button x:Name="MaximizeButton" Content="&#xE922;" Style="{StaticResource WindowCaptionButtonStyle}"
+                            Height="48"
+                            Click="MaximizeButton_OnClick" AutomationProperties.Name="{loc:Localize Window_MaximizeRestore}" />
+                    <Button Content="&#xE8BB;" Style="{StaticResource CloseCaptionButtonStyle}"
+                            Height="48"
+                            Click="CloseButton_OnClick" AutomationProperties.Name="{loc:Localize Window_DockAndClose}" />
+                </StackPanel>
+            </Grid>
+
+            <Border Grid.Row="1" Margin="8,6" Background="#01050B"
+                    BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="6" ClipToBounds="True">
+                <hosting:GameSurfacePresenter Attachment="{Binding Session.Attachment}" />
+            </Border>
+
+            <Border Grid.Row="2" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="12,0,0,0">
+                    <Ellipse Width="8" Height="8" Fill="{StaticResource SuccessBrush}" Margin="0,0,9,0" />
+                    <TextBlock Text="{Binding Session.SurfaceTitle}" FontSize="10.5" Foreground="{StaticResource TextMutedBrush}" />
+                    <TextBlock Text="{loc:Localize Detached_FooterHint}" FontSize="10.5"
+                               Foreground="{StaticResource TextMutedBrush}" />
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Border>
+</Window>

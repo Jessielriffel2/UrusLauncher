@@ -1,0 +1,35 @@
+# Módulo Core
+
+## Objetivo do módulo
+
+O `LegendLauncher.Core` contém o vocabulário estável e os contratos do launcher. Ele descreve plataformas, catálogos de servidores, perfis, credenciais transitórias, autenticação e execução sem depender de WPF, armazenamento local, HTTP ou do host Flash. O Core pode transportar um HWND como identificador opaco de superfície, mas não invoca APIs Win32 nem decide como a janela será composta. Dados secretos não são gravados pelo módulo e os modelos que os carregam sobrescrevem `ToString()` para não imprimir senha, token ou parâmetros de sessão.
+
+## Modelos principais
+
+- `PlatformDefinition` — identidade, nome, `GameCode`, endpoint HTTPS do diretório e locale da plataforma. Entrada/saída: valores imutáveis usados por UI e providers. Referência: `src/LegendLauncher.Core/Models/PlatformDefinition.cs:6`.
+- `GameServer` — servidor normalizado com `Id`, `NumericId`, `Code` (`server_prex` na OAS), nomes curto/completo, URL futura de login, recomendação, validade, fusão e abertura. `IsAvailable(now)` combina validade e data de abertura; o construtor `(id, name)` atende entradas manuais e caches simples. Referências: `src/LegendLauncher.Core/Models/GameServer.cs:10`, `src/LegendLauncher.Core/Models/GameServer.cs:25`, `src/LegendLauncher.Core/Models/GameServer.cs:50`.
+- `ServerCatalog` e `ServerCatalogSource` — snapshot de `All`, `Played` e `Current`, instante de captura e origem remota/cache. `AsCached()` marca uma cópia sem alterar os dados. Referência: `src/LegendLauncher.Core/Models/ServerCatalog.cs:3`.
+- `AccountProfile` — dados não secretos de uma conta salva: plataforma, usuário, chave do cofre, UID opcional do provider, último servidor, timestamps e `RecentServerIds` em ordem do acesso mais novo para o mais antigo. A propriedade inicia vazia, mantendo compatibilidade com JSONs criados antes de sua inclusão. Referências: `src/LegendLauncher.Core/Models/AccountProfile.cs:6`, `src/LegendLauncher.Core/Models/AccountProfile.cs:21`.
+- `CredentialSecret` — usuário e senha somente em memória. `ToString()` informa apenas se há senha. Entrada: strings fornecidas pelo cofre/UI; saída: segredo transitório para autenticação. Referência: `src/LegendLauncher.Core/Models/RuntimeModels.cs:6`.
+- `GameRenderQuality`, `GameWindowMode` e `GameRuntimeOptions` — opções não sensíveis do processo isolado, com defaults `High`/`Opaque`; o caminho do runtime é normalizado e omitido de `ToString()`. Referências: `src/LegendLauncher.Core/Models/RuntimeModels.cs:25`, `src/LegendLauncher.Core/Models/RuntimeModels.cs:36`, `src/LegendLauncher.Core/Models/RuntimeModels.cs:45`.
+- `GameSession` — identificação não sensível da superfície iniciada: PID, `NativeWindowHandle` validado pelo runtime e instante UTC. O HWND permite que o [workspace multissessão](game-session-workspace.md) componha visualmente a janela do processo isolado sem mover o ActiveX para o processo WPF. O modelo não contém perfil, senha, token nem estado de layout. Referência: `src/LegendLauncher.Core/Models/RuntimeModels.cs:76`.
+- `AuthenticationRequest` — plataforma, servidor, dica de login e segredo transitório; valida nulos e omite o segredo ao ser convertido em texto. Referência: `src/LegendLauncher.Core/Models/AuthenticationModels.cs:6`.
+- `LaunchSession` — URI final, token opcional e parâmetros sensíveis retornados pelo login; `ToString()` informa somente presença de token e quantidade de parâmetros, sem imprimir URI/host, token ou valores. Referência: `src/LegendLauncher.Core/Models/AuthenticationModels.cs:35`.
+- `AuthenticationResult` — sucesso com `LaunchSession` e `ProviderUserId` opcional, ou falha com código/mensagem. `Success(session, providerUserId?)` e `Failure` constroem resultados coerentes; a representação textual informa apenas se existe UID e nunca expõe a sessão. Referência: `src/LegendLauncher.Core/Models/AuthenticationModels.cs:60`.
+
+## Contratos principais
+
+- `IServerDirectory.GetServersAsync(platform, userId = 0, cancellationToken)` — obtém o catálogo normalizado e aceita UID opcional. Entrada: plataforma/UID; saída: `ServerCatalog`. Referência: `src/LegendLauncher.Core/Contracts/IServerDirectory.cs:5`. Implementação atual: [Providers OAS](providers-oas.md).
+- `IServerCatalogCache.GetAsync/SetAsync` — lê ou grava o último snapshot por `platformId`; sustenta operação offline dos providers. Referência: `src/LegendLauncher.Core/Contracts/IServerCatalogCache.cs:5`. Implementação persistente: [Infrastructure](infrastructure.md).
+- `IProfileStore.GetAllAsync/GetAsync/SaveAsync/DeleteAsync` — CRUD assíncrono de perfis por `Guid`. Referência: `src/LegendLauncher.Core/Contracts/IProfileStore.cs:5`. Implementação persistente: [Infrastructure](infrastructure.md).
+- `ICredentialVault.GetAsync/SetAsync/DeleteAsync` — armazena e recupera `CredentialSecret` por chave opaca; consumidores não conhecem o mecanismo do SO. Referência: `src/LegendLauncher.Core/Contracts/ICredentialVault.cs:5`. Implementação segura: [Infrastructure](infrastructure.md).
+- `IGameAuthenticationService.AuthenticateAsync(request, cancellationToken)` — fronteira para login por plataforma; saída: `AuthenticationResult` com sessão e UID opcional. O Core não executa rede; a implementação atual está em [Providers OAS](providers-oas.md). Referência: `src/LegendLauncher.Core/Contracts/IGameAuthenticationService.cs:5`.
+- `IGameRuntime.LaunchAsync(session, options, cancellationToken)` — inicia o host somente depois da autenticação e recebe `LaunchSession` + opções não sensíveis; perfil, usuário e `CredentialSecret` não cruzam essa fronteira. Saída: `Task<GameSession>` com a identidade opaca que a App pode rastrear/incorporar. Referência: `src/LegendLauncher.Core/Contracts/IGameRuntime.cs:5`.
+
+## Dependências e consumidores
+
+O projeto depende apenas da BCL do .NET; `System.Text.Json.Serialization` é usado exclusivamente para selecionar o construtor completo de `GameServer` na desserialização de cache. [Providers OAS](providers-oas.md) consome os modelos e implementa `IServerDirectory`; [Infrastructure](infrastructure.md) implementa cache, perfis e cofre. A aplicação, o [workspace](game-session-workspace.md) e o host de jogo consomem os mesmos contratos sem acoplamento a detalhes de rede, persistência ou composição Win32.
+
+## Testes
+
+`tests/LegendLauncher.Tests/Core/AuthenticationModelsTests.cs` verifica que senha, URL/host e token não aparecem em `ToString()`, além da propagação segura de `ProviderUserId`. `RuntimeModelsTests.cs` verifica os defaults seguros, a representação não sensível de `GameRuntimeOptions` e a propagação de PID/HWND/instante em `GameSession`. `tests/LegendLauncher.Tests/Infrastructure/JsonPersistenceTests.cs` confirma a persistência do histórico e a leitura de um perfil legado sem `RecentServerIds`. Os modelos de catálogo também são exercitados pelos testes do [provider OAS](providers-oas.md).

@@ -1,0 +1,109 @@
+name: Publish Windows release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          persist-credentials: false
+
+      - name: Install .NET 10
+        uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Resolve release version
+        shell: pwsh
+        run: |
+          $version = '${{ github.ref_name }}'.TrimStart('v')
+          if ($version -notmatch '^\d+\.\d+\.\d+$') {
+            throw "Release tags must use vMAJOR.MINOR.PATCH."
+          }
+          "RELEASE_VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Install pinned Inno Setup
+        shell: pwsh
+        run: choco install innosetup --version=6.7.1 --no-progress --yes
+
+      - name: Run Release tests
+        shell: pwsh
+        run: dotnet test .\LegendLauncherNext.slnx --configuration Release --nologo
+
+      - name: Build release artifacts
+        shell: pwsh
+        run: >-
+          .\scripts\build-urus-distribution.ps1
+          -Version $env:RELEASE_VERSION
+          -SkipTests
+          -SkipPortableStartupSmoke
+
+      - name: Stage immutable release artifacts
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: urus-release-${{ github.ref_name }}
+          if-no-files-found: error
+          retention-days: 3
+          compression-level: 0
+          path: |
+            artifacts/urus-distribution/UrusLauncher-Setup-${{ env.RELEASE_VERSION }}-win-x64.exe
+            artifacts/urus-distribution/UrusLauncher-${{ env.RELEASE_VERSION }}-portable-win-x64.zip
+            artifacts/urus-distribution/update-manifest.json
+            artifacts/urus-distribution/SHA256SUMS.txt
+            artifacts/urus-distribution/RELEASE_NOTES.md
+
+  publish:
+    needs: build
+    runs-on: windows-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download validated release artifacts
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
+        with:
+          name: urus-release-${{ github.ref_name }}
+          path: artifacts/urus-distribution
+
+      - name: Resolve release version
+        shell: pwsh
+        run: |
+          $version = '${{ github.ref_name }}'.TrimStart('v')
+          if ($version -notmatch '^\d+\.\d+\.\d+$') {
+            throw "Release tags must use vMAJOR.MINOR.PATCH."
+          }
+          "RELEASE_VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Publish GitHub Release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          $root = '.\artifacts\urus-distribution'
+          gh release create '${{ github.ref_name }}' `
+            "$root\UrusLauncher-Setup-$env:RELEASE_VERSION-win-x64.exe" `
+            "$root\UrusLauncher-$env:RELEASE_VERSION-portable-win-x64.zip" `
+            "$root\update-manifest.json" `
+            "$root\SHA256SUMS.txt" `
+            --verify-tag `
+            --title "Urus Launcher $env:RELEASE_VERSION" `
+            --notes-file "$root\RELEASE_NOTES.md"

@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/LegendLauncher.App/LegendLauncher.App.csproj" />
+    <Project Path="src/LegendLauncher.Core/LegendLauncher.Core.csproj" />
+    <Project Path="src/LegendLauncher.GameHost.Legacy/LegendLauncher.GameHost.Legacy.csproj" />
+    <Project Path="src/LegendLauncher.Infrastructure/LegendLauncher.Infrastructure.csproj" />
+    <Project Path="src/LegendLauncher.NetworkBridge/LegendLauncher.NetworkBridge.csproj" />
+    <Project Path="src/LegendLauncher.Providers.Oas/LegendLauncher.Providers.Oas.csproj" />
+    <Project Path="src/LegendLauncher.Providers.SevenWan/LegendLauncher.Providers.SevenWan.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/LegendLauncher.Tests/LegendLauncher.Tests.csproj" />
+  </Folder>
+</Solution>

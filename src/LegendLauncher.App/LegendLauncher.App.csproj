@@ -1,0 +1,37 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\LegendLauncher.Core\LegendLauncher.Core.csproj" />
+    <ProjectReference Include="..\LegendLauncher.GameHost.Legacy\LegendLauncher.GameHost.Legacy.csproj" />
+    <ProjectReference Include="..\LegendLauncher.Infrastructure\LegendLauncher.Infrastructure.csproj" />
+    <ProjectReference Include="..\LegendLauncher.Providers.Oas\LegendLauncher.Providers.Oas.csproj" />
+    <ProjectReference Include="..\LegendLauncher.Providers.SevenWan\LegendLauncher.Providers.SevenWan.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\*.png" />
+    <Resource Include="Assets\Branding\*.png" />
+    <Resource Include="Assets\paypal-donation-qr.jpeg" />
+    <EmbeddedResource Include="Localization\Resources\*.json">
+      <LogicalName>UrusLauncher.App.Localization.Resources.%(Filename)%(Extension)</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <AssemblyName>UrusLauncher.App</AssemblyName>
+    <RootNamespace>LegendLauncher.App</RootNamespace>
+    <AssemblyTitle>Urus Launcher</AssemblyTitle>
+    <Product>Urus Launcher</Product>
+    <Company>Urus Launcher</Company>
+    <Description>Urus Launcher</Description>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <PlatformTarget>x64</PlatformTarget>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\Branding\urus-launcher.ico</ApplicationIcon>
+  </PropertyGroup>
+
+</Project>
