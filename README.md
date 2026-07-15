@@ -155,7 +155,7 @@ Antes da build, deve existir `docs\releases\v1.1.2.json` (ou o arquivo da versã
 
 O instalador é per-user, sem elevação, e usa `%LocalAppData%\Programs\Urus Launcher`; oferece inglês, português brasileiro e espanhol e atalho de desktop opcional. O ZIP contém a pasta inteira `UrusLauncher`: extraia antes de executar `UrusLauncher.App.exe`.
 
-O script não copia arquivos automaticamente para `Downloads`. Na entrega 1.0.1, o setup `UrusLauncher-Setup-1.0.1-win-x64.exe` e o arquivo `UrusLauncher-SHA256SUMS-1.0.1.txt` foram copiados explicitamente para `%USERPROFILE%\Downloads`; o hash do instalador foi conferido depois da cópia. O ZIP portátil permanece em `artifacts\urus-distribution`. Veja [distribuicao-windows.md](docs/modulos/distribuicao-windows.md) para tamanhos e hashes completos.
+O script não copia arquivos automaticamente para `Downloads`. No handoff 1.1.2, o setup `UrusLauncher-Setup-1.1.2-win-x64.exe` e o arquivo `UrusLauncher-SHA256SUMS-1.1.2.txt` foram copiados explicitamente para `%USERPROFILE%\Downloads`; o hash do instalador foi conferido depois da cópia. O ZIP portátil permanece em `artifacts\urus-distribution` e no GitHub Release. Veja [distribuicao-windows.md](docs/modulos/distribuicao-windows.md) para tamanhos e hashes completos.
 
 O código-fonte deve permanecer fora de `Program Files`. A instalação antiga é consultada somente para localizar os assets de compatibilidade Flash existentes; dados novos são gravados no perfil do usuário.
 

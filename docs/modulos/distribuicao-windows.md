@@ -87,12 +87,12 @@ O Inno consome recursivamente o payload já validado pelo pipeline. Antes da com
 
 O ZIP contém a pasta `UrusLauncher` inteira, não um executável single-file. Para uso portátil, extraia a pasta e execute `UrusLauncher.App.exe`; mover somente esse EXE quebra as dependências e o GameHost.
 
-O script de build **não copia automaticamente** instalador ou ZIP para `Downloads`. Os artefatos canônicos ficam em `artifacts/urus-distribution`. No handoff 1.0.1, foram copiados explicitamente para `Downloads`:
+O script de build **não copia automaticamente** instalador ou ZIP para `Downloads`. Os artefatos canônicos ficam em `artifacts/urus-distribution`. No handoff 1.1.2, foram copiados explicitamente para `Downloads`:
 
-- `%USERPROFILE%\Downloads\UrusLauncher-Setup-1.0.1-win-x64.exe`;
-- `%USERPROFILE%\Downloads\UrusLauncher-SHA256SUMS-1.0.1.txt`.
+- `%USERPROFILE%\Downloads\UrusLauncher-Setup-1.1.2-win-x64.exe`;
+- `%USERPROFILE%\Downloads\UrusLauncher-SHA256SUMS-1.1.2.txt`.
 
-O SHA-256 do setup foi recalculado depois da cópia e coincide com o checksum publicado. O ZIP portátil continua disponível na saída canônica, mas não integra esse handoff em `Downloads`. O pipeline e o diretório canônico não dependem de `Downloads`.
+O SHA-256 do setup foi recalculado depois da cópia e coincidiu com `C8F3E5386AAF6EFFF75C757C745600C6108A3EA42808CA50599BEF57682101A6`. O ZIP portátil continua disponível na saída canônica e no GitHub Release, mas não integra esse handoff em `Downloads`. O pipeline e o diretório canônico não dependem de `Downloads`.
 
 ## Segurança e limites
 
