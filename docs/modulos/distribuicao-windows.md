@@ -41,17 +41,18 @@ Self-contained refere-se ao runtime .NET/WPF/WinForms. O Adobe Flash ActiveX leg
 | `artifacts/urus-distribution/RELEASE_NOTES.md` | Notas do release | Corpo trilíngue usado pelo GitHub Release. |
 | `artifacts/urus-distribution/SHA256SUMS.txt` | Checksums | SHA-256 em formato simples para validar instalador, ZIP, manifesto de atualização e notas. |
 
-## Entregáveis públicos 1.1.2
+## Entregáveis públicos 1.1.3
 
 | Tipo | Caminho |
 | --- | --- |
-| Instalador Inno Setup | `GitHub Release/UrusLauncher-Setup-1.1.2-win-x64.exe` — 54.574.762 bytes — SHA-256 `894C4F2390C4EE87C244E48B3D1EA6925C3AC7005E27D87044EB2484D5709C2D` |
-| ZIP portátil | `GitHub Release/UrusLauncher-1.1.2-portable-win-x64.zip` — 78.151.266 bytes — SHA-256 `2175826CA11FBCC60C1C19C8CD3AA16CCF94DEB1E1478027B3E3B71DF23CE4C7` |
-| Manifesto do updater | `GitHub Release/update-manifest.json` — 2.434 bytes — SHA-256 `13EB69C59CFC2A3DC4A6830DD2EBD514C74F8B357E15464B59F757A50B59B2EA` |
+| Instalador Inno Setup | `GitHub Release/UrusLauncher-Setup-1.1.3-win-x64.exe` — 54.586.546 bytes — SHA-256 `C213061318B891FB866B990CA8378F1708FA2B1DC80F3DA51E667FECA952294F` |
+| ZIP portátil | `GitHub Release/UrusLauncher-1.1.3-portable-win-x64.zip` — 78.153.034 bytes — SHA-256 `EC090E70AEDFA7645FDC9816CB27124E902F95D007F9155866B125F0BA024C4B` |
+| Manifesto do updater | `GitHub Release/update-manifest.json` — 3.529 bytes — SHA-256 `6B9DA4B6A3E652073CC8C88DC3699DC6DF96328911CDC977ADC026AC7E3AB775` |
+| Lista oficial de checksums | `GitHub Release/SHA256SUMS.txt` — 383 bytes — SHA-256 `6D51FC4A2C592165DFAC410AC1FABDDA7D26E18588C7D1570F7D24384C93DD5B` |
 | Aplicativo principal | `portable/UrusLauncher/UrusLauncher.App.exe` |
 | GameHost isolado | `portable/UrusLauncher/LegendLauncher.GameHost.Legacy.exe` |
 
-Os artefatos públicos foram gerados pelo workflow da tag `v1.1.2`, no commit `8aadfc410ed9163a1facd8c90825d9c62b1ea7b5`. App e GameHost foram publicados com ProductVersion `1.1.2+8aadfc410ed9163a1facd8c90825d9c62b1ea7b5`/FileVersion `1.1.2.0`; o workflow aprovou **445/445** testes e o smoke portátil alcançou a janela “Urus Launcher” por sete segundos sem runtime .NET global. A composição validada contém 468 arquivos e 182.338.452 bytes de payload expandido. `Get-AuthenticodeSignature` confirmou `NotSigned` no setup público baixado, coerente com a limitação atual. Os tamanhos e hashes da tabela são exatamente os publicados no GitHub Release e em `SHA256SUMS.txt`; qualquer nova build precisa publicar seus próprios valores. A entrega 1.0.1 permanece como histórico anterior em [`design-qa.md`](../../design-qa.md).
+Os artefatos públicos foram gerados pelo workflow da tag `v1.1.3`, no commit `18ccb5e982c9ff833d61819ec4d8602d38d19fa8`. App e GameHost foram publicados com ProductVersion `1.1.3+18ccb5e982c9ff833d61819ec4d8602d38d19fa8`/FileVersion `1.1.3.0`; o workflow aprovou **461/461** testes. A build canônica local também executou o smoke portátil por sete segundos sem runtime .NET global. O ZIP público foi baixado, conferido e expandido: contém 468 arquivos e 181.719.481 bytes de payload. `Get-AuthenticodeSignature` confirmou `NotSigned` no setup público baixado, coerente com a limitação atual. Os tamanhos e hashes da tabela são exatamente os publicados no GitHub Release, nos digests dos assets e em `SHA256SUMS.txt`; qualquer nova build precisa publicar seus próprios valores. A entrega 1.0.1 permanece como histórico anterior em [`design-qa.md`](../../design-qa.md).
 
 ## Fluxo de construção
 
@@ -88,12 +89,13 @@ O Inno consome recursivamente o payload já validado pelo pipeline. Antes da com
 
 O ZIP contém a pasta `UrusLauncher` inteira, não um executável single-file. Para uso portátil, extraia a pasta e execute `UrusLauncher.App.exe`; mover somente esse EXE quebra as dependências e o GameHost.
 
-O script de build **não copia automaticamente** instalador ou ZIP para `Downloads`. A saída local fica em `artifacts/urus-distribution`; o updater consome os artefatos públicos do GitHub Release. No handoff 1.1.2, o setup oficial e sua lista oficial de checksums foram baixados explicitamente para `Downloads`:
+O script de build **não copia automaticamente** instalador ou ZIP para `Downloads`. A saída local fica em `artifacts/urus-distribution`; o updater consome os artefatos públicos do GitHub Release. No handoff 1.1.3, o setup oficial, sua lista de checksums e uma cópia auditável do manifesto foram baixados explicitamente para `Downloads`:
 
-- `%USERPROFILE%\Downloads\UrusLauncher-Setup-1.1.2-win-x64.exe`;
-- `%USERPROFILE%\Downloads\UrusLauncher-SHA256SUMS-1.1.2.txt`.
+- `%USERPROFILE%\Downloads\UrusLauncher-Setup-1.1.3-win-x64.exe`;
+- `%USERPROFILE%\Downloads\UrusLauncher-SHA256SUMS-1.1.3.txt`;
+- `%USERPROFILE%\Downloads\UrusLauncher-update-manifest-1.1.3.json`.
 
-O SHA-256 do setup foi recalculado depois do download e coincidiu com `894C4F2390C4EE87C244E48B3D1EA6925C3AC7005E27D87044EB2484D5709C2D`. O ZIP portátil continua disponível no GitHub Release e pode ser reproduzido pela saída local, mas não integra esse handoff em `Downloads`. O pipeline e o diretório local de build não dependem de `Downloads`.
+O SHA-256 do setup foi recalculado depois do download e coincidiu com `C213061318B891FB866B990CA8378F1708FA2B1DC80F3DA51E667FECA952294F`; versão, repositório, bytes e hash também coincidiram entre API, manifesto normal e fallback `releases/latest/download`. O ZIP portátil continua disponível no GitHub Release e foi auditado em diretório temporário, mas não integra esse handoff em `Downloads`. O pipeline e o diretório local de build não dependem de `Downloads`.
 
 ## Segurança e limites
 
@@ -117,4 +119,4 @@ O SHA-256 do setup foi recalculado depois do download e coincidiu com `894C4F239
 
 ## Testes e validação
 
-`WindowsDistributionContractTests.cs` valida nomes públicos, configuração per-user/x64, ausência de caminho absoluto do computador de desenvolvimento, instância única por sessão, publicação self-contained, proteção do `WindowsBase.dll`, entregáveis, hashing, definição trilíngue, manifesto do updater e relaunch do Inno. `GitHubReleaseContractTests.cs:5` fixa tag, permissões, teste, artefatos, ausência de PAT e patch notes 1.1.0/1.1.1/1.1.2/1.1.3. A suíte atual concluiu **461/461** em Debug e **461/461** em Release; os artefatos públicos 1.1.2 e seus hashes permanecem registrados acima até a publicação da 1.1.3. Testes de consulta/download/manifesto, cache e fallback de rate limit são detalhados em [atualizacao.md](atualizacao.md).
+`WindowsDistributionContractTests.cs` valida nomes públicos, configuração per-user/x64, ausência de caminho absoluto do computador de desenvolvimento, instância única por sessão, publicação self-contained, proteção do `WindowsBase.dll`, entregáveis, hashing, definição trilíngue, manifesto do updater e relaunch do Inno. `GitHubReleaseContractTests.cs:5` fixa tag, permissões, teste, artefatos, ausência de PAT e patch notes 1.1.0/1.1.1/1.1.2/1.1.3. A suíte concluiu **461/461** em Debug, **461/461** em Release, repetiu **461/461** na build canônica local e **461/461** no workflow público. A release 1.1.3, seus quatro assets, manifesto normal/fallback, hashes e commit da tag foram verificados depois da publicação. Testes de consulta/download/manifesto, cache e fallback de rate limit são detalhados em [atualizacao.md](atualizacao.md).
