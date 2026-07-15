@@ -14,6 +14,9 @@ internal static partial class LauncherUpdateValidation
     public static Uri LatestReleaseUri { get; } =
         new($"https://api.github.com/repos/{Repository}/releases/latest");
 
+    public static Uri LatestManifestUri { get; } =
+        new($"https://github.com/{Repository}/releases/latest/download/{ManifestAssetName}");
+
     public static Version ParseTag(string? tagName)
     {
         Match match = ReleaseTagRegex().Match(tagName ?? string.Empty);

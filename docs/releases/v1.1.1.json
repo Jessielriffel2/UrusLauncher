@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "version": "1.1.1",
+  "title": {
+    "pt-BR": "Atualizações mais confiáveis em redes compartilhadas",
+    "en-US": "More reliable updates on shared networks",
+    "es-ES": "Actualizaciones más fiables en redes compartidas"
+  },
+  "notes": {
+    "pt-BR": [
+      "Corrigido: se a API do GitHub responder com limite 403 ou 429, o launcher tenta a rota pública do manifesto do último release.",
+      "Você continua no controle: baixar e instalar ainda exige um clique explícito em Atualizar.",
+      "Segurança preservada: versão, repositório, nome, tamanho, origem e SHA-256 continuam sendo validados.",
+      "Melhorado: a busca por atualizações funciona melhor em empresas, provedores e redes com IP compartilhado."
+    ],
+    "en-US": [
+      "Fixed: if the GitHub API returns a 403 or 429 rate limit, the launcher tries the latest release's public manifest route.",
+      "You stay in control: downloading and installing still require an explicit click on Update.",
+      "Security is preserved: version, repository, name, size, origin, and SHA-256 are still validated.",
+      "Improved: update checks work better in companies, providers, and networks with a shared IP."
+    ],
+    "es-ES": [
+      "Corregido: si la API de GitHub responde con un límite 403 o 429, el launcher prueba la ruta pública del manifiesto del último release.",
+      "Tú mantienes el control: descargar e instalar sigue requiriendo un clic explícito en Actualizar.",
+      "Seguridad preservada: se siguen validando versión, repositorio, nombre, tamaño, origen y SHA-256.",
+      "Mejorado: la búsqueda de actualizaciones funciona mejor en empresas, proveedores y redes con IP compartida."
+    ]
+  }
+}

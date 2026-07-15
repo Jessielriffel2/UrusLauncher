@@ -31,7 +31,8 @@ Self-contained refere-se ao runtime .NET/WPF/WinForms. O Adobe Flash ActiveX leg
 | `installer/UrusLauncher.iss:66` | Arquivos/atalhos/run | Instala o payload completo, cria atalhos e oferece iniciar o launcher ao final. A linha 76 reabre após update e `[Code]` reconhece `/RELAUNCH`. |
 | `.github/workflows/release.yml:15` | Job `build` | Usa somente `contents: read`, actions fixadas por commit, checkout sem credenciais persistidas, .NET 10 e Inno 6.7.1; testa/constrói e transfere o artefato com as majors `upload-artifact@v5` e `download-artifact@v6`, compatíveis com Node 24. |
 | `.github/workflows/release.yml:72` | Job `publish` | Só inicia após `build`, baixa os artefatos validados e recebe `contents: write` apenas para criar o GitHub Release. |
-| `docs/releases/v1.1.0.json:1` | Patch notes fonte | Título e mudanças da 1.1.0 em `pt-BR`, `en-US` e `es-ES`; novas versões exigem arquivo equivalente. |
+| `docs/releases/v1.1.0.json:1` | Patch notes fonte histórica | Título e mudanças do primeiro bootstrap com updater nos três idiomas. |
+| `docs/releases/v1.1.1.json:1` | Patch notes fonte atual | Título e mudanças do fallback de rate limit em `pt-BR`, `en-US` e `es-ES`; novas versões exigem arquivo equivalente. |
 | `artifacts/urus-distribution/portable/UrusLauncher/` | Payload expandido | Diretório executável usado como origem comum do Inno Setup e do ZIP. |
 | `artifacts/urus-distribution/distribution-manifest.json` | Manifesto | Produto, versão, RID, flag self-contained, data UTC, nomes/tamanhos/hashes e inventário agregado do payload. |
 | `artifacts/urus-distribution/update-manifest.json` | Manifesto de atualização | Contrato estrito consumido pela App com metadados do setup e patch notes localizados. |
@@ -61,18 +62,18 @@ Pré-requisitos do mantenedor:
 Na raiz do repositório:
 
 ```powershell
-.\scripts\build-urus-distribution.ps1 -Version 1.1.0
+.\scripts\build-urus-distribution.ps1 -Version 1.1.1
 ```
 
 O fluxo normal executa testes, publica os dois processos, compõe e valida o payload, faz o smoke do executável portátil, compila o instalador, cria o ZIP e emite manifesto/checksums. A composição não sobrepõe bibliotecas compartilhadas da App com as facades do staging do GameHost. `-SkipTests` existe para iterações locais conscientes; não deve ser usado na distribuição final.
 
-Antes do comando, deve existir `docs/releases/v1.1.0.json` (ou o arquivo da versão passada) com conteúdo não vazio nas três culturas. Não há fallback para notas inventadas no build: versão do parâmetro, JSON fonte, tag, nome do setup e manifesto precisam coincidir.
+Antes do comando, deve existir `docs/releases/v1.1.1.json` (ou o arquivo da versão passada) com conteúdo não vazio nas três culturas. Não há fallback para notas inventadas no build: versão do parâmetro, JSON fonte, tag, nome do setup e manifesto precisam coincidir.
 
 ## Publicação por tag e bootstrap
 
 O workflow `.github/workflows/release.yml` aceita somente tags no formato `vMAJOR.MINOR.PATCH`. O job `build` possui apenas `contents: read`, usa actions fixadas por SHA, desabilita persistência de credenciais no checkout, instala uma versão fixa do Inno Setup, testa e gera os pacotes. Somente os arquivos explícitos são transferidos como artefato temporário para o job `publish`. Esse segundo job possui `contents: write` e usa `gh release create` para publicar setup, ZIP, `update-manifest.json` e `SHA256SUMS.txt`, com `RELEASE_NOTES.md` como corpo. O `GITHUB_TOKEN` é efêmero da execução e não entra no código ou pacote.
 
-A primeira publicação do sistema é `v1.1.0`. Como a 1.0.1 não contém updater, seus usuários precisam instalar a 1.1.0 manualmente uma vez. Depois disso, novas tags superiores podem ser encontradas na abertura. Antes de o primeiro release existir, uma consulta retorna falha recuperável e o launcher continua utilizável.
+A 1.1.0 permanece registrada como a primeira publicação com updater. Como a 1.0.1 não contém esse módulo, seus usuários precisam instalar manualmente a versão pública mais recente, agora a 1.1.1. Usuários da 1.1.0 também podem precisar da instalação manual quando a API estiver limitada por um IP compartilhado; a 1.1.1 passa a recorrer à rota pública `releases/latest/download/update-manifest.json` em respostas `403`/`429`. Esse fallback só descobre o manifesto e não altera o clique obrigatório nem as validações do instalador. Antes de existir um release válido, a consulta retorna falha recuperável e o launcher continua utilizável.
 
 ## Instalador
 
@@ -100,7 +101,7 @@ O SHA-256 do setup foi recalculado depois da cópia e coincide com o checksum pu
 - O ActiveX Flash e arquivos do cliente antigo não são incorporados ao instalador/ZIP.
 - Os hashes são calculados com `System.Security.Cryptography.SHA256` sobre streams para funcionar tanto no PowerShell moderno quanto no Windows PowerShell, sem depender de `Get-FileHash`.
 - Checksums detectam corrupção depois da geração, mas não substituem assinatura Authenticode. Os artefatos atuais não devem ser descritos como assinados se não houver certificado aplicado.
-- O updater compara repositório, tag, manifesto, nome, bytes, digest disponível e SHA-256, mas manifesto e binário ainda compartilham o mesmo domínio de confiança do GitHub Release. Comprometimento do repositório não é resolvido somente por hash.
+- O updater compara repositório, tag, manifesto, nome, bytes, digest disponível e SHA-256. O fallback 1.1.1 para rate limit usa somente a rota pública fixa do mesmo repositório e conserva essas verificações, mas manifesto e binário ainda compartilham o mesmo domínio de confiança do GitHub Release. Comprometimento do repositório não é resolvido somente por hash.
 - Uma futura assinatura Authenticode deve ocorrer antes do cálculo/publicação dos hashes. Até lá, SmartScreen pode alertar e a documentação deve apresentar essa limitação.
 
 ## Dependências, consumidores e referências cruzadas
@@ -113,4 +114,4 @@ O SHA-256 do setup foi recalculado depois da cópia e coincide com o checksum pu
 
 ## Testes e validação
 
-`WindowsDistributionContractTests.cs` valida nomes públicos, configuração per-user/x64, publicação self-contained, proteção do `WindowsBase.dll`, entregáveis, hashing, definição trilíngue, manifesto do updater e relaunch do Inno. `GitHubReleaseContractTests.cs:5` fixa tag, permissões, teste, artefatos e ausência de PAT no workflow. Os hashes/tamanhos acima continuam sendo somente o histórico 1.0.1; não se atribuem valores à 1.1.0 antes de o novo pipeline terminar. Testes de consulta/download/manifesto são detalhados em [atualizacao.md](atualizacao.md).
+`WindowsDistributionContractTests.cs` valida nomes públicos, configuração per-user/x64, publicação self-contained, proteção do `WindowsBase.dll`, entregáveis, hashing, definição trilíngue, manifesto do updater e relaunch do Inno. `GitHubReleaseContractTests.cs:5` fixa tag, permissões, teste, artefatos e ausência de PAT no workflow. Os hashes/tamanhos acima continuam sendo somente o histórico 1.0.1; não se atribuem valores à 1.1.1 antes de o novo pipeline terminar. Testes de consulta/download/manifesto e fallback de rate limit são detalhados em [atualizacao.md](atualizacao.md).

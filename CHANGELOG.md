@@ -2,6 +2,18 @@
 
 As mudanças relevantes do Urus Launcher são registradas aqui. As versões públicas seguem versionamento semântico e são publicadas em `vMAJOR.MINOR.PATCH`.
 
+## 1.1.1 — 15/07/2026
+
+### Corrigido
+
+- Quando a API do GitHub responde `403` ou `429` por limite compartilhado, a consulta tenta a rota pública `releases/latest/download` do manifesto.
+- Redes corporativas, provedores e outros ambientes que compartilham IP deixam de depender exclusivamente da cota da API.
+
+### Segurança
+
+- O fallback não baixa nem instala sem clique; ele apenas localiza o mesmo manifesto público por outra rota.
+- Repositório, versão, origem, nome, tamanho e SHA-256 continuam sujeitos às mesmas validações da 1.1.0.
+
 ## 1.1.0 — 15/07/2026
 
 ### Adicionado

@@ -1,4 +1,3 @@
-using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Net;
@@ -11,7 +10,6 @@ namespace LegendLauncher.App.Updates;
 internal sealed class LauncherUpdateService : ILauncherUpdateService
 {
     private const int MaximumRedirects = 5;
-    private static readonly string[] RequiredLanguages = ["pt-BR", "en-US", "es-ES"];
     private readonly HttpClient _httpClient;
     private readonly string _downloadDirectory;
     private readonly IUpdateProcessStarter _processStarter;
@@ -64,11 +62,23 @@ internal sealed class LauncherUpdateService : ILauncherUpdateService
     {
         Version normalizedCurrentVersion =
             LauncherUpdateValidation.NormalizeCurrentVersion(currentVersion);
-        GitHubReleaseDocument githubRelease = await ReadJsonAsync<GitHubReleaseDocument>(
-            LauncherUpdateValidation.LatestReleaseUri,
-            LauncherUpdateValidation.MaximumJsonBytes,
-            expectedBytes: null,
-            cancellationToken).ConfigureAwait(false);
+        GitHubReleaseDocument githubRelease;
+        try
+        {
+            githubRelease = await ReadJsonAsync<GitHubReleaseDocument>(
+                LauncherUpdateValidation.LatestReleaseUri,
+                LauncherUpdateValidation.MaximumJsonBytes,
+                expectedBytes: null,
+                cancellationToken).ConfigureAwait(false);
+        }
+        catch (HttpRequestException exception) when (IsPublicApiRateLimit(exception))
+        {
+            LauncherUpdateRelease fallbackRelease =
+                await ReadFallbackReleaseAsync(cancellationToken).ConfigureAwait(false);
+            return fallbackRelease.Version > normalizedCurrentVersion
+                ? fallbackRelease
+                : null;
+        }
 
         string tagName = githubRelease.TagName
             ?? throw new InvalidDataException("The GitHub release does not contain a tag.");
@@ -100,6 +110,20 @@ internal sealed class LauncherUpdateService : ILauncherUpdateService
             manifest);
 
         return release.Version > normalizedCurrentVersion ? release : null;
+    }
+
+    private async Task<LauncherUpdateRelease> ReadFallbackReleaseAsync(
+        CancellationToken cancellationToken)
+    {
+        byte[] manifestBytes = await ReadBytesAsync(
+            LauncherUpdateValidation.LatestManifestUri,
+            LauncherUpdateValidation.MaximumJsonBytes,
+            expectedBytes: null,
+            cancellationToken).ConfigureAwait(false);
+        UpdateManifestDocument manifest = Deserialize<UpdateManifestDocument>(
+            manifestBytes,
+            "The update manifest is not valid JSON.");
+        return BuildFallbackRelease(manifest);
     }
 
     public async Task<DownloadedLauncherInstaller> DownloadInstallerAsync(
@@ -255,98 +279,65 @@ internal sealed class LauncherUpdateService : ILauncherUpdateService
         GitHubReleaseAssetDocument[]? githubAssets,
         UpdateManifestDocument manifest)
     {
-        if (manifest.Schema != 1)
-        {
-            throw new InvalidDataException("The update manifest schema is not supported.");
-        }
-
-        if (!string.Equals(
-            manifest.Repository,
-            LauncherUpdateValidation.Repository,
-            StringComparison.Ordinal))
-        {
-            throw new InvalidDataException("The update manifest repository does not match the launcher repository.");
-        }
-
-        Version manifestVersion = LauncherUpdateValidation.ParseManifestVersion(manifest.Version);
-        if (manifestVersion != tagVersion)
-        {
-            throw new InvalidDataException("The update manifest version does not match the GitHub release tag.");
-        }
-
-        UpdateManifestInstallerDocument installer = manifest.Installer
-            ?? throw new InvalidDataException("The update manifest does not contain an installer.");
-        string expectedInstallerName = LauncherUpdateValidation.ExpectedInstallerName(manifestVersion);
-        if (!string.Equals(installer.Name, expectedInstallerName, StringComparison.Ordinal))
-        {
-            throw new InvalidDataException("The installer asset name does not match the release version.");
-        }
-
-        if (installer.Bytes <= 0 ||
-            installer.Bytes > LauncherUpdateValidation.MaximumInstallerBytes)
-        {
-            throw new InvalidDataException("The installer size in the manifest is invalid.");
-        }
-
-        LauncherUpdateValidation.ValidateSha256(installer.Sha256, "The installer hash");
-        IReadOnlyDictionary<string, string> localizedNotes = ValidateNotes(manifest.Notes);
+        ValidatedUpdateManifest validated = UpdateManifestValidator.Validate(manifest, tagVersion);
         GitHubReleaseAssetDocument githubInstaller = FindSingleAsset(
             githubAssets,
-            expectedInstallerName);
-        ValidateInstallerAssetMetadata(githubInstaller, installer);
+            validated.InstallerName);
+        ValidateInstallerAssetMetadata(githubInstaller, validated);
         Uri installerUri = LauncherUpdateValidation.ParseReleaseAssetUri(
             githubInstaller.BrowserDownloadUrl,
             tagName,
-            expectedInstallerName);
+            validated.InstallerName);
 
-        return new LauncherUpdateRelease(
-            manifestVersion,
-            tagName,
-            localizedNotes,
-            new LauncherUpdateInstaller(
-                expectedInstallerName,
-                installer.Bytes,
-                installer.Sha256!.ToLowerInvariant(),
-                installerUri));
+        return CreateRelease(tagName, validated, installerUri);
     }
 
-    private static IReadOnlyDictionary<string, string> ValidateNotes(
-        Dictionary<string, string?>? notes)
+    private static LauncherUpdateRelease BuildFallbackRelease(UpdateManifestDocument manifest)
     {
-        if (notes is null || notes.Count != RequiredLanguages.Length)
-        {
-            throw new InvalidDataException("The update manifest must contain notes in all supported languages.");
-        }
+        ValidatedUpdateManifest validated = UpdateManifestValidator.Validate(
+            manifest,
+            expectedVersion: null);
+        string tagName = $"v{validated.Version.ToString(3)}";
+        var installerUri = new Uri(
+            $"https://github.com/{LauncherUpdateValidation.Repository}/releases/download/{tagName}/{validated.InstallerName}");
+        _ = LauncherUpdateValidation.ParseReleaseAssetUri(
+            installerUri.AbsoluteUri,
+            tagName,
+            validated.InstallerName);
 
-        var validated = new Dictionary<string, string>(StringComparer.Ordinal);
-        foreach (string language in RequiredLanguages)
-        {
-            if (!notes.TryGetValue(language, out string? value) ||
-                string.IsNullOrWhiteSpace(value))
-            {
-                throw new InvalidDataException($"The update notes for {language} are missing.");
-            }
+        return CreateRelease(tagName, validated, installerUri);
+    }
 
-            validated.Add(language, value.Trim());
-        }
-
-        return new ReadOnlyDictionary<string, string>(validated);
+    private static LauncherUpdateRelease CreateRelease(
+        string tagName,
+        ValidatedUpdateManifest manifest,
+        Uri installerUri)
+    {
+        return new LauncherUpdateRelease(
+            manifest.Version,
+            tagName,
+            manifest.LocalizedNotes,
+            new LauncherUpdateInstaller(
+                manifest.InstallerName,
+                manifest.InstallerBytes,
+                manifest.InstallerSha256,
+                installerUri));
     }
 
     private static void ValidateInstallerAssetMetadata(
         GitHubReleaseAssetDocument githubAsset,
-        UpdateManifestInstallerDocument installer)
+        ValidatedUpdateManifest installer)
     {
-        if (githubAsset.Size is long reportedSize && reportedSize != installer.Bytes)
+        if (githubAsset.Size is long reportedSize && reportedSize != installer.InstallerBytes)
         {
             throw new InvalidDataException("The GitHub installer size does not match the update manifest.");
         }
 
         string? reportedDigest = LauncherUpdateValidation.ParseGitHubDigest(
             githubAsset.Digest,
-            installer.Name!);
+            installer.InstallerName);
         if (reportedDigest is not null &&
-            !LauncherUpdateValidation.FixedTimeSha256Equals(installer.Sha256!, reportedDigest))
+            !LauncherUpdateValidation.FixedTimeSha256Equals(installer.InstallerSha256, reportedDigest))
         {
             throw new InvalidDataException("The GitHub installer digest does not match the update manifest.");
         }
@@ -604,6 +595,10 @@ internal sealed class LauncherUpdateService : ILauncherUpdateService
             HttpStatusCode.SeeOther or
             HttpStatusCode.TemporaryRedirect or
             HttpStatusCode.PermanentRedirect;
+
+    private static bool IsPublicApiRateLimit(HttpRequestException exception) =>
+        exception.StatusCode is HttpStatusCode.Forbidden or
+            HttpStatusCode.TooManyRequests;
 
     private static void DeleteIfExists(string path)
     {

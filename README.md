@@ -42,7 +42,7 @@ Launcher Windows para Legend Online, escrito do zero em C#/.NET 10 e distribuíd
 - O catálogo é ordenado por perfil: `RecentServerIds[0]`, gravado após uma abertura aceita, aparece primeiro com **RECOMENDADO**; `LastServerId` é somente fallback para perfis antigos. O servidor válido já lançado mais recentemente, calculado por `StartTimeUtc` e desempate por `NumericId`, recebe **MAIS RECENTE**; um divisor localizado introduz os demais servidores e é recalculado durante a busca. Os dois selos podem coexistir.
 - `HttpClient` para catálogo/Passport e curl nativo do Windows somente na entrada pós-login que a Cloudflare bloqueia no transporte .NET.
 - Windows Credential Manager para senhas; o JSON local contém somente perfis e catálogo não sensíveis.
-- GitHub Releases público para atualização opcional: o aplicativo consulta somente `Jessielriffel2/UrusLauncher`, restringe redirects a HTTPS/GitHub, baixa para `%LocalAppData%\LegendLauncherNext\updates` e só executa o setup depois de validar tamanho e SHA-256.
+- GitHub Releases público para atualização opcional: o aplicativo consulta somente `Jessielriffel2/UrusLauncher`; se a API responder `403` ou `429` por rate limit, a versão 1.1.1+ tenta o manifesto público do último release. Redirects continuam restritos a HTTPS/GitHub, o download vai para `%LocalAppData%\LegendLauncherNext\updates` e o setup só é executado depois de validar tamanho e SHA-256.
 - WinForms/AxHost apenas no `LegendLauncher.GameHost.Legacy`, um processo x64 separado do launcher.
 - Named Pipe restrito ao usuário e aos processos esperados para entregar a sessão autenticada ao GameHost sem expô-la na linha de comando.
 - Um HWND-proxy pertencente ao WPF incorpora a janela validada do GameHost; o ActiveX continua no processo separado. Cada perfil ativo tem PID/HWND próprios.
@@ -96,6 +96,8 @@ Título, instruções, feedback, tooltips e acessibilidade existem em `pt-BR`, `
 
 Em cada abertura, o launcher consulta uma vez e de forma assíncrona o último release público de `Jessielriffel2/UrusLauncher`. Um cartão discreto no canto inferior esquerdo mostra a busca, informa quando a versão atual já é a mais nova ou apresenta uma versão superior. Falha de internet, ausência do primeiro release ou documento inválido não bloqueia catálogo, login ou jogo; o cartão permite tentar novamente.
 
+Desde a 1.1.1, se a API pública do GitHub responder especificamente `403` ou `429` por limite compartilhado, a consulta tenta `https://github.com/Jessielriffel2/UrusLauncher/releases/latest/download/update-manifest.json`. Essa rota alternativa descobre apenas o mesmo manifesto público: não baixa o instalador, não ignora o clique em **Atualizar** e não reduz as validações de repositório, versão, origem, nome, tamanho ou SHA-256. Isso melhora o comportamento em empresas, provedores e redes nas quais muitas máquinas compartilham um IP.
+
 Encontrar uma versão nova **não baixa nem executa nada automaticamente**. A pessoa pode:
 
 - continuar usando a versão instalada;
@@ -108,9 +110,9 @@ Os patch notes de cada versão nascem de `docs/releases/vX.Y.Z.json` em `pt-BR`,
 
 **Limite de confiança:** SHA-256 detecta corrupção e divergência de artefato, mas não substitui assinatura de código. Os pacotes atuais não possuem Authenticode e o Windows pode exibir SmartScreen. Uma futura assinatura deve acontecer antes do hash final. Consulte [atualizacao.md](docs/modulos/atualizacao.md), [ADR-008](docs/decisoes/ADR-008-atualizacoes-github-releases.md) e [SECURITY.md](SECURITY.md).
 
-### Bootstrap da primeira versão com updater
+### Bootstrap e atualização manual para 1.1.1
 
-A versão 1.0.1 não possui atualizador e não consegue descobrir a 1.1.0. O primeiro ciclo é manual: o mantenedor publica a tag `v1.1.0`, o workflow cria o release e usuários existentes instalam esse setup uma vez. A partir da 1.1.0 instalada, versões superiores publicadas por novas tags passam a aparecer dentro do launcher.
+A versão 1.0.1 não possui atualizador e não consegue descobrir releases novos; seus usuários precisam instalar manualmente a versão pública mais recente, hoje a 1.1.1. A 1.1.0 foi o primeiro bootstrap com updater, mas sua consulta ainda pode esbarrar na cota da API em redes de IP compartilhado; nesse caso, a passagem para 1.1.1 também é manual. A partir da 1.1.1 instalada, versões superiores continuam aparecendo no launcher e a consulta dispõe do fallback público de manifesto para respostas `403`/`429`.
 
 ## Desenvolvimento
 
@@ -137,19 +139,19 @@ O projeto continua com o caminho-fonte `src\LegendLauncher.App`, mas o build ger
 Com Inno Setup 6 instalado:
 
 ```powershell
-.\scripts\build-urus-distribution.ps1 -Version 1.1.0
+.\scripts\build-urus-distribution.ps1 -Version 1.1.1
 ```
 
 O script executa a suíte Release, publica App e GameHost self-contained para `win-x64`, valida o payload e produz:
 
-- `artifacts\urus-distribution\UrusLauncher-Setup-1.1.0-win-x64.exe`;
-- `artifacts\urus-distribution\UrusLauncher-1.1.0-portable-win-x64.zip`;
+- `artifacts\urus-distribution\UrusLauncher-Setup-1.1.1-win-x64.exe`;
+- `artifacts\urus-distribution\UrusLauncher-1.1.1-portable-win-x64.zip`;
 - `artifacts\urus-distribution\distribution-manifest.json`;
 - `artifacts\urus-distribution\update-manifest.json`;
 - `artifacts\urus-distribution\RELEASE_NOTES.md`;
 - `artifacts\urus-distribution\SHA256SUMS.txt`.
 
-Antes da build, deve existir `docs\releases\v1.1.0.json` (ou o arquivo da versão solicitada) com título e notas não vazias nos três idiomas. Para publicar no repositório público, envie uma tag exatamente no formato `vMAJOR.MINOR.PATCH`. O workflow separa build (`contents: read`) de publicação (`contents: write`), usa actions fixadas por commit e entrega ao job de release somente os artefatos validados. Nenhum PAT é incorporado ao aplicativo.
+Antes da build, deve existir `docs\releases\v1.1.1.json` (ou o arquivo da versão solicitada) com título e notas não vazias nos três idiomas. Para publicar no repositório público, envie uma tag exatamente no formato `vMAJOR.MINOR.PATCH`. O workflow separa build (`contents: read`) de publicação (`contents: write`), usa actions fixadas por commit e entrega ao job de release somente os artefatos validados. Nenhum PAT é incorporado ao aplicativo.
 
 O instalador é per-user, sem elevação, e usa `%LocalAppData%\Programs\Urus Launcher`; oferece inglês, português brasileiro e espanhol e atalho de desktop opcional. O ZIP contém a pasta inteira `UrusLauncher`: extraia antes de executar `UrusLauncher.App.exe`.
 
@@ -182,7 +184,7 @@ Tentar jogar novamente com um perfil que já está em execução apenas selecion
 
 O Adobe Flash ActiveX é legado e descontinuado. Ele nunca é carregado no processo WPF, não é registrado globalmente e não deve ser redistribuído sem permissão de licença. URIs de abertura são limitadas a HTTPS e origens aprovadas, e senha/sessão não entram em argumentos de processo nem em mensagens de diagnóstico.
 
-Testes automatizados cobrem composição de catálogo, perfis, cofre, autenticação, transporte compatível, políticas de URI, settings, localização e propagação da cultura, pedido de apoio/intervalo/PIX/QR, áudio por PID e descarte concorrente, layouts 1/2/4, detach/reattach, maximização taskbar-aware, cleanup de sessão não adotada e protocolo launcher/GameHost. O updater possui contratos próprios para API/manifesto, allowlist e redirects, limites, download progressivo, SHA-256, confinamento, limpeza de setups antigos, bloqueio/revalidação de sessões, UI localizada e workflow build/publish com permissões separadas. `LocalizationCatalogTests.cs` fixa 203 chaves equivalentes nos três idiomas. A validação histórica 1.0.1 permanece documentada em [`design-qa.md`](design-qa.md); números e hashes da 1.1.0 só devem ser registrados depois de a nova build/release terminar.
+Testes automatizados cobrem composição de catálogo, perfis, cofre, autenticação, transporte compatível, políticas de URI, settings, localização e propagação da cultura, pedido de apoio/intervalo/PIX/QR, áudio por PID e descarte concorrente, layouts 1/2/4, detach/reattach, maximização taskbar-aware, cleanup de sessão não adotada e protocolo launcher/GameHost. O updater possui contratos próprios para API/manifesto, fallback de rate limit, allowlist e redirects, limites, download progressivo, SHA-256, confinamento, limpeza de setups antigos, bloqueio/revalidação de sessões, UI localizada e workflow build/publish com permissões separadas. `LocalizationCatalogTests.cs` fixa 203 chaves equivalentes nos três idiomas. A validação histórica 1.0.1 permanece documentada em [`design-qa.md`](design-qa.md); números e hashes da 1.1.1 só devem ser registrados depois de a nova build/release terminar.
 
 O layout novo compila e preserva as funções documentadas do launcher. A captura autenticada da build final foi comparada lado a lado com a referência e aprovada em [`design-qa.md`](design-qa.md).
 
