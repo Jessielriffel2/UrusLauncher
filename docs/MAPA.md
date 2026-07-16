@@ -2,7 +2,7 @@
 
 Fonte da verdade para a estrutura e os módulos do projeto.
 
-- **Última atualização:** 2026-07-15
+- **Última atualização:** 2026-07-16
 - **Raiz:** `LegendLauncherNext/`
 - **Escopo da árvore:** fontes, testes e documentação; `bin/`, `obj/` e `artifacts/` são saídas geradas e ficam fora.
 
@@ -31,12 +31,14 @@ LegendLauncherNext/
 │   │   ├── ADR-005-localizacao-dinamica.md
 │   │   ├── ADR-006-lembrete-doacao-nao-intrusivo.md
 │   │   ├── ADR-007-identidade-e-distribuicao-urus.md
-│   │   └── ADR-008-atualizacoes-github-releases.md
+│   │   ├── ADR-008-atualizacoes-github-releases.md
+│   │   └── ADR-009-provisionamento-runtime-legado.md
 │   ├── releases/
 │   │   ├── v1.1.0.json
 │   │   ├── v1.1.1.json
 │   │   ├── v1.1.2.json
-│   │   └── v1.1.3.json
+│   │   ├── v1.1.3.json
+│   │   └── v1.1.4.json
 │   └── modulos/
 │       ├── atualizacao.md
 │       ├── branding.md
@@ -240,6 +242,7 @@ LegendLauncherNext/
         │   ├── GameWorkspaceLocalizationTests.cs
         │   ├── GameWorkspaceViewModelTests.cs
         │   ├── GameWorkspaceXamlTests.cs
+        │   ├── LauncherCompositionTests.cs
         │   ├── LauncherSettingsServiceTests.cs
         │   ├── LauncherUpdateLayoutTests.cs
         │   ├── LauncherUpdateViewModelTests.cs
@@ -295,15 +298,15 @@ LegendLauncherNext/
 
 | Módulo | Responsabilidade | Arquivos principais | Documento |
 | --- | --- | --- | --- |
-| `LegendLauncher.App` | Código-fonte WPF x64 do Urus Launcher, publicado como `UrusLauncher.App.exe`; oferece launcher de três colunas, instância única por sessão do Windows, conta compartilhada entre variantes OAS com estado por plataforma, catálogo ordenado, sessões por alvo exato, chrome taskbar/DPI-aware e integração não bloqueante com atualizações públicas. | `App.xaml.cs`, `MainWindow.xaml`, `Themes/WindowStyles.xaml`, `Services/ProfilePlatformCompatibility.cs`, `Services/ServerCatalogPresentation.cs`, `MainWindowViewModel*.cs`, `SessionLaunchCoordinator.cs`, `LauncherComposition.cs` | [launcher-app.md](modulos/launcher-app.md) |
+| `LegendLauncher.App` | Código-fonte WPF x64 do Urus Launcher, publicado como `UrusLauncher.App.exe`; oferece launcher de três colunas, runtime empacotado prioritário, instância única por sessão do Windows, conta compartilhada entre variantes OAS com estado por plataforma, catálogo ordenado, sessões por alvo exato, chrome taskbar/DPI-aware e integração não bloqueante com atualizações públicas. | `App.xaml.cs`, `MainWindow.xaml`, `Themes/Controls.xaml`, `Services/ProfilePlatformCompatibility.cs`, `Services/ServerCatalogPresentation.cs`, `MainWindowViewModel*.cs`, `SessionLaunchCoordinator.cs`, `LauncherComposition.cs` | [launcher-app.md](modulos/launcher-app.md) |
 | `LegendLauncher.App/Branding` | Identidade pública Urus Launcher: logo original transparente, ícone multirresolução, slogan localizado, metadados e remoção de marcadores Next/preview/teste da UI. | `Assets/Branding/*`, `LegendLauncher.App.csproj`, `app.manifest`, `MainWindow.xaml`, `Localization/Resources/*.json` | [branding.md](modulos/branding.md) |
 | `LegendLauncher.App/Game Session Workspace` | Barra única de 44 px com controles/abas de 34 px, abas roláveis, `+ CONTA` persistente, reserva de 150 px para o chrome, layouts 1/2/4, áudio global com refresh concorrente coalescido, detach/reattach e incorporação reversível de HWND/PID. | `Views/Game/*`, `GameHosting/*.cs`, `GameWorkspaceViewModel.cs`, `GameSessionViewModel.cs`, `GameAudioService.cs`, `LauncherSettingsService.cs`, `BorderlessWindowCommands.cs` | [game-session-workspace.md](modulos/game-session-workspace.md) |
 | `LegendLauncher.App/Localization` | Localização dinâmica por 204 chaves em `pt-BR`, `en-US` e `es-ES`, inclusive título/slogan, catálogo, doação e todo o fluxo de atualização preparada, com recursos incorporados, bindings observáveis e persistência da cultura ativa. | `Localization/*.cs`, `Localization/Resources/*.json`, `MainWindowViewModel.Localization.cs`, `MainWindowViewModel.Updates.cs` | [localizacao.md](modulos/localizacao.md) |
 | `LegendLauncher.App/Donation Prompt` | Pedido opcional PayPal/PIX, lembrete de cinco horas avaliado uma vez por abertura, acesso manual, QR imutável, cópia local do CNPJ e acessibilidade localizada. | `Views/Donation/*`, `MainWindowViewModel.Donation.cs`, `LauncherSettingsService.cs`, `paypal-donation-qr.jpeg` | [donation-prompt.md](modulos/donation-prompt.md) |
 | `LegendLauncher.App/Atualização` | Consulta antecipada do GitHub Releases na abertura, fallback público para `403`/`429`, download/validação automática por usuário com janela de uma hora, cache revalidado, cartão trilíngue pronto para instalar e execução somente após clique sem sessões ativas nem login em andamento. | `Updates/*.cs`, `Views/Updates/*`, `MainWindowViewModel.Updates.cs`, `AppPaths.UpdatesDirectory` | [atualizacao.md](modulos/atualizacao.md) |
-| `Distribuição Windows` | Publica App e GameHost self-contained para `win-x64`, gera setup/ZIP, manifesto de atualização, patch notes, checksums e GitHub Release automatizado por tag. | `scripts/build-urus-distribution.ps1`, `installer/UrusLauncher.iss`, `.github/workflows/release.yml`, `docs/releases/*.json` | [distribuicao-windows.md](modulos/distribuicao-windows.md) |
+| `Distribuição Windows` | Publica App e GameHost self-contained para `win-x64`, injeta runtime registration-free fornecido/autorizado, gera setup/ZIP, manifestos, patch notes e checksums; publicação pública por tag permanece condicionada à fonte licenciada. | `scripts/build-urus-distribution.ps1`, `installer/UrusLauncher.iss`, `.github/workflows/release.yml`, `docs/releases/*.json` | [distribuicao-windows.md](modulos/distribuicao-windows.md) |
 | `LegendLauncher.Core` | Modelos imutáveis e contratos sem dependência de UI, rede, JSON ou chamadas Win32; `AccountProfile` mantém UID/recentes por plataforma com migração dos escalares legados, e o HWND da sessão é apenas um identificador opaco. | `Models/*.cs`, `Contracts/*.cs` | [core.md](modulos/core.md) |
-| `LegendLauncher.Infrastructure` | Paths — incluindo diretório privado de updates —, JSON atômico para perfis/cache/settings, Windows Credential Manager e probe do Flash instalado. | `AppPaths.cs`, `AtomicJsonFileStore.cs`, `JsonProfileStore.cs`, `WindowsCredentialVault.cs`, `LegacyRuntimeProbe.cs` | [infrastructure.md](modulos/infrastructure.md) |
+| `LegendLauncher.Infrastructure` | Paths — incluindo diretório privado de updates —, JSON atômico para perfis/cache/settings, Windows Credential Manager e probe somente leitura do Flash empacotado/instalado. | `AppPaths.cs`, `AtomicJsonFileStore.cs`, `JsonProfileStore.cs`, `WindowsCredentialVault.cs`, `LegacyRuntimeProbe.cs` | [infrastructure.md](modulos/infrastructure.md) |
 | `LegendLauncher.Providers.Oas` | Oito plataformas OAS, catálogo/cache, Passport atual, transporte compatível, parsers e allowlist. | `OasAuthenticationService.cs`, `OasCurlLaunchTransport.cs`, `OasServerDirectory.cs`, `OasOriginPolicy.cs` | [providers-oas.md](modulos/providers-oas.md) |
 | `LegendLauncher.Providers.SevenWan` | Quatorze variantes Wartune/7wan e catálogo público normalizado; autenticação permanece indisponível. | `SevenWanPlatformCatalog.cs`, `SevenWanServerDirectory.cs`, `SevenWanServerPayloadParser.cs` | [providers-sevenwan.md](modulos/providers-sevenwan.md) |
 | `LegendLauncher.GameHost.Legacy` | Processo x64 separado que herda a cultura normalizada, recebe sessão por Named Pipe, ativa COM sem registro, hospeda Flash ActiveX, devolve uma superfície nativa validada e encerra quando o processo pai desaparece. | `LegacyGameRuntime.cs`, `GameHostLocalization.cs`, `GameHostWindowIdentity.cs`, `ParentProcessLifetimeMonitor.cs`, `PipeCompletionProtocol.cs`, `FlashActiveXControl.cs` | [game-host-legacy.md](modulos/game-host-legacy.md) |
@@ -330,6 +333,7 @@ LegendLauncherNext/
 | `docs/decisoes/ADR-006-lembrete-doacao-nao-intrusivo.md` | Decisão pela avaliação única na abertura, cadência de cinco horas, acesso manual, QR preservado e PIX copiável. |
 | `docs/decisoes/ADR-007-identidade-e-distribuicao-urus.md` | Decisão pela marca pública Urus, asset original, compatibilidade interna e dois formatos de distribuição Windows. |
 | `docs/decisoes/ADR-008-atualizacoes-github-releases.md` | Decisão por consulta única na abertura, staging automático validado e consentimento explícito somente para executar o instalador. |
+| `docs/decisoes/ADR-009-provisionamento-runtime-legado.md` | Define `runtime\` prioritário, origem fornecida pelo mantenedor, validações de empacotamento e bloqueio de publicação sem licença. |
 | `docs/modulos/atualizacao.md` | Contratos, UI, segurança, bootstrap e testes do atualizador. |
 | `docs/modulos/branding.md` | Origem, integração, contratos visuais/localizados e validação dos assets Urus. |
 | `docs/modulos/distribuicao-windows.md` | Pipeline Release, instalação, portabilidade, hashes, segurança e operação dos pacotes. |
@@ -337,6 +341,7 @@ LegendLauncherNext/
 | `docs/releases/v1.1.1.json` | Fonte trilíngue dos títulos e patch notes da versão 1.1.1, incluindo o fallback de rate limit em redes/IPs compartilhados. |
 | `docs/releases/v1.1.2.json` | Fonte trilíngue dos títulos e patch notes da versão 1.1.2, incluindo Classic Português S100, identidade OAS compartilhada e estado/sessões por destino. |
 | `docs/releases/v1.1.3.json` | Fonte trilíngue dos títulos e patch notes da versão 1.1.3, incluindo download automático validado, cache exato e instalação sob clique. |
+| `docs/releases/v1.1.4.json` | Fonte trilíngue da correção de instalação limpa, prioridade do runtime interno e estado visual honesto do CTA. |
 | `src/LegendLauncher.App/Updates/UpdateManifestValidator.cs` | Validador único do manifesto normal e alternativo, mantendo versão, setup, bytes, SHA-256 e notas trilíngues sob o mesmo contrato. |
 | `tests/LegendLauncher.Tests/App/Updates/LauncherUpdateServiceFallbackTests.cs` | Contratos do fallback exclusivo para rate limit `403`/`429`, redirects permitidos e rejeição de rotas/documentos inválidos. |
 | `.github/workflows/release.yml` | Gera e publica GitHub Release quando uma tag `vMAJOR.MINOR.PATCH` é enviada. |
@@ -344,9 +349,9 @@ LegendLauncherNext/
 | `docs/modulos/localizacao.md` | Contrato dos três idiomas, atualização em runtime, limites e integração com settings/GameHost. |
 | `docs/modulos/donation-prompt.md` | Contrato temporal, visual, de integridade do QR, PIX, acessibilidade e persistência do pedido de apoio. |
 | `installer/UrusLauncher.iss` | Receita Inno Setup x64, per-user e trilíngue do instalador Urus Launcher. |
-| `scripts/build-urus-distribution.ps1` | Pipeline self-contained que testa, publica, valida, empacota e calcula checksums com `System.Security.Cryptography.SHA256`. |
+| `scripts/build-urus-distribution.ps1` | Pipeline self-contained que exige runtime fornecido, valida manifesto/OCX/Authenticode, testa, publica, empacota e calcula checksums por stream. |
 | `artifacts/urus-distribution/` | Saída gerada e fora da árvore-fonte: payload, instalador, ZIP, manifesto e checksums da versão. |
-| `tests/LegendLauncher.Tests/` | Suíte xUnit organizada pelas mesmas fronteiras dos projetos; inclui contratos XAML, branding, localização, doação, updater, GitHub Release e distribuição Windows. |
+| `tests/LegendLauncher.Tests/` | Suíte xUnit organizada pelas mesmas fronteiras dos projetos; inclui composição/prioridade do runtime, contratos XAML, branding, localização, doação, updater, GitHub Release e distribuição Windows. |
 
 ## Relação entre módulos
 
@@ -358,8 +363,8 @@ LegendLauncherNext/
 6. `Donation Prompt` usa UI/localização da App, um timestamp não sensível no settings e a área de transferência local para PIX; não acessa providers, credenciais ou sessões.
 7. `Branding` fornece assets e textos públicos à App, ao GameHost e ao instalador; não altera os nomes internos mantidos por compatibilidade.
 8. `Atualização` consulta o GitHub Release público, usa o diretório por usuário fornecido por Infrastructure e consome o manifesto/notas produzidos por Distribuição; uma versão superior é baixada/validada sem bloquear o jogo, mas nenhuma instalação ocorre sem clique, com sessão ativa ou durante a abertura de uma conta.
-9. `Distribuição Windows` consome builds Release, branding, definição trilíngue e testes para gerar os pacotes e, por tag, publicar o GitHub Release usado pelo updater.
-10. `Infrastructure` implementa persistência/cofre definidos por `Core`; também fornece diretórios privados para cache, dados e downloads de atualização.
+9. `Distribuição Windows` consome builds Release, branding, definição trilíngue, testes e uma origem autorizada de runtime para gerar os pacotes; uma tag só pode publicar quando o runner também receber essa origem.
+10. `Infrastructure` implementa persistência/cofre definidos por `Core`; também fornece diretórios privados para cache, dados e downloads de atualização, além do probe usado sobre o runtime escolhido pela App.
 11. `GameHost.Legacy` implementa `IGameRuntime`, usa a política do `NetworkBridge`, localiza mensagens próprias, devolve PID/HWND, não recebe senha e monitora o PID pai para não sobreviver ao launcher.
 12. `NetworkBridge` mantém apenas validação neste marco; `H2Proxy.exe` não é iniciado.
 

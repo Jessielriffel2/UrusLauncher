@@ -8,6 +8,8 @@ param(
 
     [string]$InnoCompiler = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe",
 
+    [string]$LegacyRuntimeSource = '',
+
     [switch]$SkipTests,
 
     [switch]$SkipPortableStartupSmoke
@@ -119,6 +121,130 @@ function Assert-WpfWindowsBase {
     }
 
     Write-Host "Validated WPF WindowsBase.dll: $($windowsBase.Length) bytes, version $productVersion."
+}
+
+function Resolve-LegacyRuntimeSource {
+    param(
+        [string]$ExplicitSource
+    )
+
+    $candidates = [System.Collections.Generic.List[string]]::new()
+    if (-not [string]::IsNullOrWhiteSpace($ExplicitSource)) {
+        $candidates.Add($ExplicitSource)
+    }
+    if (-not [string]::IsNullOrWhiteSpace($env:LEGEND_LEGACY_ROOT)) {
+        $candidates.Add($env:LEGEND_LEGACY_ROOT)
+    }
+
+    foreach ($programFilesRoot in @($env:ProgramFiles, ${env:ProgramFiles(x86)})) {
+        if (-not [string]::IsNullOrWhiteSpace($programFilesRoot)) {
+            $candidates.Add((Join-Path $programFilesRoot 'Legend Online Client by Brov (H2_x64)'))
+        }
+    }
+
+    foreach ($candidate in $candidates) {
+        try {
+            $fullPath = [System.IO.Path]::GetFullPath($candidate.Trim().Trim('"'))
+            if (Test-Path -LiteralPath $fullPath -PathType Container) {
+                return $fullPath
+            }
+        }
+        catch [System.ArgumentException], [System.NotSupportedException], [System.IO.PathTooLongException] {
+            continue
+        }
+    }
+
+    throw @'
+No authorized legacy runtime source was found. Pass -LegacyRuntimeSource or set
+LEGEND_LEGACY_ROOT to a directory containing Adobe.Flash.Control.manifest and
+the referenced x64 ActiveX control. The build never downloads an untrusted runtime.
+'@
+}
+
+function Get-ManifestActiveXPath {
+    param(
+        [Parameter(Mandatory)]
+        [string]$ManifestPath
+    )
+
+    $settings = [System.Xml.XmlReaderSettings]::new()
+    $settings.DtdProcessing = [System.Xml.DtdProcessing]::Prohibit
+    $settings.XmlResolver = $null
+    $settings.MaxCharactersInDocument = 1MB
+    $reader = [System.Xml.XmlReader]::Create($ManifestPath, $settings)
+    try {
+        while ($reader.Read()) {
+            if ($reader.NodeType -ne [System.Xml.XmlNodeType]::Element -or
+                -not $reader.LocalName.Equals('file', [System.StringComparison]::OrdinalIgnoreCase)) {
+                continue
+            }
+
+            $relativePath = $reader.GetAttribute('name')
+            if (-not [string]::IsNullOrWhiteSpace($relativePath) -and
+                $relativePath.EndsWith('.ocx', [System.StringComparison]::OrdinalIgnoreCase)) {
+                return $relativePath
+            }
+        }
+    }
+    finally {
+        $reader.Dispose()
+    }
+
+    throw "The Flash manifest does not reference an ActiveX .ocx file: '$ManifestPath'."
+}
+
+function Copy-LegacyRuntimePayload {
+    param(
+        [Parameter(Mandatory)]
+        [string]$SourceDirectory,
+
+        [Parameter(Mandatory)]
+        [string]$PayloadDirectory
+    )
+
+    $manifestSource = Join-Path $SourceDirectory 'Adobe.Flash.Control.manifest'
+    Assert-FileExists $manifestSource 'Legacy Flash activation manifest'
+    $activeXRelativePath = Get-ManifestActiveXPath $manifestSource
+    if ([System.IO.Path]::IsPathRooted($activeXRelativePath)) {
+        throw "The Flash manifest references an absolute path: '$activeXRelativePath'."
+    }
+
+    $activeXSource = Get-VerifiedChildPath `
+        (Join-Path $SourceDirectory $activeXRelativePath) `
+        $SourceDirectory
+    Assert-FileExists $activeXSource 'Legacy Flash ActiveX control'
+    $activeXFile = Get-Item -LiteralPath $activeXSource
+    if ($activeXFile.Length -le 1MB) {
+        throw "The Flash ActiveX control is unexpectedly small: $($activeXFile.Length) bytes."
+    }
+
+    $signature = Get-AuthenticodeSignature -LiteralPath $activeXSource
+    if ($signature.Status -ne [System.Management.Automation.SignatureStatus]::Valid) {
+        throw "The Flash ActiveX signature is not valid: $($signature.Status)."
+    }
+
+    $runtimeDestination = Get-VerifiedChildPath `
+        (Join-Path $PayloadDirectory 'runtime') `
+        $PayloadDirectory
+    $manifestDestination = Join-Path $runtimeDestination 'Adobe.Flash.Control.manifest'
+    $activeXDestination = Get-VerifiedChildPath `
+        (Join-Path $runtimeDestination $activeXRelativePath) `
+        $runtimeDestination
+    New-Item -ItemType Directory -Path (Split-Path $activeXDestination -Parent) -Force |
+        Out-Null
+    Copy-Item -LiteralPath $manifestSource -Destination $manifestDestination -Force
+    Copy-Item -LiteralPath $activeXSource -Destination $activeXDestination -Force
+
+    Assert-FileExists $manifestDestination 'Bundled Flash activation manifest'
+    Assert-FileExists $activeXDestination 'Bundled Flash ActiveX control'
+    Write-Host "Bundled the validated registration-free runtime in '$runtimeDestination'."
+
+    return [pscustomobject]@{
+        Directory = $runtimeDestination
+        Manifest = $manifestDestination
+        ActiveX = $activeXDestination
+        ActiveXRelativePath = $activeXRelativePath
+    }
 }
 
 function Test-PortableLauncherStartup {
@@ -235,6 +361,8 @@ Assert-FileExists $installerScript 'Inno Setup script'
 Assert-FileExists $brandingIcon 'Urus Launcher icon'
 Assert-FileExists $releaseDefinitionPath "Release definition for version $Version"
 Assert-FileExists $InnoCompiler 'Inno Setup compiler'
+$resolvedLegacyRuntimeSource = Resolve-LegacyRuntimeSource $LegacyRuntimeSource
+Write-Host "Using the builder-supplied legacy runtime from '$resolvedLegacyRuntimeSource'."
 
 $releaseDefinition = Get-Content -LiteralPath $releaseDefinitionPath -Raw |
     ConvertFrom-Json
@@ -335,6 +463,9 @@ foreach ($fileName in $gameHostPayloadFiles) {
 Copy-Item -LiteralPath $brandingIcon `
     -Destination (Join-Path $payloadDirectory 'urus-launcher.ico') `
     -Force
+$bundledLegacyRuntime = Copy-LegacyRuntimePayload `
+    $resolvedLegacyRuntimeSource `
+    $payloadDirectory
 Remove-Item -LiteralPath $stagingRoot -Recurse -Force
 
 $mainExecutable = Join-Path $payloadDirectory 'UrusLauncher.App.exe'
@@ -387,6 +518,8 @@ $payloadFiles = @(Get-ChildItem -LiteralPath $payloadDirectory -File -Recurse)
 $payloadBytes = ($payloadFiles | Measure-Object -Property Length -Sum).Sum
 $installerRecord = Get-ArtifactRecord (Get-Item -LiteralPath $installerPath)
 $portableRecord = Get-ArtifactRecord (Get-Item -LiteralPath $portableZipPath)
+$runtimeManifestRecord = Get-ArtifactRecord (Get-Item -LiteralPath $bundledLegacyRuntime.Manifest)
+$runtimeActiveXRecord = Get-ArtifactRecord (Get-Item -LiteralPath $bundledLegacyRuntime.ActiveX)
 $updateManifestPath = Join-Path $distributionRoot 'update-manifest.json'
 $updateManifest = [ordered]@{
     schema = 1
@@ -429,6 +562,17 @@ $manifest = [ordered]@{
     updater = [ordered]@{
         manifest = $updateManifestRecord
         releaseNotes = $releaseNotesRecord
+    }
+    legacyRuntime = [ordered]@{
+        bundled = $true
+        directory = 'runtime'
+        manifest = $runtimeManifestRecord
+        activeX = [ordered]@{
+            path = $bundledLegacyRuntime.ActiveXRelativePath
+            file = $runtimeActiveXRecord.file
+            bytes = $runtimeActiveXRecord.bytes
+            sha256 = $runtimeActiveXRecord.sha256
+        }
     }
     payload = [ordered]@{
         directory = 'portable/UrusLauncher'

@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "version": "1.1.4",
+  "title": {
+    "pt-BR": "Jogo pronto também em instalações limpas",
+    "en-US": "Game ready on clean installations too",
+    "es-ES": "Juego listo también en instalaciones limpias"
+  },
+  "notes": {
+    "pt-BR": [
+      "O instalador e o ZIP passam a levar o runtime de compatibilidade validado dentro da pasta runtime, eliminando a dependência do cliente antigo estar instalado no computador.",
+      "O launcher prioriza o runtime do próprio Urus e mantém a descoberta de instalações existentes somente como fallback.",
+      "O estado incompatível agora aparece em vermelho e o botão Jogar desativado deixa de parecer clicável."
+    ],
+    "en-US": [
+      "The installer and ZIP now carry the validated compatibility runtime inside the runtime folder, removing the dependency on the old client being installed on the computer.",
+      "The launcher prioritizes Urus's own runtime and keeps discovery of existing installations as a fallback only.",
+      "An incompatible state now appears in red and a disabled Play button no longer looks clickable."
+    ],
+    "es-ES": [
+      "El instalador y el ZIP ahora incluyen el runtime de compatibilidad validado dentro de la carpeta runtime, eliminando la dependencia de tener instalado el cliente antiguo.",
+      "El launcher prioriza el runtime propio de Urus y conserva la detección de instalaciones existentes solo como alternativa.",
+      "El estado incompatible ahora aparece en rojo y el botón Jugar desactivado deja de parecer clicable."
+    ]
+  }
+}

@@ -2,9 +2,9 @@
 
 ## Objetivo do módulo
 
-`LegendLauncher.Infrastructure` implementa os adaptadores locais do launcher: caminhos graváveis do usuário, inclusive o diretório confinado de downloads de atualização, persistência JSON atômica, cache de catálogos, perfis sem senha, settings não sensíveis, Windows Credential Manager e descoberta somente leitura dos assets Flash já instalados.
+`LegendLauncher.Infrastructure` implementa os adaptadores locais do launcher: caminhos graváveis do usuário, inclusive o diretório confinado de downloads de atualização, persistência JSON atômica, cache de catálogos, perfis sem senha, settings não sensíveis, Windows Credential Manager e descoberta somente leitura dos assets Flash empacotados ou já instalados.
 
-O módulo não lê nem migra dados do cliente antigo. Chaves do cofre devem começar com `LegendLauncherNext/`. O probe apenas localiza `Adobe.Flash.Control.manifest` e o OCX referenciado: não registra COM, não executa binários, não muda permissões e não depende de `H2Proxy.exe`.
+O módulo não lê nem migra dados do cliente antigo. Chaves do cofre devem começar com `LegendLauncherNext/`. O probe apenas localiza `Adobe.Flash.Control.manifest` e o OCX referenciado na origem escolhida pela App — agora `runtime\` tem prioridade —: não registra COM, não executa binários, não muda permissões e não depende de `H2Proxy.exe`.
 
 ## Arquivos, classes e funções principais
 

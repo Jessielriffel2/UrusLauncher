@@ -70,6 +70,13 @@ public sealed class WindowsDistributionContractTests
         Assert.Contains("DOTNET_MULTILEVEL_LOOKUP = '0'", source);
         Assert.Contains("$process.MainWindowTitle -ne 'Urus Launcher'", source);
         Assert.Contains("'PresentationFramework.dll'", source);
+        Assert.Contains("[string]$LegacyRuntimeSource", source);
+        Assert.Contains("Resolve-LegacyRuntimeSource $LegacyRuntimeSource", source);
+        Assert.Contains("Copy-LegacyRuntimePayload", source);
+        Assert.Contains("Adobe.Flash.Control.manifest", source);
+        Assert.Contains("Get-AuthenticodeSignature", source);
+        Assert.Contains("(Join-Path $PayloadDirectory 'runtime')", source);
+        Assert.Contains("legacyRuntime = [ordered]@{", source);
         Assert.Contains("[System.Security.Cryptography.SHA256]::Create()", source);
         Assert.DoesNotContain("Get-FileHash", source, StringComparison.Ordinal);
     }

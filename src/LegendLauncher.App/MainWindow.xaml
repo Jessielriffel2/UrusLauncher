@@ -649,7 +649,7 @@
                                         <ColumnDefinition Width="9" />
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
-                                    <Border Width="17" Height="17" CornerRadius="9" Background="{StaticResource SuccessBrush}"
+                                    <Border Width="17" Height="17" CornerRadius="9" Background="{Binding RuntimeStatusBrush}"
                                             VerticalAlignment="Top">
                                         <TextBlock Text="&#xE73E;" FontFamily="Segoe Fluent Icons" FontSize="9"
                                                    Foreground="#05211A" HorizontalAlignment="Center" VerticalAlignment="Center" />

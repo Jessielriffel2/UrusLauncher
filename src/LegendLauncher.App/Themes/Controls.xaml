@@ -160,10 +160,10 @@
                             <Setter TargetName="ButtonBorder" Property="Opacity" Value="0.82" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
-                            <Setter TargetName="ButtonBorder" Property="Background" Value="{StaticResource AccentGradientBrush}" />
-                            <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="{StaticResource AccentBrush}" />
-                            <Setter Property="Foreground" Value="White" />
-                            <Setter TargetName="ButtonBorder" Property="Opacity" Value="1" />
+                            <Setter TargetName="ButtonBorder" Property="Background" Value="#152434" />
+                            <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="#345064" />
+                            <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
+                            <Setter TargetName="ButtonBorder" Property="Opacity" Value="0.72" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>

@@ -2,7 +2,7 @@
 
 Launcher Windows para Legend Online, escrito do zero em C#/.NET 10 e distribuído publicamente como **Urus Launcher**. A aplicação reaproveita apenas os endpoints e os arquivos locais de compatibilidade necessários para acessar o jogo; identidade, interface, persistência e fluxo de sessão pertencem ao projeto novo.
 
-> **Projeto não oficial.** O Urus Launcher não é afiliado, patrocinado nem aprovado pelos responsáveis por Legend Online. Nomes, marcas e conteúdo do jogo pertencem aos respectivos titulares. O projeto não redistribui o Flash ActiveX nem arquivos proprietários do cliente antigo.
+> **Projeto não oficial.** O Urus Launcher não é afiliado, patrocinado nem aprovado pelos responsáveis por Legend Online. Nomes, marcas e conteúdo do jogo pertencem aos respectivos titulares. O repositório não armazena o Flash ActiveX nem arquivos proprietários do cliente antigo; um pacote com runtime embutido só pode ser publicado por quem possua a autorização de redistribuição aplicável.
 
 ## Estado atual
 
@@ -26,7 +26,7 @@ Launcher Windows para Legend Online, escrito do zero em C#/.NET 10 e distribuíd
 | Autenticação Passport OAS | Implementada nas oito variantes; QA abriu o Reborn turco S115 até a interface jogável e validou Passport + sessão do Classic Português S100 |
 | GameHost Flash x64 separado | Implementado, isolado por sessão e encerrado quando o processo pai desaparece; jogabilidade real confirmada no S115 |
 | Execução direta sem `H2Proxy.exe` | Implementada |
-| Distribuição Windows | Pipeline self-contained `win-x64`, instalador Inno Setup por usuário, ZIP portátil, manifesto e SHA-256 implementados |
+| Distribuição Windows | Pipeline self-contained `win-x64`, runtime registration-free fornecido pelo mantenedor, instalador Inno Setup por usuário, ZIP portátil, manifesto e SHA-256 implementados |
 | Atualizações públicas | Consulta antecipada por GitHub Releases ao abrir, download/validação automática por usuário, cache verificado e instalação somente após clique explícito |
 | Ruffle | Avaliação futura |
 | Favoritos/múltiplos servidores fixados por conta | Melhoria futura |
@@ -56,7 +56,7 @@ Launcher Windows para Legend Online, escrito do zero em C#/.NET 10 e distribuíd
 - O resultado de abertura carrega o perfil efetivamente persistido; um GameHost iniciado mas não adotado pelo workspace é encerrado, assim como um GameHost cujo processo pai desapareça.
 - A cultura ativa é configurada antes da janela principal e propagada a cada novo GameHost por `LEGEND_LAUNCHER_LANGUAGE` no ambiente do filho. Ela não entra na linha de comando, no Named Pipe nem na sessão autenticada.
 - O pedido opcional de apoio é um overlay WPF local: o intervalo de cinco horas é avaliado uma vez por abertura, sem timer durante o jogo. O QR PayPal é um recurso imutável e o PIX copia somente a chave CNPJ pública para a área de transferência.
-- O pipeline publica App e GameHost como self-contained `win-x64`, preserva o runtime WPF completo da App ao incorporar somente os quatro arquivos próprios do GameHost, executa um smoke de inicialização sem .NET global, produz instalador/ZIP do mesmo payload e emite manifesto/checksums. O .NET acompanha o pacote; o Flash ActiveX legado não é redistribuído.
+- O pipeline publica App e GameHost como self-contained `win-x64`, preserva o runtime WPF completo da App, incorpora somente os quatro arquivos próprios do GameHost e exige uma origem autorizada do runtime registration-free. Manifesto e OCX x64 assinado são copiados para `runtime\`, validados e incluídos no instalador/ZIP; o binário de terceiros não fica no Git.
 
 O GameHost separado reduz o impacto de uma falha do ActiveX, mas **não é uma sandbox de segurança**. O caminho atual carrega o jogo diretamente e não exige, inicia nem incorpora o `H2Proxy.exe` do cliente antigo.
 
@@ -121,7 +121,7 @@ Pré-requisitos:
 
 - Windows 10 ou 11 x64;
 - .NET SDK 10;
-- uma instalação local compatível contendo `Adobe.Flash.Control.manifest` e o OCX referenciado, enquanto o caminho ActiveX for necessário.
+- uma origem local autorizada contendo `Adobe.Flash.Control.manifest` e o OCX x64 assinado referenciado, necessária para gerar um pacote com jogo pronto em instalação limpa;
 - `curl.exe` incluído no diretório de sistema do Windows para a ponte compatível pós-Passport.
 
 Comandos:
@@ -140,25 +140,26 @@ O projeto continua com o caminho-fonte `src\LegendLauncher.App`, mas o build ger
 Com Inno Setup 6 instalado:
 
 ```powershell
-.\scripts\build-urus-distribution.ps1 -Version 1.1.3
+.\scripts\build-urus-distribution.ps1 -Version 1.1.4 `
+    -LegacyRuntimeSource "C:\caminho\para\runtime-autorizado"
 ```
 
 O script executa a suíte Release, publica App e GameHost self-contained para `win-x64`, valida o payload e produz:
 
-- `artifacts\urus-distribution\UrusLauncher-Setup-1.1.3-win-x64.exe`;
-- `artifacts\urus-distribution\UrusLauncher-1.1.3-portable-win-x64.zip`;
+- `artifacts\urus-distribution\UrusLauncher-Setup-1.1.4-win-x64.exe`;
+- `artifacts\urus-distribution\UrusLauncher-1.1.4-portable-win-x64.zip`;
 - `artifacts\urus-distribution\distribution-manifest.json`;
 - `artifacts\urus-distribution\update-manifest.json`;
 - `artifacts\urus-distribution\RELEASE_NOTES.md`;
 - `artifacts\urus-distribution\SHA256SUMS.txt`.
 
-Antes da build, deve existir `docs\releases\v1.1.3.json` (ou o arquivo da versão solicitada) com título e notas não vazias nos três idiomas. Para publicar no repositório público, envie uma tag exatamente no formato `vMAJOR.MINOR.PATCH`. O workflow separa build (`contents: read`) de publicação (`contents: write`), usa actions fixadas por commit e entrega ao job de release somente os artefatos validados. Nenhum PAT é incorporado ao aplicativo.
+Antes da build, deve existir `docs\releases\v1.1.4.json` (ou o arquivo da versão solicitada) com título e notas não vazias nos três idiomas. `-LegacyRuntimeSource` pode ser omitido quando `LEGEND_LEGACY_ROOT` ou a instalação Brov conhecida fornece a origem, mas o pipeline sempre falha se não puder formar `runtime\` completo. Para publicar no repositório público, além da tag `vMAJOR.MINOR.PATCH`, o mantenedor precisa fornecer essa origem ao runner e possuir autorização de redistribuição; nenhum runtime é baixado automaticamente de terceiros.
 
 O instalador é per-user, sem elevação, e usa `%LocalAppData%\Programs\Urus Launcher`; oferece inglês, português brasileiro e espanhol e atalho de desktop opcional. O ZIP contém a pasta inteira `UrusLauncher`: extraia antes de executar `UrusLauncher.App.exe`.
 
-O script não copia arquivos automaticamente para `Downloads`. No handoff 1.1.3, o setup público `UrusLauncher-Setup-1.1.3-win-x64.exe`, `UrusLauncher-SHA256SUMS-1.1.3.txt` e `UrusLauncher-update-manifest-1.1.3.json` foram baixados explicitamente para `%USERPROFILE%\Downloads`; bytes e hashes foram conferidos contra API, manifesto e fallback públicos. O ZIP portátil permanece em `artifacts\urus-distribution` e no GitHub Release. Veja [distribuicao-windows.md](docs/modulos/distribuicao-windows.md) para tamanhos e hashes completos.
+O script não copia arquivos automaticamente para `Downloads`. No handoff 1.1.3, setup/checksums/manifesto públicos foram baixados e conferidos contra API e fallback. Para o teste privado 1.1.4, `UrusLauncher-Setup-1.1.4-win-x64.exe` e `UrusLauncher-SHA256SUMS-1.1.4.txt` foram copiados explicitamente para `%USERPROFILE%\Downloads`; o ZIP permanece em `artifacts\urus-distribution`. Veja [distribuicao-windows.md](docs/modulos/distribuicao-windows.md) para tamanhos, hashes e limite de publicação.
 
-O código-fonte deve permanecer fora de `Program Files`. A instalação antiga é consultada somente para localizar os assets de compatibilidade Flash existentes; dados novos são gravados no perfil do usuário.
+O código-fonte deve permanecer fora de `Program Files`. Em desenvolvimento, uma instalação antiga pode servir de origem local; em execução, o launcher prioriza `runtime\` ao lado do aplicativo e só depois consulta a variável de ambiente e instalações Brov conhecidas. Dados novos continuam gravados no perfil do usuário.
 
 ## Como funciona o login
 
@@ -183,11 +184,11 @@ Tentar jogar novamente com um perfil que já está em execução apenas selecion
 
 ## Segurança e validação
 
-O Adobe Flash ActiveX é legado e descontinuado. Ele nunca é carregado no processo WPF, não é registrado globalmente e não deve ser redistribuído sem permissão de licença. URIs de abertura são limitadas a HTTPS e origens aprovadas, e senha/sessão não entram em argumentos de processo nem em mensagens de diagnóstico.
+O Adobe Flash ActiveX é legado e descontinuado. Ele nunca é carregado no processo WPF nem registrado globalmente. O pipeline aceita uma cópia fornecida pelo mantenedor para formar um pacote registration-free, mas isso não concede licença: a publicação só deve ocorrer com permissão de redistribuição. URIs de abertura são limitadas a HTTPS e origens aprovadas, e senha/sessão não entram em argumentos de processo nem em mensagens de diagnóstico.
 
 Testes automatizados cobrem composição de catálogo, perfis, cofre, migração de estado por plataforma, autenticação OAS cruzada, isolamento SevenWan, alvo exato de sessão, transporte compatível, políticas de URI, settings, localização e propagação da cultura, pedido de apoio/intervalo/PIX/QR, áudio por PID e descarte concorrente, layouts 1/2/4, detach/reattach, maximização taskbar-aware, cleanup de sessão não adotada e protocolo launcher/GameHost. O updater possui contratos próprios para API/manifesto, fallback de rate limit, allowlist e redirects, download automático sem execução, cache revalidado, SHA-256, confinamento, instalação sob clique, caminho por usuário e workflow build/publish com permissões separadas. `LocalizationCatalogTests.cs` fixa 204 chaves equivalentes nos três idiomas. A validação histórica 1.0.1 permanece documentada em [`design-qa.md`](design-qa.md); resultados e hashes públicos ficam registrados na documentação de distribuição.
 
-A validação 1.1.3 concluiu **461/461** testes em Debug e **461/461** em Release. O build canônico repete a suíte antes do smoke self-contained e da criação do setup, ZIP, manifesto e checksums; os resultados finais ficam em [distribuicao-windows.md](docs/modulos/distribuicao-windows.md).
+A validação pública 1.1.3 concluiu **461/461** testes em Debug/Release. A build privada 1.1.4 concluiu **465/465** em Release, smoke portátil sem .NET global, runtime registration-free presente no ZIP e abertura visual com status **Pronto para jogar**/CTA habilitado. Os resultados e hashes ficam em [distribuicao-windows.md](docs/modulos/distribuicao-windows.md).
 
 O layout novo compila e preserva as funções documentadas do launcher. A captura autenticada da build final foi comparada lado a lado com a referência e aprovada em [`design-qa.md`](design-qa.md).
 

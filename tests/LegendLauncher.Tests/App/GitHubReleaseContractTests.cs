@@ -46,7 +46,8 @@ public sealed class GitHubReleaseContractTests
     [InlineData("1.1.1")]
     [InlineData("1.1.2")]
     [InlineData("1.1.3")]
-    public void PublicVersionHasPatchNotesInEverySupportedLanguage(string version)
+    [InlineData("1.1.4")]
+    public void ReleaseDefinitionHasPatchNotesInEverySupportedLanguage(string version)
     {
         string path = FindRepositoryFile("docs", "releases", $"v{version}.json");
         using JsonDocument document = JsonDocument.Parse(File.ReadAllBytes(path));

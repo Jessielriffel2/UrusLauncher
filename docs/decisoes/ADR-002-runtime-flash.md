@@ -27,4 +27,4 @@ O proxy antigo servirá apenas como oracle de comportamento. A ponte nova será 
 
 ## Limites
 
-A redistribuição do OCX depende de licença. Até essa confirmação, o projeto apenas detecta uma cópia já instalada e não baixa Flash de terceiros.
+A redistribuição do OCX depende de licença. O pipeline pode formar um payload privado a partir de uma origem fornecida pelo mantenedor e o launcher prioriza esse runtime interno, mas nenhuma cópia entra no Git ou deve ser publicada sem autorização. O projeto não baixa Flash de terceiros. O provisionamento está detalhado no [ADR-009](ADR-009-provisionamento-runtime-legado.md).

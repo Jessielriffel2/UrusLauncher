@@ -466,7 +466,7 @@ internal sealed partial class MainWindowViewModel : ObservableObject, IDisposabl
         ? _localization.Get("Runtime_DetectedDetail")
         : _localization.Get("Runtime_MissingDetail");
 
-    public Brush RuntimeStatusBrush => _runtimeProbe.IsUsable ? WarningBrush : MutedBrush;
+    public Brush RuntimeStatusBrush => _runtimeProbe.IsUsable ? OnlineBrush : ErrorBrush;
 
     public bool CanStartGame =>
         !_disposed &&

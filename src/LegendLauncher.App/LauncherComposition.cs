@@ -17,6 +17,13 @@ namespace LegendLauncher.App;
 
 internal static class LauncherComposition
 {
+    private static readonly string[] KnownLegacyInstallationNames =
+    [
+        "Legend Online Client by Brov (H2_x64)",
+        "Legend Online Client by Brov (64-bit)",
+        "Legend Online Client by Brov"
+    ];
+
     public static MainWindowViewModel CreateMainWindowViewModel(HttpClient httpClient)
     {
         ArgumentNullException.ThrowIfNull(httpClient);
@@ -96,23 +103,37 @@ internal static class LauncherComposition
         return client;
     }
 
-    private static string? FindLegacyRuntimeCandidate()
+    private static string? FindLegacyRuntimeCandidate() => FindLegacyRuntimeCandidate(
+        AppContext.BaseDirectory,
+        Environment.GetEnvironmentVariable("LEGEND_LEGACY_ROOT"),
+        [
+            Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
+            Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86)
+        ]);
+
+    internal static string? FindLegacyRuntimeCandidate(
+        string applicationDirectory,
+        string? configuredPath,
+        IEnumerable<string> programFilesRoots)
     {
-        string? configured = Environment.GetEnvironmentVariable("LEGEND_LEGACY_ROOT");
-        if (!string.IsNullOrWhiteSpace(configured))
+        ArgumentException.ThrowIfNullOrWhiteSpace(applicationDirectory);
+        ArgumentNullException.ThrowIfNull(programFilesRoots);
+
+        string bundledRuntime = Path.Combine(applicationDirectory, "runtime");
+        if (Directory.Exists(bundledRuntime))
         {
-            return configured;
+            return bundledRuntime;
         }
 
-        string programFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
-        if (string.IsNullOrWhiteSpace(programFiles))
+        if (!string.IsNullOrWhiteSpace(configuredPath) && Directory.Exists(configuredPath))
         {
-            return null;
+            return configuredPath;
         }
 
-        string knownInstallation = Path.Combine(
-            programFiles,
-            "Legend Online Client by Brov (H2_x64)");
-        return Directory.Exists(knownInstallation) ? knownInstallation : null;
+        return programFilesRoots
+            .Where(static root => !string.IsNullOrWhiteSpace(root))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .SelectMany(root => KnownLegacyInstallationNames.Select(name => Path.Combine(root, name)))
+            .FirstOrDefault(Directory.Exists);
     }
 }

@@ -2,6 +2,24 @@
 
 As mudanças relevantes do Urus Launcher são registradas aqui. As versões públicas seguem versionamento semântico e são publicadas em `vMAJOR.MINOR.PATCH`.
 
+## 1.1.4 — 16/07/2026
+
+### Compatibilidade em instalação limpa
+
+- O pipeline passa a exigir uma origem de runtime fornecida pelo mantenedor e copia somente `Adobe.Flash.Control.manifest` e o OCX x64 referenciado para `runtime\` no payload.
+- Instalador e ZIP gerados a partir desse payload deixam de depender do cliente Brov estar previamente instalado no computador de destino.
+- O launcher procura primeiro seu runtime empacotado e preserva `LEGEND_LEGACY_ROOT` e instalações Brov conhecidas como fallback.
+- O build rejeita manifesto sem OCX confinado, ActiveX pequeno ou assinatura Authenticode inválida e registra bytes/SHA-256 no manifesto de distribuição.
+
+### Interface
+
+- O indicador de compatibilidade passa a refletir o estado real em verde/vermelho.
+- O botão **Entrar e jogar** desabilitado agora possui aparência realmente inativa, em vez de parecer clicável sem responder ou animar.
+
+### Distribuição
+
+- A origem do runtime não entra no Git; cada distribuição deve comprovar autorização de redistribuição antes de publicação pública. O build não baixa Flash de terceiros.
+
 ## 1.1.3 — 15/07/2026
 
 ### Atualização preparada em segundo plano

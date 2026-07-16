@@ -70,6 +70,28 @@ public sealed class MainWindowLayoutXamlTests
     }
 
     [Fact]
+    public void RuntimeStatusAndDisabledPrimaryActionReflectActualReadiness()
+    {
+        XDocument document = LoadMainWindow();
+        XElement runtimeStatus = FindNamedElement(document, "Border", "PinnedRuntimeStatus");
+        XElement statusIndicator = runtimeStatus
+            .Descendants(Presentation + "Border")
+            .Single(element => element.Attribute("Width")?.Value == "17");
+        XElement primaryAction = FindNamedElement(document, "Button", "PinnedPrimaryAction");
+        string controls = File.ReadAllText(FindRepositoryFile(
+            "src",
+            "LegendLauncher.App",
+            "Themes",
+            "Controls.xaml"));
+
+        Assert.Equal("{Binding RuntimeStatusBrush}", statusIndicator.Attribute("Background")?.Value);
+        Assert.Equal("{Binding CanStartGame}", primaryAction.Attribute("IsEnabled")?.Value);
+        Assert.Contains("<Trigger Property=\"IsEnabled\" Value=\"False\">", controls);
+        Assert.Contains("Property=\"Background\" Value=\"#152434\"", controls);
+        Assert.Contains("Property=\"Opacity\" Value=\"0.72\"", controls);
+    }
+
+    [Fact]
     public void LanguageSelector_UsesTheProvenExplicitDropDownInputHandlers()
     {
         XDocument document = LoadMainWindow();

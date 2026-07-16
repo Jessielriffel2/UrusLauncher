@@ -24,7 +24,7 @@ Ao mesmo tempo, renomear todos os namespaces, projetos e diretórios de dados au
 11. Instalar sem elevação em `%LocalAppData%\Programs\Urus Launcher`, com idiomas inglês/português brasileiro/espanhol, menu Iniciar e atalho de desktop opcional.
 12. Emitir `distribution-manifest.json` e `SHA256SUMS.txt`; validar runtimeconfig/deps, arquivos essenciais e a implementação WPF completa de `WindowsBase.dll`, além de executar um smoke do portátil sem runtime .NET global antes de concluir.
 13. Não copiar automaticamente para `Downloads` dentro do script. `artifacts/urus-distribution` é a saída canônica; o handoff pode copiar explicitamente os dois pacotes para `%USERPROFILE%\Downloads` depois da validação, preservando/verificando o hash.
-14. Não redistribuir Flash ActiveX, dados locais ou segredos. “Self-contained” cobre o runtime .NET, não o componente legado licenciado.
+14. Não versionar Flash ActiveX, dados locais ou segredos. Uma distribuição pode receber o runtime legado de uma origem fornecida pelo mantenedor, validá-lo e incluí-lo registration-free somente com autorização aplicável; veja ADR-009.
 15. Preservar o payload WPF produzido pela App e incorporar do staging self-contained somente os quatro arquivos próprios do GameHost (`.exe`, `.dll`, `.deps.json` e `.runtimeconfig.json`), sem sobrepor assemblies compartilhados com facades incompatíveis.
 
 ## Consequências
@@ -45,7 +45,7 @@ Ao mesmo tempo, renomear todos os namespaces, projetos e diretórios de dados au
 - O briefing e o asset foram criados para Urus; não foi copiado logo de jogo, launcher ou fabricante existente.
 - O conceito exclui deliberadamente touro literal, escudo e trade dress reconhecível de terceiros.
 - O processamento local removeu somente o fundo cromakey e produziu alpha; não importou elemento externo.
-- O instalador não inclui credenciais, perfis, cache, tokens, sessão autenticada, Flash OCX ou arquivos do cliente antigo.
+- O instalador não inclui credenciais, perfis, cache, tokens, sessão autenticada nem executáveis/dados do cliente antigo. Quando uma origem autorizada é fornecida, inclui somente manifesto e OCX registration-free em `runtime\`.
 - O script confina qualquer remoção recursiva ao diretório de artefatos e falha em payload incompleto.
 - Hashes devem ser recalculados a cada build. Se houver assinatura futura, ela deve ocorrer antes do hash final publicado.
 
