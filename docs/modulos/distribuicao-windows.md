@@ -2,9 +2,9 @@
 
 ## Objetivo do módulo
 
-O pipeline de distribuição transforma o código Release do Urus Launcher em dois entregáveis Windows x64 reproduzíveis: instalador por usuário criado com Inno Setup e ZIP portátil. Ambos usam o mesmo payload **self-contained**, contendo o runtime .NET necessário, `UrusLauncher.App.exe`, o GameHost isolado e, quando uma origem autorizada é fornecida, o runtime registration-free em `runtime\`. O processo também produz manifesto de distribuição, manifesto de atualização, patch notes trilíngues e checksums. Um workflow por tag publica esses arquivos no GitHub Releases usado pelo updater.
+O pipeline de distribuição transforma o código Release do Urus Launcher em dois entregáveis Windows x64 reproduzíveis: instalador por usuário criado com Inno Setup e ZIP portátil. Ambos usam o mesmo payload **self-contained**, contendo o runtime .NET necessário, `UrusLauncher.App.exe`, o GameHost isolado e, quando uma origem autorizada é fornecida, o runtime registration-free em `runtime\`. O processo também produz manifesto de distribuição, manifesto de atualização, patch notes trilíngues e checksums. O GitHub Releases é a fonte pública usada pelo updater; a 1.1.4 foi publicada manualmente a partir da build local autorizada porque o runner hospedado não dispõe da origem do runtime legado.
 
-Desde a preparação da 1.1.4, o build não aceita mais produzir um pacote anunciado como jogável sem manifesto/OCX. A origem vem de `-LegacyRuntimeSource`, `LEGEND_LEGACY_ROOT` ou da instalação Brov conhecida; não é versionada nem baixada automaticamente. Essa capacidade técnica não concede licença de redistribuição, portanto uma release pública continua condicionada à autorização descrita no [ADR-009](../decisoes/ADR-009-provisionamento-runtime-legado.md).
+Desde a preparação da 1.1.4, o build não aceita mais produzir um pacote anunciado como jogável sem manifesto/OCX. A origem vem de `-LegacyRuntimeSource`, `LEGEND_LEGACY_ROOT` ou da instalação Brov conhecida; não é versionada nem baixada automaticamente. A publicação pública da 1.1.4 usou uma origem local cuja redistribuição foi confirmada como autorizada pelo mantenedor, conforme a condição descrita no [ADR-009](../decisoes/ADR-009-provisionamento-runtime-legado.md).
 
 ## Arquivos, funções e saídas principais
 
@@ -37,8 +37,8 @@ Desde a preparação da 1.1.4, o build não aceita mais produzir um pacote anunc
 | `docs/releases/v1.1.0.json:1` | Patch notes fonte histórica | Título e mudanças do primeiro bootstrap com updater nos três idiomas. |
 | `docs/releases/v1.1.1.json:1` | Patch notes fonte histórica | Título e mudanças do fallback de rate limit em `pt-BR`, `en-US` e `es-ES`. |
 | `docs/releases/v1.1.2.json:1` | Patch notes fonte histórica | Correção de acesso entre variantes OAS, Classic Português S100 e sessões por alvo exato nos três idiomas. |
-| `docs/releases/v1.1.3.json:1` | Patch notes fonte pública atual | Download automático validado, cache exato, consulta manual e instalação consentida nos três idiomas. |
-| `docs/releases/v1.1.4.json:1` | Patch notes fonte em validação | Runtime interno prioritário, instalação limpa e estado visual honesto nos três idiomas. |
+| `docs/releases/v1.1.3.json:1` | Patch notes fonte pública histórica | Download automático validado, cache exato, consulta manual e instalação consentida nos três idiomas. |
+| `docs/releases/v1.1.4.json:1` | Patch notes fonte pública atual | Runtime interno prioritário, instalação limpa e estado visual honesto nos três idiomas. |
 | `artifacts/urus-distribution/portable/UrusLauncher/` | Payload expandido | Diretório executável usado como origem comum do Inno Setup e do ZIP. |
 | `artifacts/urus-distribution/distribution-manifest.json` | Manifesto | Produto, versão, RID, flag self-contained, data UTC, nomes/tamanhos/hashes e inventário agregado do payload. |
 | `artifacts/urus-distribution/update-manifest.json` | Manifesto de atualização | Contrato estrito consumido pela App com metadados do setup e patch notes localizados. |
@@ -58,16 +58,22 @@ Desde a preparação da 1.1.4, o build não aceita mais produzir um pacote anunc
 
 Os artefatos públicos foram gerados pelo workflow da tag `v1.1.3`, no commit `18ccb5e982c9ff833d61819ec4d8602d38d19fa8`. App e GameHost foram publicados com ProductVersion `1.1.3+18ccb5e982c9ff833d61819ec4d8602d38d19fa8`/FileVersion `1.1.3.0`; o workflow aprovou **461/461** testes. A build canônica local também executou o smoke portátil por sete segundos sem runtime .NET global. O ZIP público foi baixado, conferido e expandido: contém 468 arquivos e 181.719.481 bytes de payload. `Get-AuthenticodeSignature` confirmou `NotSigned` no setup público baixado, coerente com a limitação atual. Os tamanhos e hashes da tabela são exatamente os publicados no GitHub Release, nos digests dos assets e em `SHA256SUMS.txt`; qualquer nova build precisa publicar seus próprios valores. A entrega 1.0.1 permanece como histórico anterior em [`design-qa.md`](../../design-qa.md).
 
-## Artefato privado de validação 1.1.4
+## Entregáveis públicos 1.1.4
+
+Release: [Urus Launcher 1.1.4](https://github.com/Jessielriffel2/UrusLauncher/releases/tag/v1.1.4), tag/target `31d6d16b063b43bdba161a028bc4edd4f3953b96`.
 
 | Tipo | Caminho/resultado |
 | --- | --- |
-| Instalador com runtime | `%USERPROFILE%\Downloads\UrusLauncher-Setup-1.1.4-win-x64.exe` — 62.206.066 bytes — SHA-256 `23EC8A5B649E399C00719B034138E77525A87E2911A9E3A628F7962928FD999D` |
-| ZIP portátil local | `artifacts/urus-distribution/UrusLauncher-1.1.4-portable-win-x64.zip` — 88.711.128 bytes — SHA-256 `0E3262E34CEE0A37B37CC1AF4BAEDF75BA77B2B2B82F67737C40E5AF2F107294` |
+| Instalador com runtime | `GitHub Release/UrusLauncher-Setup-1.1.4-win-x64.exe` — 62.187.431 bytes — SHA-256 `96A5C3C67AB46C22B8C7AF713C3C6056D50EEA35087FFC4EBA2CCBC3B8BC02C1` |
+| ZIP portátil | `GitHub Release/UrusLauncher-1.1.4-portable-win-x64.zip` — 88.711.074 bytes — SHA-256 `44DB6D46D572E3CBC8C1B0675D6691E098AA4EFDCBE1671D7DCCD3529F066644` |
+| Manifesto do updater | `GitHub Release/update-manifest.json` — 1.551 bytes — SHA-256 `1E0264A7FD6EC90E30DDBE12B301C17F316AA118B37281CDEE5268E8DC09396F` |
+| Lista oficial de checksums | `GitHub Release/SHA256SUMS.txt` — 383 bytes — SHA-256 `DE29AE0B71C98C7E021A530671F84B46274873B58C52F92D22D0B3DA365E1C03` |
 | Manifesto registration-free | `runtime/Adobe.Flash.Control.manifest` — 5.868 bytes — SHA-256 `CCF4B2837D2AF91908BCB1C5F68FAF1B707E060972EC42EEB19BE18AB4F9D6ED` |
 | ActiveX referenciado | `runtime/flash/Flash64_15_0_0_167.ocx` — 23.445.680 bytes — SHA-256 `7AC444D19AD9D7C8A26A1FE09A7052FB7C6C922CE6C4EE38798A963DF42E38EC` |
 
-A build local 1.1.4 concluiu **465/465** testes Release, publish self-contained, validação Authenticode do OCX e smoke de sete segundos sem .NET global. O payload possui 470 arquivos/205.798.704 bytes e o ZIP contém os dois assets nos caminhos esperados. A versão portátil foi aberta pela automação do Windows, o status mostrou **Pronto para jogar** em verde e `ENTRAR E JOGAR` apareceu habilitado com perfil/servidor/credencial já existentes. Esse resultado elimina a dependência técnica da instalação Brov no computador de destino, mas não autoriza publicação pública do ActiveX; por isso o setup foi copiado apenas como artefato privado para teste em outra máquina.
+A build local autorizada 1.1.4 concluiu **465/465** testes Release, publish self-contained, validação Authenticode do OCX e smoke de sete segundos sem .NET global. App e GameHost possuem ProductVersion `1.1.4+31d6d16b063b43bdba161a028bc4edd4f3953b96` e FileVersion `1.1.4.0`. O payload possui 470 arquivos/205.798.704 bytes, e o ZIP contém o manifesto e o OCX nos caminhos esperados. A versão portátil foi aberta pela automação do Windows, o status mostrou **Pronto para jogar** em verde e `ENTRAR E JOGAR` apareceu habilitado com perfil/servidor/credencial já existentes.
+
+O setup público permanece `NotSigned`, portanto o Windows SmartScreen ainda pode exibir aviso. Tamanhos e digests dos quatro assets coincidiram entre a API pública e os arquivos locais validados; os hashes do setup, ZIP e manifesto também coincidiram com suas entradas em `SHA256SUMS.txt`. O manifesto servido por `releases/latest/download/update-manifest.json` coincidiu com o asset da release. A publicação foi criada manualmente a partir dessa build porque o runner hospedado não tem a origem licenciada do runtime. A criação da tag pela API acionou inesperadamente o workflow `29471074585`, cancelado deliberadamente antes dos jobs de build/publicação; a release manual permaneceu pública e íntegra.
 
 ## Fluxo de construção
 
@@ -91,9 +97,9 @@ Antes do comando, deve existir `docs/releases/v1.1.4.json` (ou o arquivo da vers
 
 ## Publicação por tag e bootstrap
 
-O workflow `.github/workflows/release.yml` aceita somente tags no formato `vMAJOR.MINOR.PATCH`. O job `build` possui apenas `contents: read`, usa actions fixadas por SHA, desabilita persistência de credenciais no checkout, instala uma versão fixa do Inno Setup, testa e gera os pacotes. Somente os arquivos explícitos são transferidos ao job `publish`, que recebe `contents: write`. A partir da mudança 1.1.4, o runner público ainda não possui uma origem licenciada de runtime e uma tag falhará antes de criar pacote incompleto; essa fonte/autorização precisa ser configurada antes da publicação. O `GITHUB_TOKEN` é efêmero e não entra no código ou pacote.
+O workflow `.github/workflows/release.yml` aceita somente tags no formato `vMAJOR.MINOR.PATCH`. O job `build` possui apenas `contents: read`, usa actions fixadas por SHA, desabilita persistência de credenciais no checkout, instala uma versão fixa do Inno Setup, testa e gera os pacotes. Somente os arquivos explícitos são transferidos ao job `publish`, que recebe `contents: write`. Desde a 1.1.4, porém, a automação por tag permanece indisponível no runner hospedado enquanto não houver uma forma autorizada e segura de provisionar a origem licenciada do runtime; sem ela, o build falha antes de criar pacote incompleto. Por isso a 1.1.4 foi construída, validada e publicada manualmente a partir da máquina autorizada. O [workflow 29471074585](https://github.com/Jessielriffel2/UrusLauncher/actions/runs/29471074585), disparado pela criação da tag via API, foi cancelado antes de build/publicação para não concorrer com a release manual. O `GITHUB_TOKEN` é efêmero e não entra no código ou pacote.
 
-A 1.1.0 permanece registrada como a primeira publicação com updater. Como a 1.0.1 não contém esse módulo, seus usuários precisam instalar manualmente a versão pública mais recente. A 1.1.1 adicionou a rota pública `releases/latest/download/update-manifest.json` para respostas `403`/`429`. As versões 1.1.1/1.1.2 recebem a 1.1.3 pelo fluxo antigo de **Atualizar**; a partir da 1.1.3, ciclos posteriores baixam/validam primeiro e aguardam **Instalar**. A execução sempre exige clique e ausência de sessões ativas.
+A 1.1.0 permanece registrada como a primeira publicação com updater. Como a 1.0.1 não contém esse módulo, seus usuários precisam instalar manualmente a versão pública mais recente. A 1.1.1 adicionou a rota pública `releases/latest/download/update-manifest.json` para respostas `403`/`429`. As versões 1.1.1/1.1.2 recebem atualizações pelo fluxo antigo de **Atualizar**; a partir da 1.1.3, o launcher baixa e valida primeiro e aguarda **Instalar**. A 1.1.4 é a versão pública atual oferecida por esse fluxo. A execução sempre exige clique e ausência de sessões ativas.
 
 ## Instalador
 
@@ -105,13 +111,13 @@ O Inno consome recursivamente o payload já validado pelo pipeline. Antes da com
 
 O ZIP contém a pasta `UrusLauncher` inteira, não um executável single-file. Para uso portátil, extraia a pasta e execute `UrusLauncher.App.exe`; mover somente esse EXE quebra as dependências e o GameHost.
 
-O script de build **não copia automaticamente** instalador ou ZIP para `Downloads`. A saída local fica em `artifacts/urus-distribution`; o updater consome os artefatos públicos do GitHub Release. No handoff 1.1.3, o setup oficial, sua lista de checksums e uma cópia auditável do manifesto foram baixados explicitamente para `Downloads`:
+O script de build **não copia automaticamente** instalador ou ZIP para `Downloads`. A saída local fica em `artifacts/urus-distribution`; o updater consome os artefatos públicos do GitHub Release. No handoff 1.1.4, o setup oficial, sua lista de checksums e uma cópia auditável do manifesto foram colocados explicitamente em `Downloads`:
 
-- `%USERPROFILE%\Downloads\UrusLauncher-Setup-1.1.3-win-x64.exe`;
-- `%USERPROFILE%\Downloads\UrusLauncher-SHA256SUMS-1.1.3.txt`;
-- `%USERPROFILE%\Downloads\UrusLauncher-update-manifest-1.1.3.json`.
+- `%USERPROFILE%\Downloads\UrusLauncher-Setup-1.1.4-win-x64.exe`;
+- `%USERPROFILE%\Downloads\UrusLauncher-SHA256SUMS-1.1.4.txt`;
+- `%USERPROFILE%\Downloads\UrusLauncher-update-manifest-1.1.4.json`.
 
-O SHA-256 do setup foi recalculado depois do download e coincidiu com `C213061318B891FB866B990CA8378F1708FA2B1DC80F3DA51E667FECA952294F`; versão, repositório, bytes e hash também coincidiram entre API, manifesto normal e fallback `releases/latest/download`. O ZIP portátil continua disponível no GitHub Release e foi auditado em diretório temporário, mas não integra esse handoff em `Downloads`. O pipeline e o diretório local de build não dependem de `Downloads`.
+O SHA-256 do setup no handoff foi recalculado e coincidiu com `96A5C3C67AB46C22B8C7AF713C3C6056D50EEA35087FFC4EBA2CCBC3B8BC02C1`; versão, repositório, bytes e hash também coincidiram entre API, manifesto normal e fallback `releases/latest/download`. O ZIP portátil continua disponível no GitHub Release e foi auditado, mas não integra esse handoff em `Downloads`. O pipeline e o diretório local de build não dependem de `Downloads`.
 
 ## Segurança e limites
 
@@ -136,4 +142,4 @@ O SHA-256 do setup foi recalculado depois do download e coincidiu com `C21306131
 
 ## Testes e validação
 
-`WindowsDistributionContractTests.cs` valida nomes públicos, configuração per-user/x64, ausência de caminho absoluto do computador de desenvolvimento, publicação self-contained, proteção do `WindowsBase.dll`, origem/cópia/Authenticode do runtime, entregáveis, hashing, definição trilíngue, manifesto do updater e relaunch do Inno. `LauncherCompositionTests.cs` fixa a prioridade de `runtime\`; `MainWindowLayoutXamlTests.cs` fixa status real e CTA inativo honesto. `GitHubReleaseContractTests.cs:5` cobre tag, permissões, artefatos, ausência de PAT e definições 1.1.0–1.1.4. A suíte da build privada 1.1.4 concluiu **465/465** em Release, além do smoke portátil e da conferência visual automatizada. A release pública 1.1.3 continua auditada com **461/461** no workflow e hashes verificados. Testes de consulta/download/manifesto, cache e fallback de rate limit são detalhados em [atualizacao.md](atualizacao.md).
+`WindowsDistributionContractTests.cs` valida nomes públicos, configuração per-user/x64, ausência de caminho absoluto do computador de desenvolvimento, publicação self-contained, proteção do `WindowsBase.dll`, origem/cópia/Authenticode do runtime, entregáveis, hashing, definição trilíngue, manifesto do updater e relaunch do Inno. `LauncherCompositionTests.cs` fixa a prioridade de `runtime\`; `MainWindowLayoutXamlTests.cs` fixa status real e CTA inativo honesto. `GitHubReleaseContractTests.cs:5` cobre tag, permissões, artefatos, ausência de PAT e definições 1.1.0–1.1.4. A suíte da build pública 1.1.4 concluiu **465/465** em Release, além do smoke portátil, conferência visual automatizada e verificação pública de tamanhos/digests. A release histórica 1.1.3 continua auditada com **461/461** no workflow e hashes verificados. Testes de consulta/download/manifesto, cache e fallback de rate limit são detalhados em [atualizacao.md](atualizacao.md).

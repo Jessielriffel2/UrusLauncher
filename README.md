@@ -26,7 +26,7 @@ Launcher Windows para Legend Online, escrito do zero em C#/.NET 10 e distribuíd
 | Autenticação Passport OAS | Implementada nas oito variantes; QA abriu o Reborn turco S115 até a interface jogável e validou Passport + sessão do Classic Português S100 |
 | GameHost Flash x64 separado | Implementado, isolado por sessão e encerrado quando o processo pai desaparece; jogabilidade real confirmada no S115 |
 | Execução direta sem `H2Proxy.exe` | Implementada |
-| Distribuição Windows | Pipeline self-contained `win-x64`, runtime registration-free fornecido pelo mantenedor, instalador Inno Setup por usuário, ZIP portátil, manifesto e SHA-256 implementados |
+| Distribuição Windows | Pipeline self-contained `win-x64`, runtime registration-free fornecido pelo mantenedor, instalador Inno Setup por usuário, ZIP portátil, manifesto e SHA-256 implementados; a [v1.1.4](https://github.com/Jessielriffel2/UrusLauncher/releases/tag/v1.1.4) é a release pública atual |
 | Atualizações públicas | Consulta antecipada por GitHub Releases ao abrir, download/validação automática por usuário, cache verificado e instalação somente após clique explícito |
 | Ruffle | Avaliação futura |
 | Favoritos/múltiplos servidores fixados por conta | Melhoria futura |
@@ -115,6 +115,8 @@ Os patch notes de cada versão nascem de `docs/releases/vX.Y.Z.json` em `pt-BR`,
 
 A versão 1.0.1 não possui atualizador e precisa receber manualmente o instalador público mais recente. A 1.1.0 foi o primeiro bootstrap, mas sua consulta pode esbarrar na cota da API em redes de IP compartilhado; nesse caso, a passagem também é manual. As versões 1.1.1 e 1.1.2 detectam a 1.1.3 pelo fluxo anterior: nessa passagem única, a pessoa ainda clica em **Atualizar** para baixar e instalar. Depois de instalada a 1.1.3, versões futuras são baixadas e validadas automaticamente e ficam aguardando o clique em **Instalar**. Perfis, settings e senhas permanecem preservados.
 
+A [v1.1.4](https://github.com/Jessielriffel2/UrusLauncher/releases/tag/v1.1.4) é a release pública atual e segue esse fluxo de atualização preparada pela 1.1.3.
+
 ## Desenvolvimento
 
 Pré-requisitos:
@@ -153,11 +155,11 @@ O script executa a suíte Release, publica App e GameHost self-contained para `w
 - `artifacts\urus-distribution\RELEASE_NOTES.md`;
 - `artifacts\urus-distribution\SHA256SUMS.txt`.
 
-Antes da build, deve existir `docs\releases\v1.1.4.json` (ou o arquivo da versão solicitada) com título e notas não vazias nos três idiomas. `-LegacyRuntimeSource` pode ser omitido quando `LEGEND_LEGACY_ROOT` ou a instalação Brov conhecida fornece a origem, mas o pipeline sempre falha se não puder formar `runtime\` completo. Para publicar no repositório público, além da tag `vMAJOR.MINOR.PATCH`, o mantenedor precisa fornecer essa origem ao runner e possuir autorização de redistribuição; nenhum runtime é baixado automaticamente de terceiros.
+Antes da build, deve existir `docs\releases\v1.1.4.json` (ou o arquivo da versão solicitada) com título e notas não vazias nos três idiomas. `-LegacyRuntimeSource` pode ser omitido quando `LEGEND_LEGACY_ROOT` ou a instalação Brov conhecida fornece a origem, mas o pipeline sempre falha se não puder formar `runtime\` completo. O workflow automático acionado por tag também precisa receber uma origem licenciada no runner e nunca baixa esse runtime de terceiros. A v1.1.4 foi publicada manualmente a partir de uma build local autorizada e validada, mantendo a mesma exigência de permissão de redistribuição.
 
 O instalador é per-user, sem elevação, e usa `%LocalAppData%\Programs\Urus Launcher`; oferece inglês, português brasileiro e espanhol e atalho de desktop opcional. O ZIP contém a pasta inteira `UrusLauncher`: extraia antes de executar `UrusLauncher.App.exe`.
 
-O script não copia arquivos automaticamente para `Downloads`. No handoff 1.1.3, setup/checksums/manifesto públicos foram baixados e conferidos contra API e fallback. Para o teste privado 1.1.4, `UrusLauncher-Setup-1.1.4-win-x64.exe` e `UrusLauncher-SHA256SUMS-1.1.4.txt` foram copiados explicitamente para `%USERPROFILE%\Downloads`; o ZIP permanece em `artifacts\urus-distribution`. Veja [distribuicao-windows.md](docs/modulos/distribuicao-windows.md) para tamanhos, hashes e limite de publicação.
+O script não copia arquivos automaticamente para `Downloads`. No handoff 1.1.3, setup/checksums/manifesto públicos foram baixados e conferidos contra API e fallback. No handoff público 1.1.4, os arquivos copiados explicitamente para `%USERPROFILE%\Downloads` são `UrusLauncher-Setup-1.1.4-win-x64.exe`, `UrusLauncher-SHA256SUMS-1.1.4.txt` e `UrusLauncher-update-manifest-1.1.4.json`; o ZIP permanece em `artifacts\urus-distribution` e também está disponível na [release pública](https://github.com/Jessielriffel2/UrusLauncher/releases/tag/v1.1.4). Veja [distribuicao-windows.md](docs/modulos/distribuicao-windows.md) para tamanhos e hashes.
 
 O código-fonte deve permanecer fora de `Program Files`. Em desenvolvimento, uma instalação antiga pode servir de origem local; em execução, o launcher prioriza `runtime\` ao lado do aplicativo e só depois consulta a variável de ambiente e instalações Brov conhecidas. Dados novos continuam gravados no perfil do usuário.
 
@@ -188,7 +190,7 @@ O Adobe Flash ActiveX é legado e descontinuado. Ele nunca é carregado no proce
 
 Testes automatizados cobrem composição de catálogo, perfis, cofre, migração de estado por plataforma, autenticação OAS cruzada, isolamento SevenWan, alvo exato de sessão, transporte compatível, políticas de URI, settings, localização e propagação da cultura, pedido de apoio/intervalo/PIX/QR, áudio por PID e descarte concorrente, layouts 1/2/4, detach/reattach, maximização taskbar-aware, cleanup de sessão não adotada e protocolo launcher/GameHost. O updater possui contratos próprios para API/manifesto, fallback de rate limit, allowlist e redirects, download automático sem execução, cache revalidado, SHA-256, confinamento, instalação sob clique, caminho por usuário e workflow build/publish com permissões separadas. `LocalizationCatalogTests.cs` fixa 204 chaves equivalentes nos três idiomas. A validação histórica 1.0.1 permanece documentada em [`design-qa.md`](design-qa.md); resultados e hashes públicos ficam registrados na documentação de distribuição.
 
-A validação pública 1.1.3 concluiu **461/461** testes em Debug/Release. A build privada 1.1.4 concluiu **465/465** em Release, smoke portátil sem .NET global, runtime registration-free presente no ZIP e abertura visual com status **Pronto para jogar**/CTA habilitado. Os resultados e hashes ficam em [distribuicao-windows.md](docs/modulos/distribuicao-windows.md).
+A validação pública da [v1.1.4](https://github.com/Jessielriffel2/UrusLauncher/releases/tag/v1.1.4) concluiu **465/465** testes em Release, smoke portátil sem .NET global, runtime registration-free presente no ZIP e abertura visual com status **Pronto para jogar**/CTA habilitado. A validação 1.1.3 com **461/461** testes em Debug/Release permanece no histórico. Os resultados e hashes ficam em [distribuicao-windows.md](docs/modulos/distribuicao-windows.md).
 
 O layout novo compila e preserva as funções documentadas do launcher. A captura autenticada da build final foi comparada lado a lado com a referência e aprovada em [`design-qa.md`](design-qa.md).
 
