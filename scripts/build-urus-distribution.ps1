@@ -70,6 +70,19 @@ function Assert-FileExists {
     }
 }
 
+function Write-Utf8NoBomFile {
+    param(
+        [Parameter(Mandatory)]
+        [string]$Path,
+
+        [Parameter(Mandatory)]
+        [string]$Content
+    )
+
+    $encoding = [System.Text.UTF8Encoding]::new($false)
+    [System.IO.File]::WriteAllText($Path, $Content, $encoding)
+}
+
 function Assert-SelfContainedApplication {
     param(
         [Parameter(Mandatory)]
@@ -364,7 +377,7 @@ Assert-FileExists $InnoCompiler 'Inno Setup compiler'
 $resolvedLegacyRuntimeSource = Resolve-LegacyRuntimeSource $LegacyRuntimeSource
 Write-Host "Using the builder-supplied legacy runtime from '$resolvedLegacyRuntimeSource'."
 
-$releaseDefinition = Get-Content -LiteralPath $releaseDefinitionPath -Raw |
+$releaseDefinition = Get-Content -LiteralPath $releaseDefinitionPath -Encoding utf8 -Raw |
     ConvertFrom-Json
 if ($releaseDefinition.schemaVersion -ne 1 -or
     $releaseDefinition.version -ne $Version) {
@@ -532,8 +545,7 @@ $updateManifest = [ordered]@{
     }
     notes = $localizedNotes
 }
-$updateManifest | ConvertTo-Json -Depth 5 |
-    Set-Content -LiteralPath $updateManifestPath -Encoding utf8
+Write-Utf8NoBomFile $updateManifestPath ($updateManifest | ConvertTo-Json -Depth 5)
 
 $releaseNotesPath = Join-Path $distributionRoot 'RELEASE_NOTES.md'
 $releaseNotesMarkdown = [System.Collections.Generic.List[string]]::new()
@@ -547,7 +559,7 @@ foreach ($languageCode in $releaseLanguages) {
     }
     $releaseNotesMarkdown.Add('')
 }
-$releaseNotesMarkdown | Set-Content -LiteralPath $releaseNotesPath -Encoding utf8
+Write-Utf8NoBomFile $releaseNotesPath (($releaseNotesMarkdown -join [Environment]::NewLine) + [Environment]::NewLine)
 
 $updateManifestRecord = Get-ArtifactRecord (Get-Item -LiteralPath $updateManifestPath)
 $releaseNotesRecord = Get-ArtifactRecord (Get-Item -LiteralPath $releaseNotesPath)
@@ -584,8 +596,7 @@ $manifest = [ordered]@{
 }
 
 $manifestPath = Join-Path $distributionRoot 'distribution-manifest.json'
-$manifest | ConvertTo-Json -Depth 5 |
-    Set-Content -LiteralPath $manifestPath -Encoding utf8
+Write-Utf8NoBomFile $manifestPath ($manifest | ConvertTo-Json -Depth 5)
 $checksumsPath = Join-Path $distributionRoot 'SHA256SUMS.txt'
 @(
     "$($installerRecord.sha256)  $($installerRecord.file)",

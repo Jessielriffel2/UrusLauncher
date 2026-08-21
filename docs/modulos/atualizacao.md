@@ -20,6 +20,7 @@ A consulta ocorre uma vez em cada abertura, logo depois de carregar as preferên
 | `src/LegendLauncher.App/Updates/LauncherUpdateService.cs:255` | `TryReuseCachedInstallerAsync(...)` | Abre e verifica integralmente o setup em cache; apaga uma cópia inválida e obriga novo download, sem aceitar apenas nome ou existência. |
 | `src/LegendLauncher.App/Updates/LauncherUpdateService.cs:290` | `LaunchInstallerAsync(...)` | Reabre e valida o arquivo confinado ao diretório de updates imediatamente antes de iniciar o Inno Setup com fechamento/reabertura coordenados. |
 | `src/LegendLauncher.App/Updates/LauncherUpdateService.cs:326` | `BuildRelease(...)` | Exige coerência entre tag, repositório, versão do manifesto, asset, nome, tamanho, digest disponível e notas nos três idiomas. |
+| `src/LegendLauncher.App/Updates/LauncherUpdateService.cs:631` | `Deserialize(...)` | Interpreta JSON da API e do manifesto; ignora um BOM UTF-8 inicial para não recusar um `update-manifest.json` publicado com marca UTF-8. |
 | `src/LegendLauncher.App/Updates/UpdateManifestValidator.cs:6` | `UpdateManifestValidator` | Centraliza o contrato do manifesto usado tanto pela resposta normal quanto pelo fallback, incluindo três idiomas, versão, setup, bytes e SHA-256. |
 | `src/LegendLauncher.App/Updates/UpdateDownloadCleanup.cs:6` | `UpdateDownloadCleanup` | Na criação do serviço, remove somente setup/`.part` oficiais com mais de 24 horas, apenas no nível superior; ignora reparse points e falhas/arquivos em uso. |
 | `src/LegendLauncher.App/Updates/UpdateProcessStarter.cs:5` | `IUpdateProcessStarter` | Fronteira testável para iniciar o setup somente depois da validação. |
@@ -50,7 +51,7 @@ A consulta ocorre uma vez em cada abertura, logo depois de carregar as preferên
 
 Cada versão possui uma definição fonte em `docs/releases/vX.Y.Z.json`, com `schemaVersion`, versão, título e notas em `pt-BR`, `en-US` e `es-ES`. O pipeline converte essa definição em:
 
-- `update-manifest.json`, consumido pelo launcher e contendo o instalador, bytes, SHA-256 e notas trilíngues;
+- `update-manifest.json`, consumido pelo launcher e contendo o instalador, bytes, SHA-256 e notas trilíngues, sempre em UTF-8 **sem** BOM; o parser também ignora um BOM se um asset antigo ainda o tiver;
 - `RELEASE_NOTES.md`, usado como corpo do GitHub Release;
 - registros correspondentes em `distribution-manifest.json` e `SHA256SUMS.txt`.
 
@@ -92,13 +93,13 @@ Antes de existir um primeiro release válido, a consulta pode apresentar falha r
 
 ## Testes
 
-- `LauncherUpdateServiceCheckTests.cs:7` cobre versão, manifesto, notas, URLs, redirects, limites, duplicatas e falhas de contrato.
+- `LauncherUpdateServiceCheckTests.cs:7` cobre versão, manifesto, notas, URLs, redirects, limites, duplicatas, BOM UTF-8 e falhas de contrato.
 - `LauncherUpdateServiceFallbackTests.cs:8` cobre `403`/`429`, redirect permitido, recusa de fallback para `500`/JSON inválido/erro posterior e rejeição de manifesto alternativo inválido.
 - `LauncherUpdateServiceDownloadTests.cs:8` cobre streaming, progresso, tamanho, SHA-256, `.part`, confinamento, reutilização exata de cache, substituição de cache inválido e argumentos do setup.
 - `UpdateDownloadCleanupTests.cs:6` cobre idade mínima, reconhecimento exato, escopo top-level e tolerância a arquivo em uso/inacessível.
 - `LauncherUpdateViewModelTests.cs:10` cobre consulta e download automáticos na abertura, `ReadyToInstall`, execução somente após **INSTALAR**, jogo disponível durante download, nova verificação em `Current`/`Failed`, idioma dinâmico e bloqueio da instalação com sessão ativa ou login ainda em abertura.
 - `LauncherUpdateLayoutTests.cs:3` fixa cartão inferior esquerdo, popup, ações e bindings.
-- `GitHubReleaseContractTests.cs:5` fixa workflow por tag, ausência de PAT incorporado e definições trilíngues versionadas, incluindo a 1.1.3.
+- `GitHubReleaseContractTests.cs:5` fixa workflow por tag, ausência de PAT incorporado e definições trilíngues versionadas, incluindo a 1.1.6.
 - `AppPathsTests.cs:18` fixa o diretório de updates sob a raiz privada do aplicativo.
 
-Na alteração desta política, o conjunto focado de updater, localização e contratos de distribuição concluiu **82/82**. A suíte completa concluiu **461/461** em Debug e **461/461** em Release.
+Na alteração desta política, o conjunto focado de updater, localização e contratos de distribuição concluiu **82/82**. A suíte completa concluiu **492/492** em Release.

@@ -54,6 +54,13 @@ public sealed class WindowsDistributionContractTests
         Assert.Contains("update-manifest.json", source);
         Assert.Contains("RELEASE_NOTES.md", source);
         Assert.Contains("repository = 'Jessielriffel2/UrusLauncher'", source);
+        Assert.Contains("Write-Utf8NoBomFile", source);
+        Assert.Contains("[System.Text.UTF8Encoding]::new($false)", source);
+        Assert.Contains("Get-Content -LiteralPath $releaseDefinitionPath -Encoding utf8 -Raw", source);
+        Assert.DoesNotContain(
+            "Set-Content -LiteralPath $updateManifestPath -Encoding utf8",
+            source,
+            StringComparison.Ordinal);
         Assert.Contains("[switch]$SkipPortableStartupSmoke", source);
         Assert.Contains("[ValidatePattern('^\\d+\\.\\d+\\.\\d+$')]", source);
         Assert.Contains("Refusing to modify a path outside", source);
@@ -79,6 +86,31 @@ public sealed class WindowsDistributionContractTests
         Assert.Contains("legacyRuntime = [ordered]@{", source);
         Assert.Contains("[System.Security.Cryptography.SHA256]::Create()", source);
         Assert.DoesNotContain("Get-FileHash", source, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void NativeExecutablesDisableCetShadowStacksForDebuggerCompatibility()
+    {
+        string root = FindRepositoryRoot();
+        string appProject = File.ReadAllText(Path.Combine(
+            root,
+            "src",
+            "LegendLauncher.App",
+            "LegendLauncher.App.csproj"));
+        string gameHostProject = File.ReadAllText(Path.Combine(
+            root,
+            "src",
+            "LegendLauncher.GameHost.Legacy",
+            "LegendLauncher.GameHost.Legacy.csproj"));
+        string program = File.ReadAllText(Path.Combine(
+            root,
+            "src",
+            "LegendLauncher.GameHost.Legacy",
+            "Program.cs"));
+
+        Assert.Contains("<CETCompat>false</CETCompat>", appProject, StringComparison.Ordinal);
+        Assert.Contains("<CETCompat>false</CETCompat>", gameHostProject, StringComparison.Ordinal);
+        Assert.Contains("GameHostProcessAnchorForm.Start()", program, StringComparison.Ordinal);
     }
 
     [Fact]

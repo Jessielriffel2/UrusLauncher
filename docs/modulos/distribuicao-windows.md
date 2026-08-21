@@ -13,21 +13,22 @@ Desde a preparação da 1.1.4, o build não aceita mais produzir um pacote anunc
 | `scripts/build-urus-distribution.ps1:1` | Parâmetros | Recebe versão semântica, RID `win-x64`, `ISCC.exe`, origem opcional do runtime e switches conscientes de teste/smoke. |
 | `scripts/build-urus-distribution.ps1:21` | `Invoke-CheckedCommand(...)` | Executa dotnet/ISCC e transforma qualquer exit code não zero em falha do pipeline. |
 | `scripts/build-urus-distribution.ps1:36` | `Get-VerifiedChildPath(...)` | Confina diretórios removidos/criados ao root esperado antes de qualquer limpeza recursiva. |
-| `scripts/build-urus-distribution.ps1:73` | `Assert-SelfContainedApplication(...)` | Verifica runtimeconfig/deps, `includedFrameworks` e runtime pack `win-x64` para App e GameHost. |
-| `scripts/build-urus-distribution.ps1:102` | `Assert-WpfWindowsBase(...)` | Exige a implementação WPF completa de `WindowsBase.dll`, impedindo que uma facade do GameHost substitua o runtime da App. |
-| `scripts/build-urus-distribution.ps1:126` | `Resolve-LegacyRuntimeSource(...)` | Resolve somente fonte explícita/local e falha quando não há runtime fornecido pelo mantenedor. |
-| `scripts/build-urus-distribution.ps1:164` | `Get-ManifestActiveXPath(...)` | Lê XML com DTD proibido e localiza o OCX referenciado pelo manifesto. |
-| `scripts/build-urus-distribution.ps1:196` | `Copy-LegacyRuntimePayload(...)` | Confina caminhos, valida tamanho/Authenticode e copia manifesto + OCX para `payload/runtime`. |
-| `scripts/build-urus-distribution.ps1:250` | `Test-PortableLauncherStartup(...)` | Inicia o payload sem runtime global, observa o processo e falha se ele não alcançar a janela responsiva. |
-| `scripts/build-urus-distribution.ps1:307` | `Get-ArtifactRecord(...)` | Calcula SHA-256 por stream e devolve nome, bytes e hash do artefato. |
-| `scripts/build-urus-distribution.ps1:331` | Preparação | Resolve solution, projetos, ISS, ICO, definição de release, dotnet, runtime fonte e diretórios de distribuição. |
-| `scripts/build-urus-distribution.ps1:367` | Definição da versão | Exige `docs/releases/vX.Y.Z.json` e valida conteúdo trilíngue antes de limpar saídas. |
-| `scripts/build-urus-distribution.ps1:402` | Teste e publish | Executa a suíte Release por padrão e publica App/GameHost separadamente como self-contained, sem trim e sem símbolos de debug. |
-| `scripts/build-urus-distribution.ps1:452` | Composição e validação | Mantém WPF da App, copia quatro arquivos próprios do GameHost, ICO e runtime registration-free, e rejeita executável obsoleto. |
-| `scripts/build-urus-distribution.ps1:490` | Instalador e ZIP | Compila o ISS, cria o ZIP do mesmo payload na linha 508 e valida ambos. |
-| `scripts/build-urus-distribution.ps1:523` | Manifesto do updater | Gera `update-manifest.json` com repositório, versão, setup, bytes, SHA-256 e notas nos três idiomas. |
-| `scripts/build-urus-distribution.ps1:538` | Patch notes | Gera `RELEASE_NOTES.md` a partir da mesma definição fonte. |
-| `scripts/build-urus-distribution.ps1:554` | Manifesto/checksums | Registra distribuição, updater, runtime e payload; grava `SHA256SUMS.txt`. |
+| `scripts/build-urus-distribution.ps1:73` | `Write-Utf8NoBomFile(...)` | Grava JSON e markdown em UTF-8 sem BOM; o updater recusa `0xEF` no início do manifesto. |
+| `scripts/build-urus-distribution.ps1:86` | `Assert-SelfContainedApplication(...)` | Verifica runtimeconfig/deps, `includedFrameworks` e runtime pack `win-x64` para App e GameHost. |
+| `scripts/build-urus-distribution.ps1:115` | `Assert-WpfWindowsBase(...)` | Exige a implementação WPF completa de `WindowsBase.dll`, impedindo que uma facade do GameHost substitua o runtime da App. |
+| `scripts/build-urus-distribution.ps1:139` | `Resolve-LegacyRuntimeSource(...)` | Resolve somente fonte explícita/local e falha quando não há runtime fornecido pelo mantenedor. |
+| `scripts/build-urus-distribution.ps1:177` | `Get-ManifestActiveXPath(...)` | Lê XML com DTD proibido e localiza o OCX referenciado pelo manifesto. |
+| `scripts/build-urus-distribution.ps1:209` | `Copy-LegacyRuntimePayload(...)` | Confina caminhos, valida tamanho/Authenticode e copia manifesto + OCX para `payload/runtime`. |
+| `scripts/build-urus-distribution.ps1:263` | `Test-PortableLauncherStartup(...)` | Inicia o payload sem runtime global, observa o processo e falha se ele não alcançar a janela responsiva. |
+| `scripts/build-urus-distribution.ps1:320` | `Get-ArtifactRecord(...)` | Calcula SHA-256 por stream e devolve nome, bytes e hash do artefato. |
+| `scripts/build-urus-distribution.ps1:344` | Preparação | Resolve solution, projetos, ISS, ICO, definição de release, dotnet, runtime fonte e diretórios de distribuição. |
+| `scripts/build-urus-distribution.ps1:380` | Definição da versão | Exige `docs/releases/vX.Y.Z.json` em UTF-8 e valida conteúdo trilíngue antes de limpar saídas. |
+| `scripts/build-urus-distribution.ps1:417` | Teste e publish | Executa a suíte Release por padrão e publica App/GameHost separadamente como self-contained, sem trim e sem símbolos de debug. |
+| `scripts/build-urus-distribution.ps1:465` | Composição e validação | Mantém WPF da App, copia quatro arquivos próprios do GameHost, ICO e runtime registration-free, e rejeita executável obsoleto. |
+| `scripts/build-urus-distribution.ps1:503` | Instalador e ZIP | Compila o ISS, cria o ZIP do mesmo payload na linha 522 e valida ambos. |
+| `scripts/build-urus-distribution.ps1:537` | Manifesto do updater | Gera `update-manifest.json` UTF-8 sem BOM com repositório, versão, setup, bytes, SHA-256 e notas nos três idiomas. |
+| `scripts/build-urus-distribution.ps1:550` | Patch notes | Gera `RELEASE_NOTES.md` a partir da mesma definição fonte, também sem BOM. |
+| `scripts/build-urus-distribution.ps1:564` | Manifesto/checksums | Registra distribuição, updater, runtime e payload; grava `SHA256SUMS.txt`. |
 | `installer/UrusLauncher.iss:1` | Definições do produto | Fixa nome, executáveis, versão, diretórios de entrada/saída e ICO. |
 | `installer/UrusLauncher.iss:21` | `[Setup]` | Instalador x64 por usuário, sem elevação, para Windows 10+, com LZMA2, wizard moderno e identidade Urus. |
 | `installer/UrusLauncher.iss:58` | Idiomas/tarefas | Oferece inglês, português brasileiro e espanhol e atalho de desktop opcional. |
@@ -38,7 +39,9 @@ Desde a preparação da 1.1.4, o build não aceita mais produzir um pacote anunc
 | `docs/releases/v1.1.1.json:1` | Patch notes fonte histórica | Título e mudanças do fallback de rate limit em `pt-BR`, `en-US` e `es-ES`. |
 | `docs/releases/v1.1.2.json:1` | Patch notes fonte histórica | Correção de acesso entre variantes OAS, Classic Português S100 e sessões por alvo exato nos três idiomas. |
 | `docs/releases/v1.1.3.json:1` | Patch notes fonte pública histórica | Download automático validado, cache exato, consulta manual e instalação consentida nos três idiomas. |
-| `docs/releases/v1.1.4.json:1` | Patch notes fonte pública atual | Runtime interno prioritário, instalação limpa e estado visual honesto nos três idiomas. |
+| `docs/releases/v1.1.4.json:1` | Patch notes fonte histórica | Runtime interno prioritário, instalação limpa e estado visual honesto nos três idiomas. |
+| `docs/releases/v1.1.5.json:1` | Patch notes fonte histórica | Remoção do tradutor, relogar por aba e curl em todos os Passports OAS. |
+| `docs/releases/v1.1.6.json:1` | Patch notes fonte pública atual | Manifesto UTF-8 sem BOM, GameHost visível ao Cheat Engine x64 e CET desligado nos executáveis. |
 | `artifacts/urus-distribution/portable/UrusLauncher/` | Payload expandido | Diretório executável usado como origem comum do Inno Setup e do ZIP. |
 | `artifacts/urus-distribution/distribution-manifest.json` | Manifesto | Produto, versão, RID, flag self-contained, data UTC, nomes/tamanhos/hashes e inventário agregado do payload. |
 | `artifacts/urus-distribution/update-manifest.json` | Manifesto de atualização | Contrato estrito consumido pela App com metadados do setup e patch notes localizados. |
@@ -74,6 +77,19 @@ Release: [Urus Launcher 1.1.4](https://github.com/Jessielriffel2/UrusLauncher/re
 A build local autorizada 1.1.4 concluiu **465/465** testes Release, publish self-contained, validação Authenticode do OCX e smoke de sete segundos sem .NET global. App e GameHost possuem ProductVersion `1.1.4+31d6d16b063b43bdba161a028bc4edd4f3953b96` e FileVersion `1.1.4.0`. O payload possui 470 arquivos/205.798.704 bytes, e o ZIP contém o manifesto e o OCX nos caminhos esperados. A versão portátil foi aberta pela automação do Windows, o status mostrou **Pronto para jogar** em verde e `ENTRAR E JOGAR` apareceu habilitado com perfil/servidor/credencial já existentes.
 
 O setup público permanece `NotSigned`, portanto o Windows SmartScreen ainda pode exibir aviso. Tamanhos e digests dos quatro assets coincidiram entre a API pública e os arquivos locais validados; os hashes do setup, ZIP e manifesto também coincidiram com suas entradas em `SHA256SUMS.txt`. O manifesto servido por `releases/latest/download/update-manifest.json` coincidiu com o asset da release. A publicação foi criada manualmente a partir dessa build porque o runner hospedado não tem a origem licenciada do runtime. A criação da tag pela API acionou inesperadamente o workflow `29471074585`, cancelado deliberadamente antes dos jobs de build/publicação; a release manual permaneceu pública e íntegra.
+
+## Entregáveis públicos 1.1.6
+
+Release: [Urus Launcher 1.1.6](https://github.com/Jessielriffel2/UrusLauncher/releases/tag/v1.1.6).
+
+| Tipo | Caminho/resultado |
+| --- | --- |
+| Instalador com runtime | `GitHub Release/UrusLauncher-Setup-1.1.6-win-x64.exe` — 65.853.543 bytes — SHA-256 `D5FC752CEA7E9E9660A8D5BF77E0BE664F59242FBA7B8B5825CB480CF0164994` |
+| ZIP portátil | `GitHub Release/UrusLauncher-1.1.6-portable-win-x64.zip` — 92.414.762 bytes — SHA-256 `F1F2A25E79BC7229C364124A00BDE3AE7118AA61F1D42074269483CF6C88B191` |
+| Manifesto do updater | `GitHub Release/update-manifest.json` — 2.057 bytes — SHA-256 `57F23878E53B94443ACA57101E10F5232C1F706E0D282D3EFBEA3E84EAC0FF90` |
+| Lista oficial de checksums | `GitHub Release/SHA256SUMS.txt` — 383 bytes — SHA-256 `3FE40F313B47348652B473BABC811BC88F2C42CB8F517D1C4A0F5DBCD8E67754` |
+
+A build local 1.1.6 concluiu **492/492** testes Release. O manifesto de atualização foi gravado em UTF-8 sem BOM. O smoke portátil automático foi omitido porque já havia uma instância do launcher (e GameHost) em execução na máquina de build; a guarda de instância única encerra a segunda abertura com código 0. FileVersion `1.1.6.0`. Payload: 472 arquivos / 231.218.670 bytes. A publicação permanece manual pelo mesmo motivo da 1.1.4: o runner hospedado não tem a origem licenciada do runtime. O workflow disparado pela tag deve ser cancelado se aparecer.
 
 ## Fluxo de construção
 

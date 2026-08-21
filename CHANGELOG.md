@@ -2,6 +2,32 @@
 
 As mudanças relevantes do Urus Launcher são registradas aqui. As versões públicas seguem versionamento semântico e são publicadas em `vMAJOR.MINOR.PATCH`.
 
+## 1.1.6 — 21/08/2026
+
+### Corrigido
+
+- A consulta de atualização deixa de recusar o `update-manifest.json` publicado com BOM UTF-8 pelo Windows PowerShell 5.1; o pipeline grava UTF-8 sem BOM e o parser ignora um BOM residual.
+- Máquinas na 1.1.4/1.1.5 voltam a descobrir a versão nova pelo GitHub Releases.
+
+### Compatibilidade
+
+- Com o jogo aberto, o GameHost mantém uma janela top-level **Urus GameHost** na barra de tarefas para o Cheat Engine x64 anexar `LegendLauncher.GameHost.Legacy.exe` (não o processo WPF do launcher).
+- Os executáveis nativos são publicados sem CET shadow stack, para o attach funcionar no Windows 11. Cheat Engine 32 bits continua incompatível com estes processos x64.
+
+## 1.1.5 — 20/08/2026
+
+### Removido
+
+- O tradutor de tela (captura, OCR e overlay) saiu do launcher, da localização e da documentação.
+
+### Adicionado
+
+- Botão de relogar em cada aba de conta: encerra a sessão e entra de novo no mesmo servidor.
+
+### Compatibilidade
+
+- O curl nativo do Windows passa a atender todos os Passports OAS (Creaction e OAS Games).
+
 ## 1.1.4 — 16/07/2026
 
 ### Compatibilidade em instalação limpa

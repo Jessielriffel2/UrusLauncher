@@ -47,6 +47,8 @@ public sealed class GitHubReleaseContractTests
     [InlineData("1.1.2")]
     [InlineData("1.1.3")]
     [InlineData("1.1.4")]
+    [InlineData("1.1.5")]
+    [InlineData("1.1.6")]
     public void ReleaseDefinitionHasPatchNotesInEverySupportedLanguage(string version)
     {
         string path = FindRepositoryFile("docs", "releases", $"v{version}.json");

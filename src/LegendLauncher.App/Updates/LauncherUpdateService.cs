@@ -626,11 +626,19 @@ internal sealed class LauncherUpdateService : ILauncherUpdateService
         }
     }
 
+    private static readonly byte[] Utf8ByteOrderMark = [0xEF, 0xBB, 0xBF];
+
     private static T Deserialize<T>(byte[] content, string errorMessage)
     {
+        ReadOnlySpan<byte> utf8 = content;
+        if (utf8.StartsWith(Utf8ByteOrderMark))
+        {
+            utf8 = utf8[Utf8ByteOrderMark.Length..];
+        }
+
         try
         {
-            return JsonSerializer.Deserialize<T>(content)
+            return JsonSerializer.Deserialize<T>(utf8)
                 ?? throw new InvalidDataException(errorMessage);
         }
         catch (JsonException exception)

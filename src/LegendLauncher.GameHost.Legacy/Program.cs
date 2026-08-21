@@ -92,6 +92,7 @@ internal static class Program
     {
         LaunchSession? session = connection.TakeSession();
         LegacyLaunchUriPolicy.EnsureAllowed(session.LaunchUri);
+        using GameHostProcessAnchorForm processAnchor = GameHostProcessAnchorForm.Start();
         using var form = new LegacyGameHostForm(
             assets,
             session,

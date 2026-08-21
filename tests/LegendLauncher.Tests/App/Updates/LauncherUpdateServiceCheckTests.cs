@@ -1,5 +1,6 @@
 using LegendLauncher.App.Updates;
 using System.Net.Http;
+using System.Security.Cryptography;
 using System.Text.Json.Nodes;
 
 namespace LegendLauncher.Tests.App.Updates;
@@ -270,6 +271,29 @@ public sealed class LauncherUpdateServiceCheckTests
             await service.CheckForUpdateAsync(new Version(1, 0, 0));
 
         Assert.NotNull(update);
+    }
+
+    [Fact]
+    public async Task Utf8BomPrefixedManifestIsAccepted()
+    {
+        using var directory = new TemporaryUpdateDirectory();
+        using var handler = new QueueHttpMessageHandler();
+        JsonObject manifest = UpdateTestData.CreateManifest();
+        byte[] manifestUtf8 = UpdateTestData.Serialize(manifest);
+        byte[] manifestWithBom = [0xEF, 0xBB, 0xBF, .. manifestUtf8];
+        JsonObject release = UpdateTestData.CreateRelease(manifest);
+        release["assets"]![0]!["size"] = manifestWithBom.LongLength;
+        release["assets"]![0]!["digest"] =
+            $"sha256:{Convert.ToHexString(SHA256.HashData(manifestWithBom)).ToLowerInvariant()}";
+        handler.Enqueue(UpdateTestData.Response(UpdateTestData.Serialize(release)));
+        handler.Enqueue(UpdateTestData.Response(manifestWithBom));
+        var service = CreateService(handler, directory);
+
+        LauncherUpdateRelease? update =
+            await service.CheckForUpdateAsync(new Version(1, 0, 0));
+
+        Assert.NotNull(update);
+        Assert.Equal(new Version(1, 2, 3), update.Version);
     }
 
     [Fact]

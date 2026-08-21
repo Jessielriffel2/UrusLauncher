@@ -41,6 +41,33 @@ public sealed class GameHostWindowTests
         Assert.True(result.ShowInTaskbar);
     }
 
+    [Fact]
+    public void ProcessAnchor_RemainsTopLevelForExternalMemoryTools()
+    {
+        var result = RunInSta(() =>
+        {
+            using var form = new GameHostProcessAnchorForm();
+            _ = form.Handle;
+            form.Close();
+            return (
+                form.Text,
+                form.ShowInTaskbar,
+                form.FormBorderStyle,
+                form.IsEnumeratedByExternalWindowTools,
+                form.IsDisposed,
+                form.WindowState);
+        });
+
+        Assert.Equal(
+            GameHostLocalization.Get(GameHostText.ProcessAnchorTitle),
+            result.Text);
+        Assert.True(result.ShowInTaskbar);
+        Assert.Equal(FormBorderStyle.FixedSingle, result.FormBorderStyle);
+        Assert.True(result.IsEnumeratedByExternalWindowTools);
+        Assert.False(result.IsDisposed);
+        Assert.Equal(FormWindowState.Minimized, result.WindowState);
+    }
+
     [Theory]
     [InlineData(false)]
     [InlineData(true)]

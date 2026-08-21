@@ -32,6 +32,7 @@
     <UseWPF>true</UseWPF>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets\Branding\urus-launcher.ico</ApplicationIcon>
+    <CETCompat>false</CETCompat>
   </PropertyGroup>
 
 </Project>

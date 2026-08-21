@@ -2,7 +2,7 @@
 
 Fonte da verdade para a estrutura e os módulos do projeto.
 
-- **Última atualização:** 2026-08-20
+- **Última atualização:** 2026-08-21
 - **Raiz:** `LegendLauncherNext/`
 - **Escopo da árvore:** fontes, testes e documentação; `bin/`, `obj/` e `artifacts/` são saídas geradas e ficam fora.
 
@@ -39,7 +39,8 @@ LegendLauncherNext/
 │   │   ├── v1.1.2.json
 │   │   ├── v1.1.3.json
 │   │   ├── v1.1.4.json
-│   │   └── v1.1.5.json
+│   │   ├── v1.1.5.json
+│   │   └── v1.1.6.json
 │   └── modulos/
 │       ├── atualizacao.md
 │       ├── branding.md
@@ -166,6 +167,7 @@ LegendLauncherNext/
 │   │   ├── FlashSessionParameters.cs
 │   │   ├── GameHostLocalization.cs
 │   │   ├── GameHostOptions.cs
+│   │   ├── GameHostProcessAnchorForm.cs
 │   │   ├── GameHostWindowIdentity.cs
 │   │   ├── LaunchSessionIpcCodec.cs
 │   │   ├── LaunchSessionPipeClient.cs
@@ -310,13 +312,13 @@ LegendLauncherNext/
 | `LegendLauncher.App/Game Session Workspace` | Barra única de 44 px com controles/abas de 34 px, abas roláveis, `+ CONTA` persistente, reserva de 150 px para o chrome, layouts 1/2/4, áudio global com refresh concorrente coalescido, detach/reattach, relogar (re-login no mesmo servidor a partir da aba) e incorporação reversível de HWND/PID. | `Views/Game/*`, `GameHosting/*.cs`, `GameWorkspaceViewModel.cs`, `GameSessionViewModel.cs`, `MainWindowViewModel.Relog.cs`, `GameAudioService.cs`, `LauncherSettingsService.cs`, `BorderlessWindowCommands.cs` | [game-session-workspace.md](modulos/game-session-workspace.md) |
 | `LegendLauncher.App/Localization` | Localização dinâmica por 206 chaves em `pt-BR`, `en-US` e `es-ES`, inclusive título/slogan, catálogo, doação e todo o fluxo de atualização preparada, com recursos incorporados, bindings observáveis e persistência da cultura ativa. | `Localization/*.cs`, `Localization/Resources/*.json`, `MainWindowViewModel.Localization.cs`, `MainWindowViewModel.Updates.cs` | [localizacao.md](modulos/localizacao.md) |
 | `LegendLauncher.App/Donation Prompt` | Pedido opcional PayPal/PIX, lembrete de cinco horas avaliado uma vez por abertura, acesso manual, QR imutável, cópia local do CNPJ e acessibilidade localizada. | `Views/Donation/*`, `MainWindowViewModel.Donation.cs`, `LauncherSettingsService.cs`, `paypal-donation-qr.jpeg` | [donation-prompt.md](modulos/donation-prompt.md) |
-| `LegendLauncher.App/Atualização` | Consulta antecipada do GitHub Releases na abertura, fallback público para `403`/`429`, download/validação automática por usuário com janela de uma hora, cache revalidado, cartão trilíngue pronto para instalar e execução somente após clique sem sessões ativas nem login em andamento. | `Updates/*.cs`, `Views/Updates/*`, `MainWindowViewModel.Updates.cs`, `AppPaths.UpdatesDirectory` | [atualizacao.md](modulos/atualizacao.md) |
+| `LegendLauncher.App/Atualização` | Consulta antecipada do GitHub Releases na abertura, fallback público para `403`/`429`, download/validação automática por usuário com janela de uma hora, manifesto UTF-8 sem BOM, cache revalidado, cartão trilíngue pronto para instalar e execução somente após clique sem sessões ativas nem login em andamento. | `Updates/*.cs`, `Views/Updates/*`, `MainWindowViewModel.Updates.cs`, `AppPaths.UpdatesDirectory` | [atualizacao.md](modulos/atualizacao.md) |
 | `Distribuição Windows` | Publica App e GameHost self-contained para `win-x64`, injeta runtime registration-free fornecido/autorizado e gera setup/ZIP, manifestos, patch notes e checksums; o workflow automático por tag exige a mesma fonte autorizada no runner, enquanto a 1.1.4 foi publicada manualmente a partir do build local validado e autorizado. | `scripts/build-urus-distribution.ps1`, `installer/UrusLauncher.iss`, `.github/workflows/release.yml`, `docs/releases/*.json` | [distribuicao-windows.md](modulos/distribuicao-windows.md) |
 | `LegendLauncher.Core` | Modelos imutáveis e contratos sem dependência de UI, rede, JSON ou chamadas Win32; inclui diagnóstico de autenticação limitado a fase/transporte/status, `AccountProfile` com UID/recentes por plataforma e HWND opaco. | `Models/*.cs`, `Contracts/*.cs` | [core.md](modulos/core.md) |
 | `LegendLauncher.Infrastructure` | Paths — incluindo updates/modelos de tradução —, JSON atômico para perfis/cache/settings, namespaces separados no Windows Credential Manager e probe somente leitura do Flash empacotado/instalado. | `AppPaths.cs`, `AtomicJsonFileStore.cs`, `CredentialKey.cs`, `WindowsCredentialVault.cs`, `LegacyRuntimeProbe.cs` | [infrastructure.md](modulos/infrastructure.md) |
 | `LegendLauncher.Providers.Oas` | Oito plataformas OAS, catálogo/cache, Passports Creaction e OAS Games em wrapper curl único, launch em wrapper curl separado, executor comum, diagnóstico saneado, parsers e allowlists. | `OasAuthenticationService.cs`, `OasCurlPassportTransport.cs`, `OasCurlLaunchTransport.cs`, `OasSystemCurlTransport.cs`, `OasOriginPolicy.cs` | [providers-oas.md](modulos/providers-oas.md) |
 | `LegendLauncher.Providers.SevenWan` | Quatorze variantes Wartune/7wan e catálogo público normalizado; autenticação permanece indisponível. | `SevenWanPlatformCatalog.cs`, `SevenWanServerDirectory.cs`, `SevenWanServerPayloadParser.cs` | [providers-sevenwan.md](modulos/providers-sevenwan.md) |
-| `LegendLauncher.GameHost.Legacy` | Processo x64 separado que herda a cultura normalizada, recebe sessão por Named Pipe, ativa COM sem registro, hospeda Flash ActiveX, devolve uma superfície nativa validada e encerra quando o processo pai desaparece. | `LegacyGameRuntime.cs`, `GameHostLocalization.cs`, `GameHostWindowIdentity.cs`, `ParentProcessLifetimeMonitor.cs`, `PipeCompletionProtocol.cs`, `FlashActiveXControl.cs` | [game-host-legacy.md](modulos/game-host-legacy.md) |
+| `LegendLauncher.GameHost.Legacy` | Processo x64 separado que herda a cultura normalizada, recebe sessão por Named Pipe, ativa COM sem registro, hospeda Flash ActiveX, permanece anexável a ferramentas de memória x64, devolve uma superfície nativa validada e encerra quando o processo pai desaparece. | `LegacyGameRuntime.cs`, `GameHostLocalization.cs`, `GameHostProcessAnchorForm.cs`, `GameHostWindowIdentity.cs`, `ParentProcessLifetimeMonitor.cs`, `PipeCompletionProtocol.cs`, `FlashActiveXControl.cs` | [game-host-legacy.md](modulos/game-host-legacy.md) |
 | `LegendLauncher.NetworkBridge` | Política compartilhada de bind/upstream; valida destinos e não abre proxy neste marco. | `BridgeSecurityPolicy.cs`, `BridgeValidationResult.cs` | [network-bridge.md](modulos/network-bridge.md) |
 
 ## Arquivos e decisões principais
@@ -349,10 +351,13 @@ LegendLauncherNext/
 | `docs/releases/v1.1.2.json` | Fonte trilíngue dos títulos e patch notes da versão 1.1.2, incluindo Classic Português S100, identidade OAS compartilhada e estado/sessões por destino. |
 | `docs/releases/v1.1.3.json` | Fonte trilíngue dos títulos e patch notes da versão 1.1.3, incluindo download automático validado, cache exato e instalação sob clique. |
 | `docs/releases/v1.1.4.json` | Fonte trilíngue da correção de instalação limpa, prioridade do runtime interno e estado visual honesto do CTA. |
+| `docs/releases/v1.1.5.json` | Fonte trilíngue da remoção do tradutor, relogar por aba e curl em todos os Passports OAS. |
+| `docs/releases/v1.1.6.json` | Fonte trilíngue da consulta de update sem BOM, âncora do GameHost para Cheat Engine x64 e CET desligado. |
 | `src/LegendLauncher.App/Updates/UpdateManifestValidator.cs` | Validador único do manifesto normal e alternativo, mantendo versão, setup, bytes, SHA-256 e notas trilíngues sob o mesmo contrato. |
 | `tests/LegendLauncher.Tests/App/Updates/LauncherUpdateServiceFallbackTests.cs` | Contratos do fallback exclusivo para rate limit `403`/`429`, redirects permitidos e rejeição de rotas/documentos inválidos. |
 | `.github/workflows/release.yml` | Tenta gerar e publicar GitHub Release quando uma tag `vMAJOR.MINOR.PATCH` é enviada; exige uma fonte licenciada do runtime no runner. A execução disparada pela tag 1.1.4 foi cancelada e a versão foi publicada manualmente a partir do build local autorizado. |
 | `docs/modulos/game-session-workspace.md` | Contrato funcional e técnico do workspace multissessão. |
+| `docs/modulos/game-host-legacy.md` | Isolamento Flash, IPC, âncora visível a ferramentas de memória x64 e CET desligado nos executáveis. |
 | `docs/modulos/localizacao.md` | Contrato dos três idiomas, atualização em runtime, limites e integração com settings/GameHost. |
 | `docs/modulos/donation-prompt.md` | Contrato temporal, visual, de integridade do QR, PIX, acessibilidade e persistência do pedido de apoio. |
 | `installer/UrusLauncher.iss` | Receita Inno Setup x64, per-user e trilíngue do instalador Urus Launcher. |

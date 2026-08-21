@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "version": "1.1.6",
+  "title": {
+    "pt-BR": "Atualização estável e processo visível no Cheat Engine",
+    "en-US": "Reliable auto-update and Cheat Engine visibility",
+    "es-ES": "Actualización estable y proceso visible en Cheat Engine"
+  },
+  "notes": {
+    "pt-BR": [
+      "A consulta de atualização deixa de falhar em todos os PCs: o manifesto público agora é UTF-8 sem BOM, e o launcher ignora um BOM se um asset antigo ainda o tiver.",
+      "Com o jogo aberto, o processo do Flash fica visível para o Cheat Engine x64 (janela Urus GameHost na barra de tarefas). Anexe LegendLauncher.GameHost.Legacy.exe, não o UrusLauncher.App.exe.",
+      "O shadow stack CET foi desligado nos executáveis para o attach funcionar no Windows 11. Use Cheat Engine 64 bits; o de 32 bits não lista estes processos."
+    ],
+    "en-US": [
+      "The update check no longer fails on every PC: the public manifest is now UTF-8 without a BOM, and the launcher ignores a BOM if an older asset still has one.",
+      "With the game open, the Flash process stays visible to 64-bit Cheat Engine (Urus GameHost on the taskbar). Attach LegendLauncher.GameHost.Legacy.exe, not UrusLauncher.App.exe.",
+      "CET shadow stacks are disabled on the executables so attach works on Windows 11. Use 64-bit Cheat Engine; 32-bit CE cannot list these processes."
+    ],
+    "es-ES": [
+      "La consulta de actualización deja de fallar en todos los PCs: el manifiesto público ahora es UTF-8 sin BOM, y el launcher ignora un BOM si un asset antiguo todavía lo tiene.",
+      "Con el juego abierto, el proceso de Flash permanece visible para Cheat Engine x64 (ventana Urus GameHost en la barra de tareas). Adjunta LegendLauncher.GameHost.Legacy.exe, no UrusLauncher.App.exe.",
+      "Se desactivó el shadow stack CET en los ejecutables para que el attach funcione en Windows 11. Usa Cheat Engine de 64 bits; el de 32 bits no lista estos procesos."
+    ]
+  }
+}
