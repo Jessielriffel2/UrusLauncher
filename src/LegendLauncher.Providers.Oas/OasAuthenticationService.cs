@@ -14,7 +14,7 @@ namespace LegendLauncher.Providers.Oas;
 public sealed class OasAuthenticationService : IGameAuthenticationService
 {
     private static readonly Uri CreactionPassportEndpoint =
-        new("https://passport.creaction-network.com/index.php", UriKind.Absolute);
+        OasCurlPassportTransport.Endpoint;
 
     private static readonly Uri OasGamesPassportEndpoint =
         new("https://passport.oasgames.com/index.php", UriKind.Absolute);
@@ -35,6 +35,7 @@ public sealed class OasAuthenticationService : IGameAuthenticationService
 
     private readonly Func<HttpMessageHandler> _handlerFactory;
     private readonly OasCurlLaunchTransport? _compatibleLaunchTransport;
+    private readonly IOasPassportTransport? _compatiblePassportTransport;
     private readonly TimeSpan _requestTimeout;
     private readonly int _maxJsonResponseBytes;
     private readonly int _maxHtmlResponseBytes;
@@ -48,7 +49,8 @@ public sealed class OasAuthenticationService : IGameAuthenticationService
             requestTimeout: null,
             DefaultMaxJsonResponseBytes,
             DefaultMaxHtmlResponseBytes,
-            useCompatibleLaunchTransport: true)
+            useCompatibleTransports: true,
+            compatiblePassportTransport: null)
     {
     }
 
@@ -66,7 +68,24 @@ public sealed class OasAuthenticationService : IGameAuthenticationService
             requestTimeout,
             maxJsonResponseBytes,
             maxHtmlResponseBytes,
-            useCompatibleLaunchTransport: false)
+            useCompatibleTransports: false,
+            compatiblePassportTransport: null)
+    {
+    }
+
+    internal OasAuthenticationService(
+        Func<HttpMessageHandler> handlerFactory,
+        IOasPassportTransport compatiblePassportTransport,
+        TimeSpan? requestTimeout = null,
+        int maxJsonResponseBytes = DefaultMaxJsonResponseBytes,
+        int maxHtmlResponseBytes = DefaultMaxHtmlResponseBytes)
+        : this(
+            handlerFactory,
+            requestTimeout,
+            maxJsonResponseBytes,
+            maxHtmlResponseBytes,
+            useCompatibleTransports: false,
+            compatiblePassportTransport)
     {
     }
 
@@ -75,7 +94,8 @@ public sealed class OasAuthenticationService : IGameAuthenticationService
         TimeSpan? requestTimeout,
         int maxJsonResponseBytes,
         int maxHtmlResponseBytes,
-        bool useCompatibleLaunchTransport)
+        bool useCompatibleTransports,
+        IOasPassportTransport? compatiblePassportTransport)
     {
         ArgumentNullException.ThrowIfNull(handlerFactory);
         var effectiveTimeout = requestTimeout ?? DefaultRequestTimeout;
@@ -87,9 +107,13 @@ public sealed class OasAuthenticationService : IGameAuthenticationService
         _requestTimeout = effectiveTimeout;
         _maxJsonResponseBytes = maxJsonResponseBytes;
         _maxHtmlResponseBytes = maxHtmlResponseBytes;
-        _compatibleLaunchTransport = useCompatibleLaunchTransport
+        _compatibleLaunchTransport = useCompatibleTransports
             ? new OasCurlLaunchTransport(effectiveTimeout, maxHtmlResponseBytes)
             : null;
+        _compatiblePassportTransport = compatiblePassportTransport ??
+            (useCompatibleTransports
+                ? new OasCurlPassportTransport(effectiveTimeout, maxJsonResponseBytes)
+                : null);
     }
 
     public async Task<AuthenticationResult> AuthenticateAsync(
@@ -104,6 +128,7 @@ public sealed class OasAuthenticationService : IGameAuthenticationService
             return validationFailure;
         }
 
+        var diagnosticContext = new OasAuthenticationDiagnosticContext();
         using var timeoutSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         if (_requestTimeout != Timeout.InfiniteTimeSpan)
         {
@@ -124,6 +149,7 @@ public sealed class OasAuthenticationService : IGameAuthenticationService
                     cookies,
                     request.Platform,
                     request.Secret,
+                    diagnosticContext,
                     timeoutSource.Token)
                 .ConfigureAwait(false);
             if (!passportResult.IsSuccess)
@@ -137,6 +163,7 @@ public sealed class OasAuthenticationService : IGameAuthenticationService
                     cookies,
                     launchDocumentUri,
                     platformHost,
+                    diagnosticContext,
                     timeoutSource.Token)
                 .ConfigureAwait(false);
             if (!launchResult.IsSuccess)
@@ -156,25 +183,29 @@ public sealed class OasAuthenticationService : IGameAuthenticationService
         {
             return AuthenticationResult.Failure(
                 OasAuthenticationErrorCodes.RequestTimeout,
-                "A autenticação excedeu o tempo limite.");
+                "A autenticação excedeu o tempo limite.",
+                diagnosticContext.Current);
         }
         catch (OasResponseTooLargeException)
         {
             return AuthenticationResult.Failure(
                 OasAuthenticationErrorCodes.ResponseTooLarge,
-                "A plataforma devolveu uma resposta maior que o limite permitido.");
+                "A plataforma devolveu uma resposta maior que o limite permitido.",
+                diagnosticContext.Current);
         }
         catch (HttpRequestException)
         {
             return AuthenticationResult.Failure(
                 OasAuthenticationErrorCodes.NetworkError,
-                "Não foi possível comunicar com a plataforma.");
+                "Não foi possível comunicar com a plataforma.",
+                diagnosticContext.Current);
         }
         catch (IOException)
         {
             return AuthenticationResult.Failure(
                 OasAuthenticationErrorCodes.NetworkError,
-                "A resposta da plataforma foi interrompida.");
+                "A resposta da plataforma foi interrompida.",
+                diagnosticContext.Current);
         }
     }
 
@@ -183,28 +214,40 @@ public sealed class OasAuthenticationService : IGameAuthenticationService
         CookieContainer cookies,
         PlatformDefinition platform,
         CredentialSecret credential,
+        OasAuthenticationDiagnosticContext diagnosticContext,
         CancellationToken cancellationToken)
     {
         var passportEndpoint = GetPassportEndpoint(platform);
         var loginUri = BuildPassportUri(passportEndpoint, credential);
-        using var response = await SendGetAsync(
-                httpClient,
-                cookies,
-                loginUri,
-                "application/json",
-                cancellationToken)
-            .ConfigureAwait(false);
+        var useCompatibleTransport = ShouldUseCompatiblePassportTransport(platform);
+        diagnosticContext.Begin(
+            AuthenticationFailurePhase.Passport,
+            useCompatibleTransport
+                ? AuthenticationTransportKind.SystemCurl
+                : AuthenticationTransportKind.ManagedHttp);
+        using var response = useCompatibleTransport
+            ? await _compatiblePassportTransport!
+                .SendGetAsync(loginUri, cancellationToken)
+                .ConfigureAwait(false)
+            : await SendGetAsync(
+                    httpClient,
+                    cookies,
+                    loginUri,
+                    "application/json",
+                    cancellationToken)
+                .ConfigureAwait(false);
+        var responseDiagnostic = diagnosticContext.RecordStatus((int)response.StatusCode);
 
         if (!IsEffectiveUriAllowed(
                 response,
                 uri => OasOriginPolicy.IsPassportUri(uri, passportEndpoint)))
         {
-            return PassportAuthenticationStep.Failed(OriginFailure());
+            return PassportAuthenticationStep.Failed(OriginFailure(responseDiagnostic));
         }
 
         if (!response.IsSuccessStatusCode)
         {
-            return PassportAuthenticationStep.Failed(HttpFailure());
+            return PassportAuthenticationStep.Failed(HttpFailure(responseDiagnostic));
         }
 
         CaptureResponseCookies(response, loginUri, cookies);
@@ -216,21 +259,24 @@ public sealed class OasAuthenticationService : IGameAuthenticationService
         {
             return PassportAuthenticationStep.Failed(AuthenticationResult.Failure(
                 OasAuthenticationErrorCodes.InvalidAuthenticationResponse,
-                "A plataforma devolveu uma resposta de autenticação inválida."));
+                "A plataforma devolveu uma resposta de autenticação inválida.",
+                responseDiagnostic));
         }
 
         if (!parsed.IsSuccess)
         {
             return PassportAuthenticationStep.Failed(AuthenticationResult.Failure(
                 parsed.ErrorCode!,
-                parsed.ErrorMessage));
+                parsed.ErrorMessage,
+                responseDiagnostic));
         }
 
         if (!TrySetAuthenticationCookie(cookies, parsed.LoginKey!))
         {
             return PassportAuthenticationStep.Failed(AuthenticationResult.Failure(
                 OasAuthenticationErrorCodes.InvalidAuthenticationResponse,
-                "A plataforma não forneceu uma sessão de autenticação válida."));
+                "A plataforma não forneceu uma sessão de autenticação válida.",
+                responseDiagnostic));
         }
 
         return PassportAuthenticationStep.Succeeded(parsed.ProviderUserId);
@@ -241,6 +287,7 @@ public sealed class OasAuthenticationService : IGameAuthenticationService
         CookieContainer cookies,
         Uri launchDocumentUri,
         string platformHost,
+        OasAuthenticationDiagnosticContext diagnosticContext,
         CancellationToken cancellationToken)
     {
         var currentUri = launchDocumentUri;
@@ -248,9 +295,14 @@ public sealed class OasAuthenticationService : IGameAuthenticationService
 
         for (var hop = 0; hop <= MaximumLaunchFollowUpHops; hop++)
         {
+            diagnosticContext.Begin(
+                AuthenticationFailurePhase.Launch,
+                _compatibleLaunchTransport is null
+                    ? AuthenticationTransportKind.ManagedHttp
+                    : AuthenticationTransportKind.SystemCurl);
             if (!visitedUris.Add(GetVisitKey(currentUri)))
             {
-                return InvalidLaunchStep();
+                return InvalidLaunchStep(diagnosticContext.Current);
             }
 
             using var response = await SendLaunchGetAsync(
@@ -259,6 +311,7 @@ public sealed class OasAuthenticationService : IGameAuthenticationService
                     currentUri,
                     cancellationToken)
                 .ConfigureAwait(false);
+            var responseDiagnostic = diagnosticContext.RecordStatus((int)response.StatusCode);
             var effectiveUri = response.RequestMessage?.RequestUri;
             var isAllowedEffectiveUri = effectiveUri is not null &&
                 (hop == 0
@@ -266,7 +319,7 @@ public sealed class OasAuthenticationService : IGameAuthenticationService
                     : OasOriginPolicy.IsAllowedGameUri(effectiveUri));
             if (!isAllowedEffectiveUri)
             {
-                return LaunchResolutionStep.Failed(OriginFailure());
+                return LaunchResolutionStep.Failed(OriginFailure(responseDiagnostic));
             }
 
             CaptureResponseCookies(response, effectiveUri!, cookies);
@@ -275,7 +328,7 @@ public sealed class OasAuthenticationService : IGameAuthenticationService
             {
                 if (!OasOriginPolicy.IsAllowedGameUri(redirectUri))
                 {
-                    return LaunchResolutionStep.Failed(OriginFailure());
+                    return LaunchResolutionStep.Failed(OriginFailure(responseDiagnostic));
                 }
 
                 if (OasLaunchPageParser.TryCreateGameLaunch(
@@ -288,7 +341,7 @@ public sealed class OasAuthenticationService : IGameAuthenticationService
 
                 if (hop == MaximumLaunchFollowUpHops)
                 {
-                    return InvalidLaunchStep();
+                    return InvalidLaunchStep(responseDiagnostic);
                 }
 
                 currentUri = redirectUri;
@@ -297,7 +350,7 @@ public sealed class OasAuthenticationService : IGameAuthenticationService
 
             if (!response.IsSuccessStatusCode)
             {
-                return LaunchResolutionStep.Failed(HttpFailure());
+                return LaunchResolutionStep.Failed(HttpFailure(responseDiagnostic));
             }
 
             if (OasLaunchPageParser.TryCreateGameLaunch(
@@ -314,7 +367,7 @@ public sealed class OasAuthenticationService : IGameAuthenticationService
             var parsed = OasLaunchPageParser.Parse(html, effectiveUri!);
             if (!parsed.IsOriginAllowed)
             {
-                return LaunchResolutionStep.Failed(OriginFailure());
+                return LaunchResolutionStep.Failed(OriginFailure(responseDiagnostic));
             }
 
             if (parsed.IsSuccess)
@@ -325,13 +378,13 @@ public sealed class OasAuthenticationService : IGameAuthenticationService
 
             if (parsed.FollowUpUri is null || hop == MaximumLaunchFollowUpHops)
             {
-                return InvalidLaunchStep();
+                return InvalidLaunchStep(responseDiagnostic);
             }
 
             currentUri = parsed.FollowUpUri;
         }
 
-        return InvalidLaunchStep();
+        return InvalidLaunchStep(diagnosticContext.Current);
     }
 
     private static string GetVisitKey(Uri uri)
@@ -444,6 +497,10 @@ public sealed class OasAuthenticationService : IGameAuthenticationService
             StringComparison.OrdinalIgnoreCase)
             ? CreactionPassportEndpoint
             : OasGamesPassportEndpoint;
+
+    private bool ShouldUseCompatiblePassportTransport(PlatformDefinition platform) =>
+        _compatiblePassportTransport is not null &&
+        OasPlatformCatalog.Find(platform.Id) is not null;
 
     private static Uri BuildPassportUri(Uri passportEndpoint, CredentialSecret credential)
     {
@@ -612,18 +669,26 @@ public sealed class OasAuthenticationService : IGameAuthenticationService
         MaxConnectionsPerServer = 4,
     };
 
-    private static AuthenticationResult HttpFailure() => AuthenticationResult.Failure(
-        OasAuthenticationErrorCodes.HttpError,
-        "A plataforma recusou a requisição de autenticação.");
+    private static AuthenticationResult HttpFailure(
+        AuthenticationFailureDiagnostic diagnostic) =>
+        AuthenticationResult.Failure(
+            OasAuthenticationErrorCodes.HttpError,
+            "A plataforma recusou a requisição de autenticação.",
+            diagnostic);
 
-    private static AuthenticationResult OriginFailure() => AuthenticationResult.Failure(
-        OasAuthenticationErrorCodes.OriginNotAllowed,
-        "A plataforma devolveu um endereço fora das origens permitidas.");
+    private static AuthenticationResult OriginFailure(
+        AuthenticationFailureDiagnostic diagnostic) =>
+        AuthenticationResult.Failure(
+            OasAuthenticationErrorCodes.OriginNotAllowed,
+            "A plataforma devolveu um endereço fora das origens permitidas.",
+            diagnostic);
 
-    private static LaunchResolutionStep InvalidLaunchStep() =>
+    private static LaunchResolutionStep InvalidLaunchStep(
+        AuthenticationFailureDiagnostic? diagnostic) =>
         LaunchResolutionStep.Failed(AuthenticationResult.Failure(
             OasAuthenticationErrorCodes.InvalidLaunchResponse,
-            "A plataforma não forneceu uma sessão de jogo reconhecível."));
+            "A plataforma não forneceu uma sessão de jogo reconhecível.",
+            diagnostic));
 
     private static void ValidateTimeout(TimeSpan timeout)
     {

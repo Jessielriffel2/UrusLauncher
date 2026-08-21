@@ -137,13 +137,14 @@
                         <DataTemplate>
                             <Border Style="{StaticResource SessionTabBorderStyle}"
                                     MinWidth="132"
-                                    MaxWidth="190"
+                                    MaxWidth="210"
                                     Height="34"
                                     Margin="0,0,5,0">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="30" />
+                                        <ColumnDefinition Width="26" />
+                                        <ColumnDefinition Width="26" />
                                     </Grid.ColumnDefinitions>
                                     <Button Background="Transparent"
                                             BorderThickness="0"
@@ -169,6 +170,18 @@
                                         </Grid>
                                     </Button>
                                     <Button Grid.Column="1"
+                                            Background="Transparent"
+                                            BorderThickness="0"
+                                            Foreground="{StaticResource TextMutedBrush}"
+                                            FontFamily="Segoe Fluent Icons"
+                                            FontSize="11"
+                                            Content="&#xE72C;"
+                                            Cursor="Hand"
+                                            Command="{Binding DataContext.Workspace.RelogSessionCommand, ElementName=WorkspaceRoot}"
+                                            CommandParameter="{Binding}"
+                                            ToolTip="{loc:Localize Session_RelogTooltip}"
+                                            AutomationProperties.Name="{loc:Localize Session_Relog}" />
+                                    <Button Grid.Column="2"
                                             Background="Transparent"
                                             BorderThickness="0"
                                             Foreground="{StaticResource TextMutedBrush}"
@@ -427,6 +440,16 @@
                                                     Command="{Binding DataContext.Workspace.DetachSessionCommand, ElementName=WorkspaceRoot}"
                                                     CommandParameter="{Binding}"
                                                     ToolTip="{loc:Localize Session_DetachTooltip}" />
+                                            <Button Content="&#xE72C;"
+                                                    FontFamily="Segoe Fluent Icons"
+                                                    Foreground="{StaticResource AccentBrush}"
+                                                    Background="Transparent"
+                                                    BorderThickness="0"
+                                                    Width="34"
+                                                    Command="{Binding DataContext.Workspace.RelogSessionCommand, ElementName=WorkspaceRoot}"
+                                                    CommandParameter="{Binding}"
+                                                    ToolTip="{loc:Localize Session_RelogTooltip}"
+                                                    AutomationProperties.Name="{loc:Localize Session_Relog}" />
                                             <Button Content="&#xE711;"
                                                     FontFamily="Segoe Fluent Icons"
                                                     Foreground="{StaticResource TextSecondaryBrush}"
@@ -439,7 +462,8 @@
                                         </StackPanel>
                                     </Grid>
                                     <Border Grid.Row="1" Background="#01050B">
-                                        <hosting:GameSurfacePresenter Attachment="{Binding Attachment}" />
+                                        <hosting:GameSurfacePresenter x:Name="GamePresenter"
+                                                                      Attachment="{Binding Attachment}" />
                                     </Border>
                                 </Grid>
                             </Border>

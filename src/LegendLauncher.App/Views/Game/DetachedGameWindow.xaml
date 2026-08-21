@@ -103,7 +103,8 @@
 
             <Border Grid.Row="1" Margin="8,6" Background="#01050B"
                     BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="6" ClipToBounds="True">
-                <hosting:GameSurfacePresenter Attachment="{Binding Session.Attachment}" />
+                <hosting:GameSurfacePresenter x:Name="DetachedGamePresenter"
+                                              Attachment="{Binding Session.Attachment}" />
             </Border>
 
             <Border Grid.Row="2" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0">

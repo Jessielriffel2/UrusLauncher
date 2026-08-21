@@ -107,6 +107,77 @@ public sealed class OasAuthenticationServiceTests
     }
 
     [Fact]
+    public async Task AuthenticateAsync_UsesCompatiblePassportForCreactionReborn()
+    {
+        var passportTransport = new StubPassportTransport((requestUri, _) =>
+        {
+            Assert.Equal("passport.creaction-network.com", requestUri.Host);
+            return Task.FromResult(JsonResponse(ValidPassportJson));
+        });
+        var handler = new AuthenticationHandler((_, call, _) => Task.FromResult(
+            call == 1
+                ? HtmlResponse(
+                    "<frame src='https://s115lortr.creaction-network.com/client/game.jsp'></frame>")
+                : throw new InvalidOperationException("Passport must not use managed HTTP.")));
+        var service = new OasAuthenticationService(() => handler, passportTransport);
+
+        var result = await service.AuthenticateAsync(CreateRequest(
+            launchUri: "https://lortr.creaction-network.com/serverlist/s115",
+            platform: OasPlatformCatalog.RebornTurkish));
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(1, passportTransport.CallCount);
+        Assert.Equal(1, handler.CallCount);
+    }
+
+    [Fact]
+    public async Task AuthenticateAsync_UsesCompatiblePassportForOasGames()
+    {
+        var passportTransport = new StubPassportTransport((requestUri, _) =>
+        {
+            Assert.Equal("passport.oasgames.com", requestUri.Host);
+            return Task.FromResult(JsonResponse(ValidPassportJson));
+        });
+        var handler = new AuthenticationHandler((_, call, _) => Task.FromResult(
+            call == 1
+                ? HtmlResponse(
+                    "<frame src='https://s123lobr.creaction-network.com/client/game.jsp'></frame>")
+                : throw new InvalidOperationException("Passport must not use managed HTTP.")));
+        var service = new OasAuthenticationService(() => handler, passportTransport);
+
+        var result = await service.AuthenticateAsync(CreateRequest());
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(1, passportTransport.CallCount);
+        Assert.Equal(1, handler.CallCount);
+    }
+
+    [Fact]
+    public async Task AuthenticateAsync_ReportsSanitizedCreactionPassportFailure()
+    {
+        const string password = "dummy-password-never-in-diagnostics";
+        var passportTransport = new StubPassportTransport((_, _) => Task.FromResult(
+            new HttpResponseMessage(HttpStatusCode.Forbidden)));
+        var handler = new AuthenticationHandler((_, _, _) =>
+            throw new InvalidOperationException("Launch must not start after Passport failure."));
+        var service = new OasAuthenticationService(() => handler, passportTransport);
+
+        var result = await service.AuthenticateAsync(CreateRequest(
+            password: password,
+            launchUri: "https://lortr.creaction-network.com/serverlist/s115",
+            platform: OasPlatformCatalog.RebornTurkish));
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal(OasAuthenticationErrorCodes.HttpError, result.ErrorCode);
+        Assert.Equal(AuthenticationFailurePhase.Passport, result.FailureDiagnostic?.Phase);
+        Assert.Equal(AuthenticationTransportKind.SystemCurl, result.FailureDiagnostic?.Transport);
+        Assert.Equal(403, result.FailureDiagnostic?.HttpStatusCode);
+        Assert.DoesNotContain(password, result.ToString(), StringComparison.Ordinal);
+        Assert.Equal(1, passportTransport.CallCount);
+        Assert.Equal(0, handler.CallCount);
+    }
+
+    [Fact]
     public async Task AuthenticateAsync_FollowsLoginTokenBeforeCreatingFlashSession()
     {
         var handler = new AuthenticationHandler((request, call, _) =>
@@ -278,6 +349,9 @@ public sealed class OasAuthenticationServiceTests
 
         Assert.False(result.IsSuccess);
         Assert.Equal(OasAuthenticationErrorCodes.HttpError, result.ErrorCode);
+        Assert.Equal(AuthenticationFailurePhase.Passport, result.FailureDiagnostic?.Phase);
+        Assert.Equal(AuthenticationTransportKind.ManagedHttp, result.FailureDiagnostic?.Transport);
+        Assert.Equal(503, result.FailureDiagnostic?.HttpStatusCode);
         Assert.Equal(1, handler.CallCount);
     }
 
@@ -294,6 +368,9 @@ public sealed class OasAuthenticationServiceTests
 
         Assert.False(result.IsSuccess);
         Assert.Equal(OasAuthenticationErrorCodes.HttpError, result.ErrorCode);
+        Assert.Equal(AuthenticationFailurePhase.Launch, result.FailureDiagnostic?.Phase);
+        Assert.Equal(AuthenticationTransportKind.ManagedHttp, result.FailureDiagnostic?.Transport);
+        Assert.Equal(403, result.FailureDiagnostic?.HttpStatusCode);
         Assert.Equal(2, handler.CallCount);
     }
 
@@ -647,6 +724,25 @@ public sealed class OasAuthenticationServiceTests
     {
         Headers = { Location = new Uri(location) },
     };
+
+    private sealed class StubPassportTransport(
+        Func<Uri, CancellationToken, Task<HttpResponseMessage>> sendAsync)
+        : IOasPassportTransport
+    {
+        private int _callCount;
+
+        public int CallCount => _callCount;
+
+        public async Task<HttpResponseMessage> SendGetAsync(
+            Uri requestUri,
+            CancellationToken cancellationToken)
+        {
+            Interlocked.Increment(ref _callCount);
+            var response = await sendAsync(requestUri, cancellationToken);
+            response.RequestMessage ??= new HttpRequestMessage(HttpMethod.Get, requestUri);
+            return response;
+        }
+    }
 
     private sealed class AuthenticationHandler(
         Func<HttpRequestMessage, int, CancellationToken, Task<HttpResponseMessage>> sendAsync)

@@ -53,6 +53,8 @@
   "Session_DetachSelected": "Desacoplar sessão selecionada",
   "Session_DetachLabel": "DESACOPLAR",
   "Session_DetachTooltip": "Desacoplar sessão",
+  "Session_Relog": "Relogar sessão",
+  "Session_RelogTooltip": "Relogar e entrar novamente no mesmo servidor",
   "Workspace_EmptyTitle": "Nenhuma sessão aberta",
   "Accounts_OpenLabel": "ABRIR UMA CONTA",
   "Detached_IsolatedSubtitle": "SESSÃO ISOLADA · URUS LAUNCHER",

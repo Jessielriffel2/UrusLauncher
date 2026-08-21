@@ -21,6 +21,7 @@ Launcher Windows para Legend Online, escrito do zero em C#/.NET 10 e distribuíd
 | Janela principal responsiva | Implementada em 1420×820, com mínimo 1180×700, cabeçalho recolhido no workspace, setup rolável e status/ação/legenda fixos |
 | Maximização em chrome próprio | Implementada pela área útil do monitor, sem cobrir a barra de tarefas; tamanho normal/restaurado é limitado em DIPs ao monitor atual |
 | Som global dos jogos | Implementado por PID, com padrão mudo, preferência persistida e descarte seguro de callbacks |
+| Tradutor de tela híbrido | Manual por sessão: OCR Windows lazy, overlay por linha e local gratuito por padrão; turco → português por API apenas com chave própria, consentimento, limite e ativação temporária |
 | Último servidor por perfil | Implementado; fixado no topo como **RECOMENDADO**, independentemente para cada perfil e variante |
 | Senhas no Windows Credential Manager | Implementado |
 | Autenticação Passport OAS | Implementada nas oito variantes; QA abriu o Reborn turco S115 até a interface jogável e validou Passport + sessão do Classic Português S100 |
@@ -38,9 +39,9 @@ Launcher Windows para Legend Online, escrito do zero em C#/.NET 10 e distribuíd
 - Identidade pública **Urus Launcher** com monograma “U” original, sem touro/escudo/trade dress, slogan localizado e executável principal `UrusLauncher.App.exe`. Namespaces/projetos `LegendLauncher.*` permanecem internos.
 - Composição visual fiel ao mock de referência em 1584×992: contas à esquerda, catálogo ao centro e sessão à direita, com adaptação para outros tamanhos.
 - MVVM simples, com responsabilidades separadas entre launcher, apresentação do catálogo, perfis, abertura e workspace multissessão.
-- Localização dinâmica por 204 chaves em cada catálogo incorporado `pt-BR`, `en-US` e `es-ES`. Bindings observáveis atualizam launcher, workspace, atualizações, modal de apoio e janelas desacopladas sem reiniciar sessões; mensagens calculadas preservam chave/argumentos para serem reapresentadas na cultura ativa.
+- Localização dinâmica por 206 chaves em cada catálogo incorporado `pt-BR`, `en-US` e `es-ES`. Bindings observáveis atualizam launcher, workspace, atualizações, modal de apoio e janelas desacopladas sem reiniciar sessões; mensagens calculadas preservam chave/argumentos para serem reapresentadas na cultura ativa.
 - O catálogo é ordenado por perfil e plataforma: `RecentServerIdsByPlatform[plataforma][0]`, gravado após uma abertura aceita, aparece primeiro com **RECOMENDADO**; os campos escalares são somente espelho/fallback de perfis antigos. O servidor válido já lançado mais recentemente, calculado por `StartTimeUtc` e desempate por `NumericId`, recebe **MAIS RECENTE**; um divisor localizado introduz os demais servidores e é recalculado durante a busca. Os dois selos podem coexistir.
-- `HttpClient` para catálogo/Passport e curl nativo do Windows somente na entrada pós-login que a Cloudflare bloqueia no transporte .NET.
+- `HttpClient` para catálogo e Passport OAS Games; curl nativo confiável do Windows para o Passport Creaction/Reborn e para a entrada pós-login que a Cloudflare bloqueia no transporte .NET, sempre por wrappers de origem estrita e configuração via `stdin`.
 - Windows Credential Manager para senhas; o JSON local contém somente perfis e catálogo não sensíveis.
 - GitHub Releases público para atualização preparada: o aplicativo consulta somente `Jessielriffel2/UrusLauncher`; se a API responder `403` ou `429` por rate limit, a versão 1.1.1+ tenta o manifesto público do último release. Na 1.1.3+, uma versão superior é baixada e validada em `%LocalAppData%\LegendLauncherNext\updates`, mas o setup só é executado depois do clique explícito em **Instalar**.
 - Uma única instância do Urus Launcher fica ativa por sessão do Windows; tentar abri-lo novamente restaura/traz a janela existente para frente. Assim, perfis multissessão permanecem no mesmo processo e duas instâncias não disputam o cache do updater.
@@ -124,7 +125,7 @@ Pré-requisitos:
 - Windows 10 ou 11 x64;
 - .NET SDK 10;
 - uma origem local autorizada contendo `Adobe.Flash.Control.manifest` e o OCX x64 assinado referenciado, necessária para gerar um pacote com jogo pronto em instalação limpa;
-- `curl.exe` incluído no diretório de sistema do Windows para a ponte compatível pós-Passport.
+- `curl.exe` incluído no diretório de sistema do Windows para as pontes compatíveis e limitadas do Passport Creaction e da entrada pós-Passport.
 
 Comandos:
 
@@ -166,8 +167,8 @@ O código-fonte deve permanecer fora de `Program Files`. Em desenvolvimento, uma
 ## Como funciona o login
 
 1. A pessoa seleciona ou cria um perfil, escolhe a plataforma e um servidor disponível.
-2. A senha digitada, ou recuperada do Cofre do Windows, é enviada pelo `HttpClient` ao endpoint Passport atual da plataforma; o `loginKey` vira somente um cookie transitório `oas_user`.
-3. A página de entrada é resolvida pela ponte limitada do curl do sistema. URI/cookies entram por `stdin`, redirects são validados um a um e nenhum segredo aparece nos argumentos do processo.
+2. A senha digitada, ou recuperada do Cofre do Windows, é enviada somente ao endpoint Passport exato da plataforma: OAS Games usa `HttpClient`; Creaction/Reborn usa o curl do sistema com toda a configuração sensível por `stdin`. O `loginKey` vira somente um cookie transitório `oas_user`.
+3. A página de entrada é resolvida por outro wrapper limitado do curl do sistema. URI/cookies entram por `stdin`, redirects são validados um a um e nenhum segredo aparece nos argumentos do processo.
 4. Após a OAS devolver a URI final de sessão, o launcher inicia um GameHost exclusivo e entrega essa URI por Named Pipe protegido.
 5. O GameHost devolve seu HWND; o launcher valida HWND/PID, cria a aba e incorpora a janela no workspace sem carregar o ActiveX no WPF.
 6. Depois de uma abertura aceita, o perfil registra o UID retornado e o último servidor. Se a opção de lembrar estiver ativa, a senha fica no Windows Credential Manager.
@@ -188,7 +189,7 @@ Tentar jogar novamente com um perfil que já está em execução apenas selecion
 
 O Adobe Flash ActiveX é legado e descontinuado. Ele nunca é carregado no processo WPF nem registrado globalmente. O pipeline aceita uma cópia fornecida pelo mantenedor para formar um pacote registration-free, mas isso não concede licença: a publicação só deve ocorrer com permissão de redistribuição. URIs de abertura são limitadas a HTTPS e origens aprovadas, e senha/sessão não entram em argumentos de processo nem em mensagens de diagnóstico.
 
-Testes automatizados cobrem composição de catálogo, perfis, cofre, migração de estado por plataforma, autenticação OAS cruzada, isolamento SevenWan, alvo exato de sessão, transporte compatível, políticas de URI, settings, localização e propagação da cultura, pedido de apoio/intervalo/PIX/QR, áudio por PID e descarte concorrente, layouts 1/2/4, detach/reattach, maximização taskbar-aware, cleanup de sessão não adotada e protocolo launcher/GameHost. O updater possui contratos próprios para API/manifesto, fallback de rate limit, allowlist e redirects, download automático sem execução, cache revalidado, SHA-256, confinamento, instalação sob clique, caminho por usuário e workflow build/publish com permissões separadas. `LocalizationCatalogTests.cs` fixa 204 chaves equivalentes nos três idiomas. A validação histórica 1.0.1 permanece documentada em [`design-qa.md`](design-qa.md); resultados e hashes públicos ficam registrados na documentação de distribuição.
+Testes automatizados cobrem composição de catálogo, perfis, cofre, migração de estado por plataforma, autenticação OAS cruzada, isolamento SevenWan, alvo exato de sessão, transporte compatível, políticas de URI, settings, localização e propagação da cultura, pedido de apoio/intervalo/PIX/QR, áudio por PID e descarte concorrente, layouts 1/2/4, detach/reattach, maximização taskbar-aware, cleanup de sessão não adotada e protocolo launcher/GameHost. O updater possui contratos próprios para API/manifesto, fallback de rate limit, allowlist e redirects, download automático sem execução, cache revalidado, SHA-256, confinamento, instalação sob clique, caminho por usuário e workflow build/publish com permissões separadas. `LocalizationCatalogTests.cs` fixa 206 chaves equivalentes nos três idiomas. A validação histórica 1.0.1 permanece documentada em [`design-qa.md`](design-qa.md); resultados e hashes públicos ficam registrados na documentação de distribuição.
 
 A validação pública da [v1.1.4](https://github.com/Jessielriffel2/UrusLauncher/releases/tag/v1.1.4) concluiu **465/465** testes em Release, smoke portátil sem .NET global, runtime registration-free presente no ZIP e abertura visual com status **Pronto para jogar**/CTA habilitado. A validação 1.1.3 com **461/461** testes em Debug/Release permanece no histórico. Os resultados e hashes ficam em [distribuicao-windows.md](docs/modulos/distribuicao-windows.md).
 

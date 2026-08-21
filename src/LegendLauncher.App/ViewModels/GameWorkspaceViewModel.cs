@@ -44,6 +44,9 @@ internal sealed class GameWorkspaceViewModel : ObservableObject, IDisposable
         DetachSessionCommand = new RelayCommand<GameSessionViewModel>(
             DetachSession,
             session => session is not null && Sessions.Contains(session) && !session.IsDetached);
+        RelogSessionCommand = new RelayCommand<GameSessionViewModel>(
+            RelogSession,
+            session => session is not null && Sessions.Contains(session) && session.IsRunning);
         ToggleMuteCommand = new RelayCommand(ToggleMute);
         SingleLayoutCommand = new RelayCommand(() => LayoutMode = GameLayoutMode.Single);
         SplitTwoLayoutCommand = new RelayCommand(() => LayoutMode = GameLayoutMode.SplitTwo);
@@ -51,6 +54,8 @@ internal sealed class GameWorkspaceViewModel : ObservableObject, IDisposable
     }
 
     public event EventHandler<GameSessionViewModel>? DetachRequested;
+
+    public event EventHandler<GameSessionViewModel>? RelogRequested;
 
     public event EventHandler<GameSessionViewModel>? SessionRemoved;
 
@@ -61,6 +66,8 @@ internal sealed class GameWorkspaceViewModel : ObservableObject, IDisposable
     public RelayCommand<GameSessionViewModel> CloseSessionCommand { get; }
 
     public RelayCommand<GameSessionViewModel> DetachSessionCommand { get; }
+
+    public RelayCommand<GameSessionViewModel> RelogSessionCommand { get; }
 
     public RelayCommand ToggleMuteCommand { get; }
 
@@ -215,7 +222,21 @@ internal sealed class GameWorkspaceViewModel : ObservableObject, IDisposable
             throw;
         }
 
-        var item = new GameSessionViewModel(profile, platform, server, session, attachment);
+        GameSessionViewModel item;
+        try
+        {
+            item = new GameSessionViewModel(
+                profile,
+                platform,
+                server,
+                session,
+                attachment);
+        }
+        catch
+        {
+            TryTerminateProcess(session.ProcessId);
+            throw;
+        }
         item.Exited += SessionOnExited;
         Sessions.Add(item);
         if (!item.IsRunning)
@@ -271,6 +292,8 @@ internal sealed class GameWorkspaceViewModel : ObservableObject, IDisposable
         }
     }
 
+    public void RequestClose(GameSessionViewModel session) => CloseSession(session);
+
     public void Dispose()
     {
         if (_disposed)
@@ -323,6 +346,16 @@ internal sealed class GameWorkspaceViewModel : ObservableObject, IDisposable
         DetachSessionCommand.NotifyCanExecuteChanged();
         OnPropertyChanged(nameof(CanDetachSelected));
         DetachRequested?.Invoke(this, session);
+    }
+
+    private void RelogSession(GameSessionViewModel? session)
+    {
+        if (session is null || !Sessions.Contains(session) || !session.IsRunning)
+        {
+            return;
+        }
+
+        RelogRequested?.Invoke(this, session);
     }
 
     private void ToggleMute() => IsMuted = !IsMuted;
@@ -396,6 +429,7 @@ internal sealed class GameWorkspaceViewModel : ObservableObject, IDisposable
         SelectSessionCommand.NotifyCanExecuteChanged();
         CloseSessionCommand.NotifyCanExecuteChanged();
         DetachSessionCommand.NotifyCanExecuteChanged();
+        RelogSessionCommand.NotifyCanExecuteChanged();
     }
 
     private async Task PersistGamePreferencesAsync()

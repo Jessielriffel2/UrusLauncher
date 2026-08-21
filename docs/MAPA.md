@@ -2,7 +2,7 @@
 
 Fonte da verdade para a estrutura e os módulos do projeto.
 
-- **Última atualização:** 2026-07-16
+- **Última atualização:** 2026-08-20
 - **Raiz:** `LegendLauncherNext/`
 - **Escopo da árvore:** fontes, testes e documentação; `bin/`, `obj/` e `artifacts/` são saídas geradas e ficam fora.
 
@@ -38,7 +38,8 @@ LegendLauncherNext/
 │   │   ├── v1.1.1.json
 │   │   ├── v1.1.2.json
 │   │   ├── v1.1.3.json
-│   │   └── v1.1.4.json
+│   │   ├── v1.1.4.json
+│   │   └── v1.1.5.json
 │   └── modulos/
 │       ├── atualizacao.md
 │       ├── branding.md
@@ -100,7 +101,7 @@ LegendLauncherNext/
 │   │   │   ├── ProfilePlatformCompatibility.cs
 │   │   │   ├── ProfileStorageCoordinator.cs
 │   │   │   ├── ServerCatalogPresentation.cs
-│   │   │   └── SessionLaunchCoordinator.cs
+│   │   │   ├── SessionLaunchCoordinator.cs
 │   │   ├── Themes/
 │   │   │   ├── Colors.xaml
 │   │   │   ├── Controls.xaml
@@ -122,6 +123,7 @@ LegendLauncherNext/
 │   │   │   ├── MainWindowViewModel.Donation.cs
 │   │   │   ├── MainWindowViewModel.Localization.cs
 │   │   │   ├── MainWindowViewModel.Profiles.cs
+│   │   │   ├── MainWindowViewModel.Relog.cs
 │   │   │   ├── MainWindowViewModel.Updates.cs
 │   │   │   ├── ObservableObject.cs
 │   │   │   ├── PlatformItemViewModel.cs
@@ -151,6 +153,7 @@ LegendLauncherNext/
 │   │   │   └── IServerDirectory.cs
 │   │   └── Models/
 │   │       ├── AccountProfile.cs
+│   │       ├── AuthenticationFailureDiagnostic.cs
 │   │       ├── AuthenticationModels.cs
 │   │       ├── GameServer.cs
 │   │       ├── PlatformDefinition.cs
@@ -207,8 +210,10 @@ LegendLauncherNext/
 │   │   ├── BoundedHttpContentReader.cs
 │   │   ├── LegendLauncher.Providers.Oas.csproj
 │   │   ├── OasAuthenticationErrorCodes.cs
+│   │   ├── OasAuthenticationDiagnosticContext.cs
 │   │   ├── OasAuthenticationService.cs
 │   │   ├── OasCurlLaunchTransport.cs
+│   │   ├── OasCurlPassportTransport.cs
 │   │   ├── OasCurlResponseParser.cs
 │   │   ├── OasLaunchPageParser.cs
 │   │   ├── OasOriginPolicy.cs
@@ -217,6 +222,7 @@ LegendLauncherNext/
 │   │   ├── OasServerDirectory.cs
 │   │   ├── OasServerDirectoryException.cs
 │   │   ├── OasServerPayloadParser.cs
+│   │   ├── OasSystemCurlTransport.cs
 │   │   └── Properties/
 │   │       └── AssemblyInfo.cs
 │   └── LegendLauncher.Providers.SevenWan/
@@ -286,6 +292,7 @@ LegendLauncherNext/
         ├── Oas/
         │   ├── OasAuthenticationServiceTests.cs
         │   ├── OasCurlLaunchTransportTests.cs
+        │   ├── OasCurlPassportTransportTests.cs
         │   ├── OasCurlResponseParserTests.cs
         │   ├── OasLiveSmokeTests.cs
         │   ├── OasPlatformCatalogTests.cs
@@ -300,14 +307,14 @@ LegendLauncherNext/
 | --- | --- | --- | --- |
 | `LegendLauncher.App` | Código-fonte WPF x64 do Urus Launcher, publicado como `UrusLauncher.App.exe`; oferece launcher de três colunas, runtime empacotado prioritário, instância única por sessão do Windows, conta compartilhada entre variantes OAS com estado por plataforma, catálogo ordenado, sessões por alvo exato, chrome taskbar/DPI-aware e integração não bloqueante com atualizações públicas. | `App.xaml.cs`, `MainWindow.xaml`, `Themes/Controls.xaml`, `Services/ProfilePlatformCompatibility.cs`, `Services/ServerCatalogPresentation.cs`, `MainWindowViewModel*.cs`, `SessionLaunchCoordinator.cs`, `LauncherComposition.cs` | [launcher-app.md](modulos/launcher-app.md) |
 | `LegendLauncher.App/Branding` | Identidade pública Urus Launcher: logo original transparente, ícone multirresolução, slogan localizado, metadados e remoção de marcadores Next/preview/teste da UI. | `Assets/Branding/*`, `LegendLauncher.App.csproj`, `app.manifest`, `MainWindow.xaml`, `Localization/Resources/*.json` | [branding.md](modulos/branding.md) |
-| `LegendLauncher.App/Game Session Workspace` | Barra única de 44 px com controles/abas de 34 px, abas roláveis, `+ CONTA` persistente, reserva de 150 px para o chrome, layouts 1/2/4, áudio global com refresh concorrente coalescido, detach/reattach e incorporação reversível de HWND/PID. | `Views/Game/*`, `GameHosting/*.cs`, `GameWorkspaceViewModel.cs`, `GameSessionViewModel.cs`, `GameAudioService.cs`, `LauncherSettingsService.cs`, `BorderlessWindowCommands.cs` | [game-session-workspace.md](modulos/game-session-workspace.md) |
-| `LegendLauncher.App/Localization` | Localização dinâmica por 204 chaves em `pt-BR`, `en-US` e `es-ES`, inclusive título/slogan, catálogo, doação e todo o fluxo de atualização preparada, com recursos incorporados, bindings observáveis e persistência da cultura ativa. | `Localization/*.cs`, `Localization/Resources/*.json`, `MainWindowViewModel.Localization.cs`, `MainWindowViewModel.Updates.cs` | [localizacao.md](modulos/localizacao.md) |
+| `LegendLauncher.App/Game Session Workspace` | Barra única de 44 px com controles/abas de 34 px, abas roláveis, `+ CONTA` persistente, reserva de 150 px para o chrome, layouts 1/2/4, áudio global com refresh concorrente coalescido, detach/reattach, relogar (re-login no mesmo servidor a partir da aba) e incorporação reversível de HWND/PID. | `Views/Game/*`, `GameHosting/*.cs`, `GameWorkspaceViewModel.cs`, `GameSessionViewModel.cs`, `MainWindowViewModel.Relog.cs`, `GameAudioService.cs`, `LauncherSettingsService.cs`, `BorderlessWindowCommands.cs` | [game-session-workspace.md](modulos/game-session-workspace.md) |
+| `LegendLauncher.App/Localization` | Localização dinâmica por 206 chaves em `pt-BR`, `en-US` e `es-ES`, inclusive título/slogan, catálogo, doação e todo o fluxo de atualização preparada, com recursos incorporados, bindings observáveis e persistência da cultura ativa. | `Localization/*.cs`, `Localization/Resources/*.json`, `MainWindowViewModel.Localization.cs`, `MainWindowViewModel.Updates.cs` | [localizacao.md](modulos/localizacao.md) |
 | `LegendLauncher.App/Donation Prompt` | Pedido opcional PayPal/PIX, lembrete de cinco horas avaliado uma vez por abertura, acesso manual, QR imutável, cópia local do CNPJ e acessibilidade localizada. | `Views/Donation/*`, `MainWindowViewModel.Donation.cs`, `LauncherSettingsService.cs`, `paypal-donation-qr.jpeg` | [donation-prompt.md](modulos/donation-prompt.md) |
 | `LegendLauncher.App/Atualização` | Consulta antecipada do GitHub Releases na abertura, fallback público para `403`/`429`, download/validação automática por usuário com janela de uma hora, cache revalidado, cartão trilíngue pronto para instalar e execução somente após clique sem sessões ativas nem login em andamento. | `Updates/*.cs`, `Views/Updates/*`, `MainWindowViewModel.Updates.cs`, `AppPaths.UpdatesDirectory` | [atualizacao.md](modulos/atualizacao.md) |
 | `Distribuição Windows` | Publica App e GameHost self-contained para `win-x64`, injeta runtime registration-free fornecido/autorizado e gera setup/ZIP, manifestos, patch notes e checksums; o workflow automático por tag exige a mesma fonte autorizada no runner, enquanto a 1.1.4 foi publicada manualmente a partir do build local validado e autorizado. | `scripts/build-urus-distribution.ps1`, `installer/UrusLauncher.iss`, `.github/workflows/release.yml`, `docs/releases/*.json` | [distribuicao-windows.md](modulos/distribuicao-windows.md) |
-| `LegendLauncher.Core` | Modelos imutáveis e contratos sem dependência de UI, rede, JSON ou chamadas Win32; `AccountProfile` mantém UID/recentes por plataforma com migração dos escalares legados, e o HWND da sessão é apenas um identificador opaco. | `Models/*.cs`, `Contracts/*.cs` | [core.md](modulos/core.md) |
-| `LegendLauncher.Infrastructure` | Paths — incluindo diretório privado de updates —, JSON atômico para perfis/cache/settings, Windows Credential Manager e probe somente leitura do Flash empacotado/instalado. | `AppPaths.cs`, `AtomicJsonFileStore.cs`, `JsonProfileStore.cs`, `WindowsCredentialVault.cs`, `LegacyRuntimeProbe.cs` | [infrastructure.md](modulos/infrastructure.md) |
-| `LegendLauncher.Providers.Oas` | Oito plataformas OAS, catálogo/cache, Passport atual, transporte compatível, parsers e allowlist. | `OasAuthenticationService.cs`, `OasCurlLaunchTransport.cs`, `OasServerDirectory.cs`, `OasOriginPolicy.cs` | [providers-oas.md](modulos/providers-oas.md) |
+| `LegendLauncher.Core` | Modelos imutáveis e contratos sem dependência de UI, rede, JSON ou chamadas Win32; inclui diagnóstico de autenticação limitado a fase/transporte/status, `AccountProfile` com UID/recentes por plataforma e HWND opaco. | `Models/*.cs`, `Contracts/*.cs` | [core.md](modulos/core.md) |
+| `LegendLauncher.Infrastructure` | Paths — incluindo updates/modelos de tradução —, JSON atômico para perfis/cache/settings, namespaces separados no Windows Credential Manager e probe somente leitura do Flash empacotado/instalado. | `AppPaths.cs`, `AtomicJsonFileStore.cs`, `CredentialKey.cs`, `WindowsCredentialVault.cs`, `LegacyRuntimeProbe.cs` | [infrastructure.md](modulos/infrastructure.md) |
+| `LegendLauncher.Providers.Oas` | Oito plataformas OAS, catálogo/cache, Passports Creaction e OAS Games em wrapper curl único, launch em wrapper curl separado, executor comum, diagnóstico saneado, parsers e allowlists. | `OasAuthenticationService.cs`, `OasCurlPassportTransport.cs`, `OasCurlLaunchTransport.cs`, `OasSystemCurlTransport.cs`, `OasOriginPolicy.cs` | [providers-oas.md](modulos/providers-oas.md) |
 | `LegendLauncher.Providers.SevenWan` | Quatorze variantes Wartune/7wan e catálogo público normalizado; autenticação permanece indisponível. | `SevenWanPlatformCatalog.cs`, `SevenWanServerDirectory.cs`, `SevenWanServerPayloadParser.cs` | [providers-sevenwan.md](modulos/providers-sevenwan.md) |
 | `LegendLauncher.GameHost.Legacy` | Processo x64 separado que herda a cultura normalizada, recebe sessão por Named Pipe, ativa COM sem registro, hospeda Flash ActiveX, devolve uma superfície nativa validada e encerra quando o processo pai desaparece. | `LegacyGameRuntime.cs`, `GameHostLocalization.cs`, `GameHostWindowIdentity.cs`, `ParentProcessLifetimeMonitor.cs`, `PipeCompletionProtocol.cs`, `FlashActiveXControl.cs` | [game-host-legacy.md](modulos/game-host-legacy.md) |
 | `LegendLauncher.NetworkBridge` | Política compartilhada de bind/upstream; valida destinos e não abre proxy neste marco. | `BridgeSecurityPolicy.cs`, `BridgeValidationResult.cs` | [network-bridge.md](modulos/network-bridge.md) |
@@ -327,7 +334,7 @@ LegendLauncherNext/
 | `docs/MAPA.md` | Este documento central; muda junto com estrutura ou lista de módulos. |
 | `docs/decisoes/ADR-001-stack-e-isolamento.md` | Escolha de .NET/WPF e processo separado. |
 | `docs/decisoes/ADR-002-runtime-flash.md` | Estratégia de compatibilidade Flash e futuro Ruffle. |
-| `docs/decisoes/ADR-003-transporte-oas-cloudflare.md` | Ponte pós-Passport via curl do Windows, limites e alternativas. |
+| `docs/decisoes/ADR-003-transporte-oas-cloudflare.md` | Wrappers separados para Passport Creaction e entrada pós-login via curl do Windows, limites e alternativas. |
 | `docs/decisoes/ADR-004-gamehost-incorporado-multissessao.md` | Decisão por um GameHost por sessão, proxy HWND, layouts, barra compacta, chrome responsivo, detach, áudio e settings. |
 | `docs/decisoes/ADR-005-localizacao-dinamica.md` | Decisão por catálogos incorporados, bindings observáveis, persistência e propagação não sensível da cultura ao GameHost. |
 | `docs/decisoes/ADR-006-lembrete-doacao-nao-intrusivo.md` | Decisão pela avaliação única na abertura, cadência de cinco horas, acesso manual, QR preservado e PIX copiável. |
@@ -357,7 +364,7 @@ LegendLauncherNext/
 
 1. `LegendLauncher.App` compõe `Core`, `Infrastructure`, `Providers.Oas`, `Providers.SevenWan` e `GameHost.Legacy` por `PlatformAdapterRegistry`.
 2. O `Game Session Workspace` recebe `GameSession` e o perfil efetivo da App, identifica cada sessão por perfil + plataforma + servidor e compõe o HWND validado sem carregar ActiveX no WPF; eventos de processo retornam à `Dispatcher` antes de alterar a UI.
-3. `Providers.Oas` implementa catálogo/autenticação de `Core`; usa cache por contrato e o curl do Windows somente na entrada pós-Passport.
+3. `Providers.Oas` implementa catálogo/autenticação de `Core`; usa cache por contrato, mantém Passport OAS Games no .NET e limita o curl do Windows ao Passport Creaction exato e à entrada pós-Passport.
 4. `Providers.SevenWan` implementa catálogo de `Core`; a App associa suas variantes a autenticação indisponível explícita.
 5. `Localization` atualiza a App, o workspace, o pedido de apoio e o updater pela instância observável compartilhada; sua cultura é persistida no mesmo settings e propagada ao GameHost somente por ambiente normalizado.
 6. `Donation Prompt` usa UI/localização da App, um timestamp não sensível no settings e a área de transferência local para PIX; não acessa providers, credenciais ou sessões.
@@ -370,4 +377,4 @@ LegendLauncherNext/
 
 ## Estado funcional resumido
 
-O MVP possui interface WPF moderna, marca pública **Urus Launcher** e 204 textos próprios equivalentes em português brasileiro, inglês e espanhol. O arquivo público é `UrusLauncher.App.exe`; nomes internos e `%LocalAppData%\LegendLauncherNext` permanecem por compatibilidade. Uma instância única por sessão do Windows concentra perfis e contas no workspace e evita disputa de update. Há múltiplos perfis/contas, senha no Cofre do Windows, catálogo ordenado por histórico, autenticação nas oito variantes OAS e um GameHost separado por sessão. Na 1.1.2, o mesmo login OAS preserva perfil/chave ao alternar entre Reborn, Brasil, Classic e demais variantes, enquanto UID e recentes ficam isolados por plataforma; sessões são reutilizadas somente para perfil + plataforma + servidor idênticos. O workspace oferece abas, layouts 1/2/4, detach/reattach e mudo global por PID com solicitações concorrentes coalescidas. A janela acompanha work area/DPI, o pedido opcional de apoio não interrompe o jogo e o cartão de atualização consulta antecipadamente uma vez na abertura o release público esperado. Desde a 1.1.1, respostas `403`/`429` da API acionam a rota pública do manifesto do último release, útil em redes/IPs compartilhados. Na 1.1.3, uma versão superior é baixada e validada automaticamente no diretório do usuário sem bloquear o jogo, com até uma hora para redes lentas; cache exato é revalidado, **Verificar novamente** repete a consulta e somente **Instalar** executa o setup quando não há sessões nem login em andamento. Na 1.1.4, o runtime registration-free autorizado passou a acompanhar setup e ZIP e é priorizado pela App, permitindo que o botão de jogo funcione também em PCs limpos sem o cliente Brov; a versão foi publicada manualmente a partir do build validado do commit `31d6d16b063b43bdba161a028bc4edd4f3953b96`, e o updater público/rota `latest` já reconhece a 1.1.4. O setup é limitado e validado por repositório, URL, versão, nome, bytes e SHA-256, mas os artefatos ainda não possuem Authenticode. A distribuição 1.0.1 continua sendo o pacote histórico anterior; a 1.1.0 é o primeiro bootstrap, a 1.1.1 adicionou o fallback de manifesto, a 1.1.2 corrige o acesso cruzado às variantes OAS, a 1.1.3 separa staging automático da instalação consentida e a 1.1.4 provisiona o runtime em instalações limpas. Login social, favoritos manuais, assinatura Authenticode e autenticação 7wan continuam fora do marco atual.
+O MVP possui interface WPF moderna, marca pública **Urus Launcher** e catálogos próprios equivalentes em português brasileiro, inglês e espanhol. O arquivo público é `UrusLauncher.App.exe`; nomes internos e `%LocalAppData%\LegendLauncherNext` permanecem por compatibilidade. Uma instância única por sessão do Windows concentra perfis e contas no workspace e evita disputa de update. Há múltiplos perfis/contas, senha no Cofre do Windows, catálogo ordenado por histórico, autenticação nas oito variantes OAS e um GameHost separado por sessão. Na 1.1.2, o mesmo login OAS preserva perfil/chave ao alternar entre Reborn, Brasil, Classic e demais variantes, enquanto UID e recentes ficam isolados por plataforma; sessões são reutilizadas somente para perfil + plataforma + servidor idênticos. O workspace oferece abas, layouts 1/2/4, detach/reattach, mudo global por PID e relogar (re-login no mesmo servidor a partir da aba). A janela acompanha work area/DPI, o pedido opcional de apoio não interrompe o jogo e o cartão de atualização consulta antecipadamente uma vez na abertura o release público esperado. Desde a 1.1.1, respostas `403`/`429` da API acionam a rota pública do manifesto do último release, útil em redes/IPs compartilhados. Na 1.1.3, uma versão superior é baixada e validada automaticamente no diretório do usuário sem bloquear o jogo, com até uma hora para redes lentas; cache exato é revalidado, **Verificar novamente** repete a consulta e somente **Instalar** executa o setup quando não há sessões nem login em andamento. Na 1.1.4, o runtime registration-free autorizado passou a acompanhar setup e ZIP e é priorizado pela App, permitindo que o botão de jogo funcione também em PCs limpos sem o cliente Brov; a versão foi publicada manualmente a partir do build validado do commit `31d6d16b063b43bdba161a028bc4edd4f3953b96`, e o updater público/rota `latest` já reconhece a 1.1.4. O setup é limitado e validado por repositório, URL, versão, nome, bytes e SHA-256, mas os artefatos ainda não possuem Authenticode. Login social, favoritos manuais, assinatura Authenticode e autenticação 7wan continuam fora do marco atual.

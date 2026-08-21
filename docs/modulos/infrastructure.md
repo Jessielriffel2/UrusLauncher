@@ -2,7 +2,7 @@
 
 ## Objetivo do módulo
 
-`LegendLauncher.Infrastructure` implementa os adaptadores locais do launcher: caminhos graváveis do usuário, inclusive o diretório confinado de downloads de atualização, persistência JSON atômica, cache de catálogos, perfis sem senha, settings não sensíveis, Windows Credential Manager e descoberta somente leitura dos assets Flash empacotados ou já instalados.
+`LegendLauncher.Infrastructure` implementa os adaptadores locais do launcher: caminhos graváveis do usuário, inclusive diretórios confinados de atualização/modelos opt-in, persistência JSON atômica, cache de catálogos, perfis sem senha, settings não sensíveis, Windows Credential Manager e descoberta somente leitura dos assets Flash empacotados ou já instalados.
 
 O módulo não lê nem migra dados do cliente antigo. Chaves do cofre devem começar com `LegendLauncherNext/`. O probe apenas localiza `Adobe.Flash.Control.manifest` e o OCX referenciado na origem escolhida pela App — agora `runtime\` tem prioridade —: não registra COM, não executa binários, não muda permissões e não depende de `H2Proxy.exe`.
 
@@ -10,7 +10,7 @@ O módulo não lê nem migra dados do cliente antigo. Chaves do cofre devem come
 
 | Referência aproximada | Tipo/função | Responsabilidade, entrada e saída |
 | --- | --- | --- |
-| `src/LegendLauncher.Infrastructure/Paths/AppPaths.cs:6` | `AppPaths` | Calcula caminhos sob `%LocalAppData%\LegendLauncherNext`. Os overloads recebem opcionalmente base/nome da aplicação e expõem raiz, cache, dados, updates e arquivos JSON. |
+| `src/LegendLauncher.Infrastructure/Paths/AppPaths.cs:6` | `AppPaths` | Calcula caminhos sob `%LocalAppData%\LegendLauncherNext`. Expõe raiz, cache, dados e updates. |
 | `src/LegendLauncher.Infrastructure/Paths/AppPaths.cs:42` | `UpdatesDirectory` | Define `%LocalAppData%\LegendLauncherNext\updates`, separado de cache/dados e usado somente por instaladores temporários/validados. |
 | `src/LegendLauncher.Infrastructure/Paths/AppPaths.cs:65` | `EnsureDirectories()` | Cria somente `cache/`, `data/` e `updates/` pertencentes ao launcher novo. |
 | `src/LegendLauncher.Infrastructure/Persistence/AtomicJsonFileStore.cs:10` | `AtomicJsonFileStore<TDocument>` | Primitiva JSON com trava compartilhada por caminho e opções de serialização seguras. Entrada: arquivo/documento; saída: documento tipado ou alteração persistida. |
@@ -26,7 +26,7 @@ O módulo não lê nem migra dados do cliente antigo. Chaves do cofre devem come
 | `src/LegendLauncher.Infrastructure/Persistence/JsonProfileStore.cs:12` | `JsonProfileStore` | Implementa `IProfileStore`; valida `Guid` e namespace da chave do cofre antes de salvar metadados não secretos. |
 | `src/LegendLauncher.Infrastructure/Persistence/JsonProfileRepository.cs:9` | `JsonProfileRepository<TProfile,TKey>` | Repositório genérico que lista, localiza, inclui/substitui e exclui perfis sobre o store atômico. |
 | `src/LegendLauncher.App/Services/ProfileStorageCoordinator.cs:23` | `SaveAsync(...)` | Salva a identidade não secreta e coordena o cofre. Trocas entre variantes `oas-*` do mesmo login conservam perfil/chave e materializam UID e servidores recentes por plataforma; mudança de login ou família de provider rotaciona a chave. |
-| `src/LegendLauncher.Infrastructure/Security/CredentialKey.cs:7` | `CredentialKey` | Define o namespace do launcher. `ForProfile(Guid)` cria alvo estável e `Validate(string)` rejeita chave vazia, externa, longa ou com controle. |
+| `src/LegendLauncher.Infrastructure/Security/CredentialKey.cs:7` | `CredentialKey` | Define o namespace do launcher. `ForProfile(Guid)` isola contas; `Validate` rejeita chave externa/inválida. |
 | `src/LegendLauncher.Infrastructure/Security/WindowsCredentialVault.cs:14` | `WindowsCredentialVault` | Implementa `ICredentialVault` com credenciais genéricas do Windows, sem enumerar outros alvos. |
 | `src/LegendLauncher.Infrastructure/Security/WindowsCredentialVault.cs:18` | `GetAsync(...)` | Lê usuário/senha por chave validada; devolve `null` para alvo ausente e zera cópias temporárias do blob. |
 | `src/LegendLauncher.Infrastructure/Security/WindowsCredentialVault.cs:57` | `SetAsync(...)` | Valida limites, grava com `CredWriteW` e zera os bytes da senha após a chamada nativa. |

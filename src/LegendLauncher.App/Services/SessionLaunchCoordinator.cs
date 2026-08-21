@@ -69,6 +69,7 @@ internal sealed class SessionLaunchCoordinator
             return SessionLaunchOutcome.AuthenticationRejected(
                 authentication.ErrorCode,
                 authentication.ErrorMessage,
+                authentication.FailureDiagnostic,
                 credential.Source);
         }
 
@@ -318,7 +319,8 @@ internal sealed record SessionLaunchOutcome(
     bool WasProfilePersisted,
     bool WasCredentialPersisted,
     string? ErrorCode,
-    string? ErrorMessage)
+    string? ErrorMessage,
+    AuthenticationFailureDiagnostic? FailureDiagnostic)
 {
     public static SessionLaunchOutcome Success(
         GameSession gameSession,
@@ -334,6 +336,7 @@ internal sealed record SessionLaunchOutcome(
             wasProfilePersisted,
             wasCredentialPersisted,
             null,
+            null,
             null);
 
     public static SessionLaunchOutcome CredentialRequired() =>
@@ -345,11 +348,13 @@ internal sealed record SessionLaunchOutcome(
             false,
             false,
             null,
+            null,
             null);
 
     public static SessionLaunchOutcome AuthenticationRejected(
         string? errorCode,
         string? errorMessage,
+        AuthenticationFailureDiagnostic? failureDiagnostic,
         SessionCredentialSource credentialSource) =>
         new(
             SessionLaunchState.AuthenticationRejected,
@@ -359,8 +364,9 @@ internal sealed record SessionLaunchOutcome(
             false,
             false,
             errorCode,
-            errorMessage);
+            errorMessage,
+            failureDiagnostic);
 
     public override string ToString() =>
-        $"SessionLaunchOutcome {{ State = {State}, CredentialSource = {CredentialSource}, HasGameSession = {GameSession is not null}, HasEffectiveProfile = {EffectiveProfile is not null}, WasProfilePersisted = {WasProfilePersisted}, WasCredentialPersisted = {WasCredentialPersisted}, HasErrorCode = {ErrorCode is not null}, HasErrorMessage = {ErrorMessage is not null} }}";
+        $"SessionLaunchOutcome {{ State = {State}, CredentialSource = {CredentialSource}, HasGameSession = {GameSession is not null}, HasEffectiveProfile = {EffectiveProfile is not null}, WasProfilePersisted = {WasProfilePersisted}, WasCredentialPersisted = {WasCredentialPersisted}, HasErrorCode = {ErrorCode is not null}, HasErrorMessage = {ErrorMessage is not null}, FailureDiagnostic = {FailureDiagnostic?.ToString() ?? "None"} }}";
 }

@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "version": "1.1.5",
+  "title": {
+    "pt-BR": "Tradutor removido e relogar por aba",
+    "en-US": "Translator removed and per-tab relog",
+    "es-ES": "Traductor eliminado y reloguear por pestaña"
+  },
+  "notes": {
+    "pt-BR": [
+      "O tradutor de tela foi removido do launcher; a interface do jogo volta ao essencial, sem captura, OCR ou overlay.",
+      "Botão de relogar em cada aba de conta: encerra a sessão atual e entra novamente no mesmo servidor com um clique.",
+      "O curl nativo do Windows agora atende todos os Passports OAS (Creaction e OAS Games), contornando o bloqueio da Cloudflare no transporte .NET."
+    ],
+    "en-US": [
+      "The screen translator was removed from the launcher; the game UI returns to the essentials, without capture, OCR or overlay.",
+      "Relog button on each account tab: ends the current session and logs back into the same server with one click.",
+      "The native Windows curl now serves every OAS Passport (Creaction and OAS Games), bypassing the Cloudflare block on the .NET transport."
+    ],
+    "es-ES": [
+      "Se eliminó el traductor de pantalla del launcher; la interfaz del juego vuelve a lo esencial, sin captura, OCR ni overlay.",
+      "Botón de reloguear en cada pestaña de cuenta: cierra la sesión actual y vuelve a entrar al mismo servidor con un clic.",
+      "El curl nativo de Windows ahora atiende todos los Passport OAS (Creaction y OAS Games), evitando el bloqueo de Cloudflare en el transporte .NET."
+    ]
+  }
+}

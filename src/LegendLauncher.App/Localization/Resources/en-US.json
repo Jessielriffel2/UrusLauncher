@@ -53,6 +53,8 @@
   "Session_DetachSelected": "Detach selected session",
   "Session_DetachLabel": "DETACH",
   "Session_DetachTooltip": "Detach session",
+  "Session_Relog": "Relog session",
+  "Session_RelogTooltip": "Relog and re-enter the same server",
   "Workspace_EmptyTitle": "No open sessions",
   "Accounts_OpenLabel": "OPEN AN ACCOUNT",
   "Detached_IsolatedSubtitle": "ISOLATED SESSION · URUS LAUNCHER",

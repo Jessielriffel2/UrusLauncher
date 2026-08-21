@@ -8,6 +8,9 @@ namespace LegendLauncher.App.ViewModels;
 internal sealed class GameSessionViewModel : ObservableObject, IDisposable
 {
     private readonly Process? _process;
+    private readonly AccountProfile _profile;
+    private readonly PlatformDefinition _platform;
+    private readonly GameServer _server;
     private bool _isDetached;
     private bool _isRunning = true;
     private bool _isSelected;
@@ -25,6 +28,9 @@ internal sealed class GameSessionViewModel : ObservableObject, IDisposable
         ArgumentNullException.ThrowIfNull(server);
         ArgumentNullException.ThrowIfNull(session);
 
+        _profile = profile;
+        _platform = platform;
+        _server = server;
         Id = Guid.NewGuid();
         ProfileId = profile.Id;
         PlatformId = platform.Id;
@@ -68,6 +74,12 @@ internal sealed class GameSessionViewModel : ObservableObject, IDisposable
     public string PlatformId { get; }
 
     public string ServerId { get; }
+
+    public AccountProfile Profile => _profile;
+
+    public PlatformDefinition Platform => _platform;
+
+    public GameServer Server => _server;
 
     public string ProfileName { get; }
 

@@ -29,4 +29,29 @@ public sealed class AuthenticationModelsTests
         Assert.Equal(987654321, result.ProviderUserId);
         Assert.Contains("HasProviderUserId = True", result.ToString(), StringComparison.Ordinal);
     }
+
+    [Fact]
+    public void FailureDiagnosticContainsOnlyBoundedMetadata()
+    {
+        const string remoteSecret = "secret-that-must-not-appear";
+        var diagnostic = new AuthenticationFailureDiagnostic(
+            AuthenticationFailurePhase.Passport,
+            AuthenticationTransportKind.SystemCurl,
+            403);
+        var result = AuthenticationResult.Failure(
+            "http_error",
+            $"Remote text omitted: {remoteSecret}".Replace(remoteSecret, "sanitized", StringComparison.Ordinal),
+            diagnostic);
+
+        Assert.Equal(AuthenticationFailurePhase.Passport, result.FailureDiagnostic?.Phase);
+        Assert.Equal(AuthenticationTransportKind.SystemCurl, result.FailureDiagnostic?.Transport);
+        Assert.Equal(403, result.FailureDiagnostic?.HttpStatusCode);
+        Assert.DoesNotContain(remoteSecret, diagnostic.ToString(), StringComparison.Ordinal);
+        Assert.DoesNotContain(remoteSecret, result.ToString(), StringComparison.Ordinal);
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            new AuthenticationFailureDiagnostic(
+                AuthenticationFailurePhase.Launch,
+                AuthenticationTransportKind.ManagedHttp,
+                42));
+    }
 }

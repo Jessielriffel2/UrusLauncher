@@ -79,6 +79,7 @@ internal sealed partial class MainWindowViewModel : ObservableObject, IDisposabl
             static (_, _) => null,
             _localization);
         Workspace.SessionRemoved += WorkspaceOnSessionRemoved;
+        Workspace.RelogRequested += WorkspaceOnRelogRequested;
         InitializeLocalization();
         InitializeUpdater(updateService, currentVersion);
 
@@ -540,6 +541,7 @@ internal sealed partial class MainWindowViewModel : ObservableObject, IDisposabl
         _launchCancellation?.Cancel();
         _launchCancellation?.Dispose();
         Workspace.SessionRemoved -= WorkspaceOnSessionRemoved;
+        Workspace.RelogRequested -= WorkspaceOnRelogRequested;
         DisposeUpdater();
         DisposeLocalization();
         Workspace.Dispose();
@@ -583,6 +585,11 @@ internal sealed partial class MainWindowViewModel : ObservableObject, IDisposabl
             PendingPassword,
             RememberPassword);
 
+        await LaunchAsync(launchInput);
+    }
+
+    private async Task LaunchAsync(SessionLaunchInput launchInput)
+    {
         _launchCancellation?.Cancel();
         _launchCancellation?.Dispose();
         var launchCancellation = new CancellationTokenSource();
@@ -636,9 +643,11 @@ internal sealed partial class MainWindowViewModel : ObservableObject, IDisposabl
                 throw new InvalidOperationException("The session launcher returned no profile snapshot.");
             if (outcome.WasProfilePersisted)
             {
-                if (requestedProfile?.Model.Id == launchedProfile.Id)
+                if (launchInput.Profile is { Id: var requestedId } && requestedId == launchedProfile.Id)
                 {
-                    ReplaceProfile(requestedProfile, launchedProfile);
+                    ProfileItemViewModel? requestedItem = Profiles
+                        .FirstOrDefault(profile => profile.Model.Id == requestedId);
+                    ReplaceProfile(requestedItem, launchedProfile);
                 }
                 else
                 {
@@ -651,8 +660,8 @@ internal sealed partial class MainWindowViewModel : ObservableObject, IDisposabl
             PendingPassword = string.Empty;
             Workspace.AddSession(
                 launchedProfile,
-                launchedPlatform,
-                launchedServer,
+                launchInput.Platform,
+                launchInput.Server,
                 gameSession);
             gameSessionAdopted = true;
             NotifyGameReadiness();

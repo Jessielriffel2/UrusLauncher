@@ -34,8 +34,13 @@ internal sealed partial class MainWindowViewModel
         }
     }
 
-    private void ReplaceProfile(ProfileItemViewModel original, AccountProfile updated)
+    private void ReplaceProfile(ProfileItemViewModel? original, AccountProfile updated)
     {
+        if (original is null)
+        {
+            return;
+        }
+
         int index = Profiles.IndexOf(original);
         if (index < 0)
         {

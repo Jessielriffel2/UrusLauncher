@@ -59,12 +59,14 @@ public sealed class AuthenticationResult
         LaunchSession? session,
         long? providerUserId,
         string? errorCode,
-        string? errorMessage)
+        string? errorMessage,
+        AuthenticationFailureDiagnostic? failureDiagnostic)
     {
         Session = session;
         ProviderUserId = providerUserId;
         ErrorCode = errorCode;
         ErrorMessage = errorMessage;
+        FailureDiagnostic = failureDiagnostic;
     }
 
     public bool IsSuccess => Session is not null;
@@ -80,6 +82,11 @@ public sealed class AuthenticationResult
 
     public string? ErrorMessage { get; }
 
+    /// <summary>
+    /// Gets bounded technical metadata suitable for sanitized diagnostics.
+    /// </summary>
+    public AuthenticationFailureDiagnostic? FailureDiagnostic { get; }
+
     public static AuthenticationResult Success(
         LaunchSession session,
         long? providerUserId = null) =>
@@ -87,16 +94,21 @@ public sealed class AuthenticationResult
             session ?? throw new ArgumentNullException(nameof(session)),
             providerUserId,
             null,
+            null,
             null);
 
-    public static AuthenticationResult Failure(string errorCode, string? errorMessage = null) =>
+    public static AuthenticationResult Failure(
+        string errorCode,
+        string? errorMessage = null,
+        AuthenticationFailureDiagnostic? failureDiagnostic = null) =>
         new(
             null,
             null,
             errorCode ?? throw new ArgumentNullException(nameof(errorCode)),
-            errorMessage);
+            errorMessage,
+            failureDiagnostic);
 
     public override string ToString() => IsSuccess
         ? $"AuthenticationResult {{ IsSuccess = True, HasProviderUserId = {ProviderUserId is not null} }}"
-        : $"AuthenticationResult {{ IsSuccess = False, ErrorCode = {ErrorCode} }}";
+        : $"AuthenticationResult {{ IsSuccess = False, ErrorCode = {ErrorCode}, FailureDiagnostic = {FailureDiagnostic?.ToString() ?? "None"} }}";
 }

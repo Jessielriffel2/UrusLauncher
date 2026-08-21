@@ -296,6 +296,45 @@ public sealed class MainWindowViewModelTests
     }
 
     [Fact]
+    public async Task RelogSessionClosesTheOldSessionAndLaunchesTheSameServerAgain()
+    {
+        AccountProfile profile = AppTestData.Profile("player@example.test", 715, "100") with
+        {
+            PlatformId = OasPlatformCatalog.Brazil.Id,
+            RecentServerIds = ["100"],
+        };
+        var directory = new StubServerDirectory((_, _, _) =>
+            Task.FromResult(AppTestData.Catalog([AppTestData.Server("100")])));
+        var vault = new InMemoryCredentialVault();
+        vault.Seed(profile.CredentialKey, new CredentialSecret(profile.UserName, "vault-secret"));
+        var authentication = SuccessfulAuthentication();
+        using MainWindowViewModel viewModel = CreateViewModel(
+            directory,
+            new InMemoryProfileStore(profile),
+            vault,
+            authentication);
+
+        await viewModel.InitializeAsync();
+        await WaitUntilAsync(() => viewModel.HasSavedCredential && !viewModel.IsLoading);
+
+        await viewModel.StartGameAsync();
+        GameSessionViewModel original = Assert.Single(viewModel.Workspace.Sessions);
+        Assert.Single(authentication.Requests);
+
+        await viewModel.RelogSessionAsync(original);
+
+        Assert.Equal(2, authentication.Requests.Count);
+        Assert.DoesNotContain(original, viewModel.Workspace.Sessions);
+        GameSessionViewModel reopened = Assert.Single(viewModel.Workspace.Sessions);
+        Assert.Equal(profile.Id, reopened.ProfileId);
+        Assert.Equal(OasPlatformCatalog.Brazil.Id, reopened.PlatformId);
+        Assert.Equal("100", reopened.ServerId);
+        AuthenticationRequest relogRequest = authentication.Requests[1];
+        Assert.Equal(OasPlatformCatalog.Brazil.Id, relogRequest.Platform.Id);
+        Assert.Equal("100", relogRequest.Server.Id);
+    }
+
+    [Fact]
     public async Task ActiveSessionIsReusedOnlyForExactProfilePlatformAndServer()
     {
         AccountProfile profile = AppTestData.Profile("player@example.test", null, "100");

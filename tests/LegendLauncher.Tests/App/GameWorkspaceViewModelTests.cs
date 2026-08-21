@@ -67,6 +67,36 @@ public sealed class GameWorkspaceViewModelTests
     }
 
     [Fact]
+    public void RelogSessionCommandRaisesRelogRequestedForTheTargetSession()
+    {
+        using GameWorkspaceViewModel workspace = CreateWorkspace();
+        GameSessionViewModel first = AddSession(workspace, 1);
+        GameSessionViewModel second = AddSession(workspace, 2);
+        GameSessionViewModel? requested = null;
+        workspace.RelogRequested += (_, item) => requested = item;
+
+        Assert.True(workspace.RelogSessionCommand.CanExecute(second));
+        workspace.RelogSessionCommand.Execute(second);
+
+        Assert.Same(second, requested);
+        Assert.Contains(first, workspace.Sessions);
+        Assert.Contains(second, workspace.Sessions);
+    }
+
+    [Fact]
+    public void RequestCloseRemovesTheSessionWithoutTouchingTheOthers()
+    {
+        using GameWorkspaceViewModel workspace = CreateWorkspace();
+        GameSessionViewModel first = AddSession(workspace, 1);
+        GameSessionViewModel second = AddSession(workspace, 2);
+
+        workspace.RequestClose(first);
+
+        Assert.DoesNotContain(first, workspace.Sessions);
+        Assert.Contains(second, workspace.Sessions);
+    }
+
+    [Fact]
     public void ExistingSessionTargetIsFocusedInsteadOfDuplicated()
     {
         using GameWorkspaceViewModel workspace = CreateWorkspace();

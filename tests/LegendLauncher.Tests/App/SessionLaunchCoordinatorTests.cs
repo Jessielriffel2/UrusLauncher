@@ -49,8 +49,15 @@ public sealed class SessionLaunchCoordinatorTests
         var store = new InMemoryProfileStore(profile);
         var vault = new InMemoryCredentialVault();
         var runtime = new StubGameRuntime();
+        var diagnostic = new AuthenticationFailureDiagnostic(
+            AuthenticationFailurePhase.Passport,
+            AuthenticationTransportKind.SystemCurl,
+            403);
         var authentication = new StubAuthenticationService((_, _) =>
-            Task.FromResult(AuthenticationResult.Failure("invalid_credentials")));
+            Task.FromResult(AuthenticationResult.Failure(
+                "http_error",
+                "sanitized",
+                diagnostic)));
         SessionLaunchCoordinator coordinator = CreateCoordinator(store, vault, authentication, runtime);
 
         SessionLaunchOutcome outcome = await coordinator.LaunchAsync(
@@ -58,6 +65,7 @@ public sealed class SessionLaunchCoordinatorTests
 
         Assert.Equal(SessionLaunchState.AuthenticationRejected, outcome.State);
         Assert.Equal(SessionCredentialSource.Typed, outcome.CredentialSource);
+        Assert.Same(diagnostic, outcome.FailureDiagnostic);
         Assert.Empty(runtime.Sessions);
         Assert.Equal(10, store.Values.Single().ProviderUserId);
         Assert.False(vault.Contains(profile.CredentialKey));
