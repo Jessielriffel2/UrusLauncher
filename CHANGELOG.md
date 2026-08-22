@@ -2,6 +2,19 @@
 
 As mudanças relevantes do Urus Launcher são registradas aqui. As versões públicas seguem versionamento semântico e são publicadas em `vMAJOR.MINOR.PATCH`.
 
+## 1.1.7 — 21/08/2026
+
+### Interface
+
+- A lista de perfis filtra por nome e login enquanto a pessoa digita e passa a rolar com a barra personalizada.
+- Os cartões de atualização e de dados protegidos viram faixas compactas, liberando altura para as contas.
+- No workspace, a conta ativa fica destacada. No layout 2, as duas contas visíveis aparecem como bolinhas fundidas; clicar no agrupamento abre as duas em tela dividida.
+- Clicar na busca de servidor ou de perfil esconde o placeholder e coloca o cursor no início.
+
+### Corrigido
+
+- Sessões que saem da grade deixam de reaparecer como janela de jogo por cima do launcher; o HWND é estacionado oculto e o encaixe é recalculado após o layout.
+
 ## 1.1.6 — 21/08/2026
 
 ### Corrigido

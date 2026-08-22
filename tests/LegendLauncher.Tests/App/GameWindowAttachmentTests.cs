@@ -122,4 +122,69 @@ public sealed class GameWindowAttachmentTests
 
         Assert.Equal(expected, result);
     }
+
+    [Fact]
+    public void ParkedStyle_KeepsChildClippingAndClearsVisibility()
+    {
+        uint standalone =
+            NativeWindowMethods.WindowStylePopup |
+            NativeWindowMethods.WindowStyleCaption |
+            NativeWindowMethods.WindowStyleVisible |
+            0x00000040;
+
+        uint parked = NativeWindowMethods.CalculateParkedStyle(standalone);
+
+        Assert.NotEqual(0u, parked & NativeWindowMethods.WindowStyleChild);
+        Assert.NotEqual(0u, parked & NativeWindowMethods.WindowStyleClipChildren);
+        Assert.Equal(0u, parked & NativeWindowMethods.WindowStyleVisible);
+        Assert.Equal(0u, parked & NativeWindowMethods.WindowStylePopup);
+        Assert.Equal(0u, parked & NativeWindowMethods.WindowStyleCaption);
+        Assert.Equal(parked, NativeWindowMethods.CalculateParkedStyle(parked));
+    }
+
+    [Fact]
+    public void EmbeddedHost_ParksLiveSessionsInsteadOfRestoringStandaloneChrome()
+    {
+        string host = File.ReadAllText(FindRepositoryFile(
+            "src",
+            "LegendLauncher.App",
+            "GameHosting",
+            "EmbeddedGameSurfaceHost.cs"));
+        string attachment = File.ReadAllText(FindRepositoryFile(
+            "src",
+            "LegendLauncher.App",
+            "GameHosting",
+            "GameWindowAttachment.cs"));
+        string parking = File.ReadAllText(FindRepositoryFile(
+            "src",
+            "LegendLauncher.App",
+            "GameHosting",
+            "GameHostParkingSurface.cs"));
+
+        Assert.Contains("ParkIfParent", host);
+        Assert.Contains("GameHostParkingSurface.Handle", host);
+        Assert.Contains("RequestSyncToProxy", host);
+        Assert.Contains("LayoutUpdated", host);
+        Assert.Contains("SizeChanged", host);
+        Assert.Contains("ParkIfParent", attachment);
+        Assert.Contains("CalculateParkedStyle", attachment);
+        Assert.Contains("CreateHiddenParkingWindow", parking);
+        Assert.DoesNotContain("SetWindowStyle(_gameWindow, _standaloneStyle)", attachment);
+    }
+
+    private static string FindRepositoryFile(params string[] relativeSegments)
+    {
+        DirectoryInfo? directory = new(AppContext.BaseDirectory);
+        while (directory is not null)
+        {
+            if (File.Exists(Path.Combine(directory.FullName, "LegendLauncherNext.slnx")))
+            {
+                return Path.Combine([directory.FullName, .. relativeSegments]);
+            }
+
+            directory = directory.Parent;
+        }
+
+        throw new DirectoryNotFoundException("LegendLauncherNext repository root was not found.");
+    }
 }

@@ -11,7 +11,7 @@ Os códigos canônicos persistidos são `pt-BR`, `en-US` e `es-ES`. Códigos das
 | Referência aproximada | Tipo/função | Responsabilidade, entrada e saída |
 | --- | --- | --- |
 | `src/LegendLauncher.App/Localization/LocalizationService.cs:9` | `LanguageOption` | Opção imutável do seletor com código canônico e nome nativo; `ToString()` devolve o nome para que templates WPF compactos nunca exibam a representação técnica do record. |
-| `src/LegendLauncher.App/Localization/LocalizationService.cs:14` | `LocalizationService` | Fonte global observável da cultura e dos 206 textos de cada catálogo. Recebe um código opcional e expõe idioma, cultura, indexador, formatação e eventos de atualização. |
+| `src/LegendLauncher.App/Localization/LocalizationService.cs:14` | `LocalizationService` | Fonte global observável da cultura e dos 211 textos de cada catálogo. Recebe um código opcional e expõe idioma, cultura, indexador, formatação e eventos de atualização. |
 | `src/LegendLauncher.App/Localization/LocalizationService.cs:53` | `Get(...)` / `Format(...)` | Resolve uma chave no catálogo ativo; chave ausente tenta `pt-BR` e por fim retorna um marcador visível. `Format` usa a cultura ativa para números e datas. |
 | `src/LegendLauncher.App/Localization/LocalizationService.cs:69` | `SetLanguage(...)` | Normaliza e aplica o idioma, atualiza a cultura das threads quando habilitado e notifica `LanguageCode`, `Culture`, `Item[]` e `LanguageChanged`. Saída: se houve troca efetiva. |
 | `src/LegendLauncher.App/Localization/LocalizationService.cs:96` | `EnableThreadCultureUpdates()` | Faz a cultura selecionada valer para a thread atual e novas threads do launcher. |
@@ -19,9 +19,11 @@ Os códigos canônicos persistidos são `pt-BR`, `en-US` e `es-ES`. Códigos das
 | `src/LegendLauncher.App/Localization/LocalizationService.cs:137` | `LoadCatalogs()` | Lê os três JSONs incorporados ao assembly, rejeitando recurso ausente, vazio ou com chave/valor em branco. |
 | `src/LegendLauncher.App/Localization/LocalizedMessage.cs:3` | `LocalizedMessage` | Guarda chave e argumentos, não o texto já traduzido. Permite que um status visível seja resolvido novamente depois da troca de idioma. |
 | `src/LegendLauncher.App/Localization/LocalizeExtension.cs:7` | `LocalizeExtension` | Markup extension WPF que cria um `Binding` de uma via para o indexador da instância global. A notificação `Item[]` atualiza inclusive janelas já abertas. |
-| `src/LegendLauncher.App/Localization/Resources/pt-BR.json:1` | Catálogo português | Catálogo padrão e fallback com 206 chaves. |
-| `src/LegendLauncher.App/Localization/Resources/en-US.json:1` | Catálogo inglês | Traduções em inglês americano com as mesmas 206 chaves. |
-| `src/LegendLauncher.App/Localization/Resources/es-ES.json:1` | Catálogo espanhol | Traduções em espanhol com as mesmas 206 chaves. |
+| `src/LegendLauncher.App/Localization/Resources/pt-BR.json:1` | Catálogo português | Catálogo padrão e fallback com 211 chaves. |
+| `src/LegendLauncher.App/Localization/Resources/en-US.json:1` | Catálogo inglês | Traduções em inglês americano com as mesmas 211 chaves. |
+| `src/LegendLauncher.App/Localization/Resources/es-ES.json:1` | Catálogo espanhol | Traduções em espanhol com as mesmas 211 chaves. |
+| `src/LegendLauncher.App/Localization/Resources/*.json:9` | Busca de perfis | `Profiles_SearchPlaceholder` e `Profiles_SearchAutomation` no campo acima da lista de contas. |
+| `src/LegendLauncher.App/Localization/Resources/*.json:93` | Agrupamento split | `Workspace_SplitPairTooltip`, `Workspace_SplitPairAutomation` e `Workspace_SelectedAvatarAutomation` para o par fundido e o estado selecionado na barra lateral. |
 | `src/LegendLauncher.App/Localization/Resources/*.json:2` | Marca e slogan | `App_WindowTitle` mantém “Urus Launcher”; `Brand_Subtitle` oferece “Jogue do seu jeito”, “Play your way” e “Juega a tu manera”. As antigas chaves de prévia foram removidas. |
 | `src/LegendLauncher.App/App.xaml.cs:9` | `App.OnStartup(...)` | Lê `settings.json` antes de criar a janela, aplica o idioma salvo ou `pt-BR` em falha e então habilita as culturas de thread. |
 | `src/LegendLauncher.App/MainWindow.xaml:110` | Seletor de idioma | Combobox compacto no cabeçalho, ligado a `Languages` e `SelectedLanguage`. Usa os handlers explícitos já validados no seletor de versões para abrir por clique, Enter, Espaço, F4 ou Alt+Seta para baixo. |

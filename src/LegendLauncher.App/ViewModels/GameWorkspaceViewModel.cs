@@ -16,6 +16,8 @@ internal sealed class GameWorkspaceViewModel : ObservableObject, IDisposable
     private readonly LocalizationService _localization;
     private readonly Func<nint, int, GameWindowAttachment?> _attachmentFactory;
     private IReadOnlyList<GameSessionViewModel> _visibleSessions = [];
+    private IReadOnlyList<WorkspaceAvatarItem> _sidebarAvatars = [];
+    private IReadOnlyList<GameSessionViewModel> _splitPair = [];
     private GameSessionViewModel? _selectedSession;
     private GameLayoutMode _layoutMode = GameLayoutMode.GridFour;
     private bool _isMuted = true;
@@ -38,6 +40,9 @@ internal sealed class GameWorkspaceViewModel : ObservableObject, IDisposable
         SelectSessionCommand = new RelayCommand<GameSessionViewModel>(
             SelectSession,
             session => session is not null && Sessions.Contains(session));
+        ActivateSidebarAvatarCommand = new RelayCommand<WorkspaceAvatarItem>(
+            ActivateSidebarAvatar,
+            item => item is not null && Sessions.Contains(item.Front));
         CloseSessionCommand = new RelayCommand<GameSessionViewModel>(
             CloseSession,
             session => session is not null && Sessions.Contains(session));
@@ -62,6 +67,8 @@ internal sealed class GameWorkspaceViewModel : ObservableObject, IDisposable
     public ObservableCollection<GameSessionViewModel> Sessions { get; }
 
     public RelayCommand<GameSessionViewModel> SelectSessionCommand { get; }
+
+    public RelayCommand<WorkspaceAvatarItem> ActivateSidebarAvatarCommand { get; }
 
     public RelayCommand<GameSessionViewModel> CloseSessionCommand { get; }
 
@@ -90,6 +97,12 @@ internal sealed class GameWorkspaceViewModel : ObservableObject, IDisposable
             OnPropertyChanged(nameof(LayoutRows));
             OnPropertyChanged(nameof(LayoutColumns));
         }
+    }
+
+    public IReadOnlyList<WorkspaceAvatarItem> SidebarAvatars
+    {
+        get => _sidebarAvatars;
+        private set => SetProperty(ref _sidebarAvatars, value);
     }
 
     public GameSessionViewModel? SelectedSession
@@ -323,6 +336,36 @@ internal sealed class GameWorkspaceViewModel : ObservableObject, IDisposable
         }
     }
 
+    private void ActivateSidebarAvatar(WorkspaceAvatarItem? item)
+    {
+        if (item is null || !Sessions.Contains(item.Front))
+        {
+            return;
+        }
+
+        if (item.Rear is { } rear && Sessions.Contains(rear))
+        {
+            _splitPair = [item.Front, rear];
+            if (LayoutMode != GameLayoutMode.SplitTwo)
+            {
+                LayoutMode = GameLayoutMode.SplitTwo;
+                return;
+            }
+
+            if (ReferenceEquals(SelectedSession, item.Front) ||
+                ReferenceEquals(SelectedSession, rear))
+            {
+                RefreshVisibleSessions();
+                return;
+            }
+
+            SelectedSession = item.Front;
+            return;
+        }
+
+        SelectSession(item.Front);
+    }
+
     private void CloseSession(GameSessionViewModel? session)
     {
         if (session is null || !Sessions.Contains(session))
@@ -364,6 +407,7 @@ internal sealed class GameWorkspaceViewModel : ObservableObject, IDisposable
     {
         OnPropertyChanged(nameof(MuteLabel));
         OnPropertyChanged(nameof(FooterStatus));
+        RefreshSidebarAvatars();
     }
 
     private void SessionOnExited(object? sender, EventArgs eventArgs)
@@ -401,25 +445,95 @@ internal sealed class GameWorkspaceViewModel : ObservableObject, IDisposable
     private void RefreshVisibleSessions()
     {
         int capacity = (int)LayoutMode;
-        List<GameSessionViewModel> candidates = Sessions
+        List<GameSessionViewModel> running = Sessions
             .Where(static session => !session.IsDetached && session.IsRunning)
-            .Take(capacity)
             .ToList();
-        if (SelectedSession is { IsDetached: false, IsRunning: true } selected &&
-            !candidates.Contains(selected))
+        List<GameSessionViewModel> candidates;
+        if (LayoutMode == GameLayoutMode.SplitTwo &&
+            _splitPair.Count == 2 &&
+            _splitPair.All(running.Contains))
         {
-            if (candidates.Count == capacity && candidates.Count > 0)
+            candidates = [.. _splitPair];
+            if (SelectedSession is { IsDetached: false, IsRunning: true } selected &&
+                !candidates.Contains(selected))
             {
                 candidates[^1] = selected;
             }
-            else
+        }
+        else
+        {
+            candidates = running.Take(capacity).ToList();
+            if (SelectedSession is { IsDetached: false, IsRunning: true } selected &&
+                !candidates.Contains(selected))
             {
-                candidates.Add(selected);
+                if (candidates.Count == capacity && candidates.Count > 0)
+                {
+                    candidates[^1] = selected;
+                }
+                else
+                {
+                    candidates.Add(selected);
+                }
             }
         }
 
+        _splitPair = LayoutMode == GameLayoutMode.SplitTwo && candidates.Count == 2
+            ? candidates
+            : [];
         VisibleSessions = candidates;
+        RefreshSidebarAvatars();
     }
+
+    private void RefreshSidebarAvatars()
+    {
+        List<WorkspaceAvatarItem> items = [];
+        HashSet<GameSessionViewModel> grouped = [];
+        if (LayoutMode == GameLayoutMode.SplitTwo && VisibleSessions.Count == 2)
+        {
+            items.Add(CreatePairAvatar(VisibleSessions[0], VisibleSessions[1]));
+            grouped.Add(VisibleSessions[0]);
+            grouped.Add(VisibleSessions[1]);
+        }
+
+        foreach (GameSessionViewModel session in Sessions)
+        {
+            if (!grouped.Contains(session))
+            {
+                items.Add(CreateSingleAvatar(session));
+            }
+        }
+
+        SidebarAvatars = items;
+    }
+
+    private WorkspaceAvatarItem CreateSingleAvatar(GameSessionViewModel session) =>
+        new(
+            session,
+            null,
+            session.SurfaceTitle,
+            FormatAvatarAutomation(session.SurfaceTitle, session.IsSelected));
+
+    private WorkspaceAvatarItem CreatePairAvatar(
+        GameSessionViewModel left,
+        GameSessionViewModel right)
+    {
+        string pairAutomation = _localization.Format(
+            "Workspace_SplitPairAutomation",
+            left.ProfileName,
+            right.ProfileName);
+        return new(
+            left,
+            right,
+            _localization.Format("Workspace_SplitPairTooltip", left.ProfileName, right.ProfileName),
+            FormatAvatarAutomation(
+                pairAutomation,
+                left.IsSelected || right.IsSelected));
+    }
+
+    private string FormatAvatarAutomation(string name, bool selected) =>
+        selected
+            ? _localization.Format("Workspace_SelectedAvatarAutomation", name)
+            : name;
 
     private void NotifySessionCollectionChanged()
     {
@@ -427,6 +541,7 @@ internal sealed class GameWorkspaceViewModel : ObservableObject, IDisposable
         OnPropertyChanged(nameof(HasSessions));
         OnPropertyChanged(nameof(FooterStatus));
         SelectSessionCommand.NotifyCanExecuteChanged();
+        ActivateSidebarAvatarCommand.NotifyCanExecuteChanged();
         CloseSessionCommand.NotifyCanExecuteChanged();
         DetachSessionCommand.NotifyCanExecuteChanged();
         RelogSessionCommand.NotifyCanExecuteChanged();

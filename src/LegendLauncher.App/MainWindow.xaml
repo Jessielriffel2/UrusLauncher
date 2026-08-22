@@ -176,12 +176,12 @@
                             <Grid Margin="18,25,18,15">
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="24" />
-                                    <RowDefinition Height="*" />
-                                    <RowDefinition Height="10" />
                                     <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="10" />
-                                    <RowDefinition Height="100" />
+                                    <RowDefinition Height="*" />
+                                    <RowDefinition Height="6" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="6" />
+                                    <RowDefinition Height="Auto" />
                                 </Grid.RowDefinitions>
 
                                 <Grid>
@@ -198,11 +198,43 @@
                                             ToolTip="{loc:Localize Profiles_Create}" AutomationProperties.Name="{loc:Localize Profiles_Create}" />
                                 </Grid>
 
-                                <ListBox x:Name="ProfileList" Grid.Row="2" ItemsSource="{Binding Profiles}" SelectedItem="{Binding SelectedProfile}"
+                                <Grid Grid.Row="1" Margin="0,12,0,8">
+                                    <TextBox x:Name="ProfileSearchInput" Style="{StaticResource SearchInputStyle}"
+                                             Height="40" Padding="46,0,14,0"
+                                             Text="{Binding ProfileSearchText, UpdateSourceTrigger=PropertyChanged}"
+                                             PreviewMouseLeftButtonDown="SearchInput_OnPreviewMouseLeftButtonDown"
+                                             GotKeyboardFocus="SearchInput_OnGotKeyboardFocus"
+                                             AutomationProperties.Name="{loc:Localize Profiles_SearchAutomation}" />
+                                    <TextBlock Text="&#xE721;" FontFamily="Segoe Fluent Icons" FontSize="16"
+                                               Foreground="{StaticResource TextMutedBrush}" Margin="17,0,0,0"
+                                               HorizontalAlignment="Left" VerticalAlignment="Center" IsHitTestVisible="False" />
+                                    <TextBlock Text="{loc:Localize Profiles_SearchPlaceholder}" Foreground="{StaticResource TextMutedBrush}"
+                                               FontSize="12" Margin="47,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <MultiDataTrigger>
+                                                        <MultiDataTrigger.Conditions>
+                                                            <Condition Binding="{Binding Text.Length, ElementName=ProfileSearchInput}" Value="0" />
+                                                            <Condition Binding="{Binding IsKeyboardFocused, ElementName=ProfileSearchInput}" Value="False" />
+                                                        </MultiDataTrigger.Conditions>
+                                                        <Setter Property="Visibility" Value="Visible" />
+                                                    </MultiDataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </Grid>
+
+                                <ListBox x:Name="ProfileList" Grid.Row="2" ItemsSource="{Binding FilteredProfiles}" SelectedItem="{Binding SelectedProfile}"
                                          ItemContainerStyle="{StaticResource ProfileListItemStyle}"
                                          Background="Transparent" BorderThickness="0"
                                          ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                                         ScrollViewer.VerticalScrollBarVisibility="Hidden">
+                                         ScrollViewer.VerticalScrollBarVisibility="Auto">
+                                    <ListBox.Resources>
+                                        <Style TargetType="ScrollBar" BasedOn="{StaticResource UrusScrollBarStyle}" />
+                                    </ListBox.Resources>
                                     <ListBox.ItemTemplate>
                                         <DataTemplate>
                                             <Grid>
@@ -237,6 +269,7 @@
                                         <Style TargetType="Button">
                                             <Setter Property="Background" Value="Transparent" />
                                             <Setter Property="BorderThickness" Value="0" />
+                                            <Setter Property="Visibility" Value="Collapsed" />
                                             <Setter Property="Template">
                                                 <Setter.Value>
                                                     <ControlTemplate TargetType="Button">
@@ -254,8 +287,8 @@
                                                 </Setter.Value>
                                             </Setter>
                                             <Style.Triggers>
-                                                <DataTrigger Binding="{Binding HasItems, ElementName=ProfileList}" Value="True">
-                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                <DataTrigger Binding="{Binding Profiles.Count}" Value="0">
+                                                    <Setter Property="Visibility" Value="Visible" />
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
@@ -283,20 +316,25 @@
 
                                 <updates:UpdateStatusView Grid.Row="4" />
 
-                                <Border Grid.Row="6" Background="#C9081626" BorderBrush="{StaticResource BorderStrongBrush}"
-                                        BorderThickness="1" CornerRadius="10" Padding="13">
+                                <Border Grid.Row="6" Background="#A0081626" BorderBrush="#2A3C50"
+                                        BorderThickness="1" CornerRadius="8" Padding="8,6">
                                     <Grid>
                                         <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="22" />
-                                            <ColumnDefinition Width="8" />
+                                            <ColumnDefinition Width="16" />
+                                            <ColumnDefinition Width="6" />
                                             <ColumnDefinition Width="*" />
                                         </Grid.ColumnDefinitions>
-                                        <TextBlock Text="&#xEA18;" FontFamily="Segoe Fluent Icons" FontSize="17"
-                                                   Foreground="#D5E5F3" VerticalAlignment="Top" Margin="0,1,0,0" />
-                                        <StackPanel Grid.Column="2">
-                                            <TextBlock Text="{loc:Localize Security_ProtectedDataTitle}" FontSize="12" FontWeight="SemiBold" />
+                                        <TextBlock Text="&#xEA18;" FontFamily="Segoe Fluent Icons" FontSize="13"
+                                                   Foreground="#A8C0D4" VerticalAlignment="Center" />
+                                        <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                                            <TextBlock Text="{loc:Localize Security_ProtectedDataTitle}" FontSize="11" FontWeight="SemiBold" />
                                             <TextBlock Text="{loc:Localize Security_ProtectedDataDescription}"
-                                                       Style="{StaticResource CaptionTextStyle}" Margin="0,5,0,0" />
+                                                       Style="{StaticResource CaptionTextStyle}"
+                                                       FontSize="10"
+                                                       LineHeight="13"
+                                                       Margin="0,1,0,0"
+                                                       TextWrapping="NoWrap"
+                                                       TextTrimming="CharacterEllipsis" />
                                         </StackPanel>
                                     </Grid>
                                 </Border>
@@ -354,6 +392,8 @@
                                 <Grid>
                                     <TextBox x:Name="ServerSearchInput" Style="{StaticResource SearchInputStyle}"
                                              Padding="46,0,14,0" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                                             PreviewMouseLeftButtonDown="SearchInput_OnPreviewMouseLeftButtonDown"
+                                             GotKeyboardFocus="SearchInput_OnGotKeyboardFocus"
                                              AutomationProperties.Name="{loc:Localize Servers_SearchAutomation}" />
                                     <TextBlock Text="&#xE721;" FontFamily="Segoe Fluent Icons" FontSize="18"
                                                Foreground="{StaticResource TextMutedBrush}" Margin="17,0,0,0"
@@ -364,9 +404,13 @@
                                             <Style TargetType="TextBlock">
                                                 <Setter Property="Visibility" Value="Collapsed" />
                                                 <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding Text.Length, ElementName=ServerSearchInput}" Value="0">
+                                                    <MultiDataTrigger>
+                                                        <MultiDataTrigger.Conditions>
+                                                            <Condition Binding="{Binding Text.Length, ElementName=ServerSearchInput}" Value="0" />
+                                                            <Condition Binding="{Binding IsKeyboardFocused, ElementName=ServerSearchInput}" Value="False" />
+                                                        </MultiDataTrigger.Conditions>
                                                         <Setter Property="Visibility" Value="Visible" />
-                                                    </DataTrigger>
+                                                    </MultiDataTrigger>
                                                 </Style.Triggers>
                                             </Style>
                                         </TextBlock.Style>

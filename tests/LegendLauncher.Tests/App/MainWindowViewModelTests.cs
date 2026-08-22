@@ -517,6 +517,46 @@ public sealed class MainWindowViewModelTests
         Assert.Empty(terminatedProcessIds);
     }
 
+    [Fact]
+    public async Task ProfileSearch_FiltersByDisplayNameAndLoginWithoutClearingSelection()
+    {
+        AccountProfile akainu = AppTestData.Profile("akainu@example.test", 1, "100", updatedOffset: 3) with
+        {
+            DisplayName = "AKAINU",
+        };
+        AccountProfile tiago = AppTestData.Profile("tiago@example.test", 2, "100", updatedOffset: 2) with
+        {
+            DisplayName = "TIAGO",
+        };
+        AccountProfile maga = AppTestData.Profile("maga@example.test", 3, "100", updatedOffset: 1) with
+        {
+            DisplayName = "Maga",
+        };
+        using MainWindowViewModel viewModel = CreateViewModel(
+            new StubServerDirectory((_, _, _) => Task.FromResult(AppTestData.Catalog([]))),
+            new InMemoryProfileStore(akainu, tiago, maga),
+            new InMemoryCredentialVault());
+
+        await viewModel.InitializeAsync();
+        ProfileItemViewModel selected = viewModel.Profiles.Single(profile => profile.Model.Id == tiago.Id);
+        viewModel.SelectedProfile = selected;
+
+        viewModel.ProfileSearchText = "tia";
+        Assert.Equal([tiago.Id], viewModel.FilteredProfiles.Select(profile => profile.Model.Id));
+        Assert.Same(selected, viewModel.SelectedProfile);
+
+        viewModel.ProfileSearchText = "akainu@";
+        Assert.Equal([akainu.Id], viewModel.FilteredProfiles.Select(profile => profile.Model.Id));
+        Assert.Same(selected, viewModel.SelectedProfile);
+
+        viewModel.SelectedProfile = null;
+        Assert.Same(selected, viewModel.SelectedProfile);
+
+        viewModel.ProfileSearchText = string.Empty;
+        Assert.Equal(3, viewModel.FilteredProfiles.Count);
+        Assert.Same(selected, viewModel.SelectedProfile);
+    }
+
     private static MainWindowViewModel CreateViewModel(
         StubServerDirectory directory,
         InMemoryProfileStore profiles,

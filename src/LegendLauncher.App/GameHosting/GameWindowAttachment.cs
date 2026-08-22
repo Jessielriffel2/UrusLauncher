@@ -83,7 +83,34 @@ internal sealed class GameWindowAttachment
 
         NativeWindowMethods.HideWindow(_gameWindow);
         _ = NativeWindowMethods.SetParentWindow(_gameWindow, nint.Zero);
-        NativeWindowMethods.SetWindowStyle(_gameWindow, _standaloneStyle);
+        NativeWindowMethods.SetWindowStyle(
+            _gameWindow,
+            NativeWindowMethods.CalculateParkedStyle(_standaloneStyle));
+        NativeWindowMethods.HideWindow(_gameWindow);
+        return true;
+    }
+
+    public bool ParkIfParent(nint proxyWindow, nint parkingWindow)
+    {
+        if (!NativeWindowMethods.IsWindowHandle(_gameWindow))
+        {
+            return false;
+        }
+
+        nint currentParent = NativeWindowMethods.GetParentWindow(_gameWindow);
+        if (!ShouldDetachFromProxy(proxyWindow, currentParent))
+        {
+            return false;
+        }
+
+        NativeWindowMethods.HideWindow(_gameWindow);
+        NativeWindowMethods.SetWindowStyle(
+            _gameWindow,
+            NativeWindowMethods.CalculateParkedStyle(_standaloneStyle));
+        ValidateProxyWindow(parkingWindow);
+        _ = NativeWindowMethods.SetParentWindow(_gameWindow, parkingWindow);
+        NativeWindowMethods.ResizeWindow(_gameWindow, new NativeClientSize(1, 1));
+        NativeWindowMethods.HideWindow(_gameWindow);
         return true;
     }
 
@@ -208,6 +235,7 @@ internal sealed class GameWindowAttachment
             }
 
             NativeWindowMethods.SetWindowStyle(_gameWindow, previousStyle);
+            NativeWindowMethods.HideWindow(_gameWindow);
             if (previousParent != nint.Zero &&
                 NativeWindowMethods.GetParentWindow(_gameWindow) == previousParent)
             {

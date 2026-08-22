@@ -15,7 +15,8 @@ public sealed class LauncherUpdateLayoutTests
             source,
             StringComparison.Ordinal);
         Assert.Contains("<updates:UpdateStatusView Grid.Row=\"4\" />", source);
-        Assert.Contains("<Border Grid.Row=\"6\" Background=\"#C9081626\"", source);
+        Assert.Contains("<Border Grid.Row=\"6\" Background=\"#A0081626\"", source);
+        Assert.DoesNotContain("<RowDefinition Height=\"100\" />", source, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -42,6 +43,7 @@ public sealed class LauncherUpdateLayoutTests
             StringComparison.Ordinal);
         Assert.Contains("Update_CardAutomation", source);
         Assert.Contains("Update_NotesAutomation", source);
+        Assert.DoesNotContain("MinHeight=\"72\"", source, StringComparison.Ordinal);
         Assert.DoesNotContain("IsUpdateAvailable", source, StringComparison.Ordinal);
         Assert.DoesNotContain("WebBrowser", source, StringComparison.Ordinal);
         Assert.DoesNotContain("WebView", source, StringComparison.Ordinal);

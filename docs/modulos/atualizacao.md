@@ -28,7 +28,7 @@ A consulta ocorre uma vez em cada abertura, logo depois de carregar as preferên
 | `src/LegendLauncher.App/ViewModels/MainWindowViewModel.Updates.cs:158` | `BeginUpdateCheck()` | Dispara a consulta única e antecipada em cada abertura. |
 | `src/LegendLauncher.App/ViewModels/MainWindowViewModel.Updates.cs:167` | `CheckForUpdatesAsync()` | Consulta, baixa, valida e guarda o setup sem executá-lo; alterna entre `Checking`, `Current`, `Downloading`, `ReadyToInstall` e `Failed`. |
 | `src/LegendLauncher.App/ViewModels/MainWindowViewModel.Updates.cs:223` | `InstallUpdateAsync()` | Aceita somente setup já preparado em `ReadyToInstall`, exige nenhuma sessão nem login em andamento e executa apenas depois do clique explícito em **INSTALAR**. |
-| `src/LegendLauncher.App/Views/Updates/UpdateStatusView.xaml:19` | Cartão de status | Mostra busca, versão, erro, progresso e ações localizadas no canto inferior esquerdo. |
+| `src/LegendLauncher.App/Views/Updates/UpdateStatusView.xaml:19` | Cartão de status | Faixa compacta no canto inferior esquerdo: título e ação na mesma linha, detalhe em uma linha e progresso só durante o download. |
 | `src/LegendLauncher.App/Views/Updates/UpdateStatusView.xaml:100` | Popup de novidades | Exibe as notas da versão atualizadas com o idioma ativo e mantém a instalação opcional. |
 | `src/LegendLauncher.App/LauncherComposition.cs:50` | Composição | Entrega o `HttpClient` compartilhado e `%LocalAppData%\LegendLauncherNext\updates` ao serviço. |
 | `src/LegendLauncher.Infrastructure/Paths/AppPaths.cs:42` | `UpdatesDirectory` | Diretório gravável e exclusivo do usuário para downloads temporários e instaladores validados. |
@@ -99,7 +99,7 @@ Antes de existir um primeiro release válido, a consulta pode apresentar falha r
 - `UpdateDownloadCleanupTests.cs:6` cobre idade mínima, reconhecimento exato, escopo top-level e tolerância a arquivo em uso/inacessível.
 - `LauncherUpdateViewModelTests.cs:10` cobre consulta e download automáticos na abertura, `ReadyToInstall`, execução somente após **INSTALAR**, jogo disponível durante download, nova verificação em `Current`/`Failed`, idioma dinâmico e bloqueio da instalação com sessão ativa ou login ainda em abertura.
 - `LauncherUpdateLayoutTests.cs:3` fixa cartão inferior esquerdo, popup, ações e bindings.
-- `GitHubReleaseContractTests.cs:5` fixa workflow por tag, ausência de PAT incorporado e definições trilíngues versionadas, incluindo a 1.1.6.
+- `GitHubReleaseContractTests.cs:5` fixa workflow por tag, ausência de PAT incorporado e definições trilíngues versionadas, incluindo a 1.1.7.
 - `AppPathsTests.cs:18` fixa o diretório de updates sob a raiz privada do aplicativo.
 
-Na alteração desta política, o conjunto focado de updater, localização e contratos de distribuição concluiu **82/82**. A suíte completa concluiu **492/492** em Release.
+Na alteração desta política, o conjunto focado de updater, localização e contratos de distribuição concluiu **82/82**. A suíte completa concluiu **501/501** em Release.

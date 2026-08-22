@@ -34,6 +34,7 @@ internal sealed partial class MainWindowViewModel : ObservableObject, IDisposabl
     private IReadOnlyList<ServerRowViewModel> _recentServers = [];
     private IReadOnlyList<ServerRowViewModel> _visibleServers = [];
     private string _searchText = string.Empty;
+    private string _profileSearchText = string.Empty;
     private string _profileLabel = string.Empty;
     private string _loginHint = string.Empty;
     private string _pendingPassword = string.Empty;
@@ -188,6 +189,13 @@ internal sealed partial class MainWindowViewModel : ObservableObject, IDisposabl
         get => _selectedProfile;
         set
         {
+            if (value is null &&
+                _selectedProfile is not null &&
+                !IsProfileVisibleInCurrentFilter(_selectedProfile))
+            {
+                return;
+            }
+
             PlatformItemViewModel previousPlatform = SelectedPlatform;
             if (!SetProperty(ref _selectedProfile, value))
             {
@@ -290,6 +298,33 @@ internal sealed partial class MainWindowViewModel : ObservableObject, IDisposabl
                     RestoreServerSelection(catalog: null);
                 }
             }
+        }
+    }
+
+    public string ProfileSearchText
+    {
+        get => _profileSearchText;
+        set
+        {
+            string normalized = value ?? string.Empty;
+            if (SetProperty(ref _profileSearchText, normalized))
+            {
+                NotifyFilteredProfiles();
+            }
+        }
+    }
+
+    public IReadOnlyList<ProfileItemViewModel> FilteredProfiles
+    {
+        get
+        {
+            string query = _profileSearchText.Trim();
+            if (query.Length == 0)
+            {
+                return Profiles;
+            }
+
+            return Profiles.Where(profile => profile.MatchesSearch(query)).ToList();
         }
     }
 

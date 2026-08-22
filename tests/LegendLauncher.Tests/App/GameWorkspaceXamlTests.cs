@@ -109,6 +109,25 @@ public sealed class GameWorkspaceXamlTests
         Assert.Equal("DisplayName", selector.Attribute("DisplayMemberPath")?.Value);
     }
 
+    [Fact]
+    public void SidebarAvatars_HighlightTheSelectedSession()
+    {
+        XDocument document = XDocument.Load(FindRepositoryFile(
+            "src",
+            "LegendLauncher.App",
+            "Views",
+            "Game",
+            "GameWorkspaceView.xaml"));
+        XElement avatarList = FindNamedElement(document, "ItemsControl", "SessionAvatarList");
+        Assert.Equal("{Binding Workspace.SidebarAvatars}", avatarList.Attribute("ItemsSource")?.Value);
+        string markup = avatarList.ToString();
+        Assert.Contains("ActivateSidebarAvatarCommand", markup, StringComparison.Ordinal);
+        Assert.Contains("IsPair", markup, StringComparison.Ordinal);
+        Assert.Contains("IsHighlighted", markup, StringComparison.Ordinal);
+        Assert.Contains("SplitPairAvatars", markup, StringComparison.Ordinal);
+        Assert.Contains("RearInitial", markup, StringComparison.Ordinal);
+    }
+
     private static XElement FindNamedElement(
         XDocument document,
         string localName,

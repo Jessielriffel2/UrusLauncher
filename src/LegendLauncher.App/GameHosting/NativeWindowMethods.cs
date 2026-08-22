@@ -17,10 +17,13 @@ internal static class NativeWindowMethods
     internal const uint WindowStyleCaption = 0x00C00000;
     internal const uint WindowStyleClipChildren = 0x02000000;
     internal const uint WindowStyleClipSiblings = 0x04000000;
+    internal const uint WindowStyleVisible = 0x10000000;
 
     private const int WindowLongStyle = -16;
     private const uint StaticBlackRectangle = 0x00000004;
     private const uint WindowExtendedStyleNoParentNotify = 0x00000004;
+    private const uint WindowExtendedStyleToolWindow = 0x00000080;
+    private const uint WindowExtendedStyleNoActivate = 0x08000000;
     private const int ShowWindowHide = 0;
     private const int ShowWindowShow = 5;
     private const uint SetWindowPositionNoSize = 0x0001;
@@ -44,6 +47,38 @@ internal static class NativeWindowMethods
 
     internal static uint CalculateEmbeddedStyle(uint originalStyle) =>
         (originalStyle | EmbeddedRequiredStyles) & ~EmbeddedChromeMask;
+
+    internal static uint CalculateParkedStyle(uint originalStyle) =>
+        CalculateEmbeddedStyle(originalStyle) & ~WindowStyleVisible;
+
+    internal static nint CreateHiddenParkingWindow()
+    {
+        nint parkingWindow = CreateWindowEx(
+            WindowExtendedStyleNoParentNotify |
+            WindowExtendedStyleToolWindow |
+            WindowExtendedStyleNoActivate,
+            "Static",
+            "UrusGameHostParking",
+            WindowStylePopup |
+            WindowStyleClipChildren |
+            WindowStyleClipSiblings |
+            StaticBlackRectangle,
+            -32000,
+            -32000,
+            1,
+            1,
+            nint.Zero,
+            nint.Zero,
+            nint.Zero,
+            nint.Zero);
+        if (parkingWindow == nint.Zero)
+        {
+            throw CreateLastWin32Exception("The GameHost parking window could not be created.");
+        }
+
+        HideWindow(parkingWindow);
+        return parkingWindow;
+    }
 
     internal static nint CreateProxyWindow(nint parentWindow)
     {

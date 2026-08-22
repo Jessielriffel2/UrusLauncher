@@ -44,6 +44,46 @@ public sealed class MainWindowLayoutXamlTests
     }
 
     [Fact]
+    public void ProfileList_FiltersAsYouTypeAndUsesACustomScrollbar()
+    {
+        XDocument document = LoadMainWindow();
+        XElement search = FindNamedElement(document, "TextBox", "ProfileSearchInput");
+        Assert.Equal(
+            "{Binding ProfileSearchText, UpdateSourceTrigger=PropertyChanged}",
+            search.Attribute("Text")?.Value);
+
+        XElement list = FindNamedElement(document, "ListBox", "ProfileList");
+        Assert.Equal("{Binding FilteredProfiles}", list.Attribute("ItemsSource")?.Value);
+        Assert.Equal("Auto", list.Attribute("ScrollViewer.VerticalScrollBarVisibility")?.Value);
+        Assert.Contains("UrusScrollBarStyle", list.ToString(), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void SearchInputs_HidePlaceholderOnFocusAndPlaceCaretAtStart()
+    {
+        XDocument document = LoadMainWindow();
+        foreach (string name in new[] { "ProfileSearchInput", "ServerSearchInput" })
+        {
+            XElement search = FindNamedElement(document, "TextBox", name);
+            Assert.Equal(
+                "SearchInput_OnPreviewMouseLeftButtonDown",
+                search.Attribute("PreviewMouseLeftButtonDown")?.Value);
+            Assert.Equal(
+                "SearchInput_OnGotKeyboardFocus",
+                search.Attribute("GotKeyboardFocus")?.Value);
+            Assert.Contains("IsKeyboardFocused", search.Parent!.ToString(), StringComparison.Ordinal);
+        }
+
+        string styles = File.ReadAllText(FindRepositoryFile(
+            "src",
+            "LegendLauncher.App",
+            "Themes",
+            "Controls.xaml"));
+        Assert.Contains("SearchInputStyle", styles, StringComparison.Ordinal);
+        Assert.Contains("HorizontalContentAlignment\" Value=\"Left\"", styles, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void SessionSetupScrollsWhileRuntimeAndPrimaryActionStayPinned()
     {
         XDocument document = LoadMainWindow();

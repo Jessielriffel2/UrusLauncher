@@ -2,6 +2,7 @@ using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Interop;
+using System.Windows.Threading;
 
 namespace LegendLauncher.App.GameHosting;
 
@@ -12,6 +13,9 @@ internal sealed class EmbeddedGameSurfaceHost : HwndHost
 {
     private readonly GameWindowAttachment _attachment;
     private nint _proxyWindow;
+    private NativeClientSize _lastSyncedSize;
+    private bool _layoutHooked;
+    private bool _syncQueued;
 
     public EmbeddedGameSurfaceHost(GameWindowAttachment attachment)
     {
@@ -34,6 +38,8 @@ internal sealed class EmbeddedGameSurfaceHost : HwndHost
         {
             _attachment.AttachTo(proxyWindow);
             _proxyWindow = proxyWindow;
+            HookLayoutSync();
+            RequestSyncToProxy();
             return new HandleRef(this, proxyWindow);
         }
         catch
@@ -49,27 +55,31 @@ internal sealed class EmbeddedGameSurfaceHost : HwndHost
 
     protected override void DestroyWindowCore(HandleRef hwnd)
     {
+        UnhookLayoutSync();
         nint proxyWindow = hwnd.Handle;
         if (proxyWindow == nint.Zero)
         {
             return;
         }
 
-        _ = _attachment.DetachIfParent(proxyWindow);
+        if (!_attachment.ParkIfParent(proxyWindow, GameHostParkingSurface.Handle))
+        {
+            _ = _attachment.DetachIfParent(proxyWindow);
+        }
+
         NativeWindowMethods.DestroyProxyWindow(proxyWindow);
         if (_proxyWindow == proxyWindow)
         {
             _proxyWindow = nint.Zero;
         }
+
+        _lastSyncedSize = default;
     }
 
     protected override void OnWindowPositionChanged(Rect rcBoundingBox)
     {
         base.OnWindowPositionChanged(rcBoundingBox);
-        if (_proxyWindow != nint.Zero)
-        {
-            _attachment.ResizeTo(_proxyWindow);
-        }
+        SyncGameWindowToProxy(force: true);
     }
 
     protected override bool TabIntoCore(TraversalRequest request)
@@ -82,5 +92,68 @@ internal sealed class EmbeddedGameSurfaceHost : HwndHost
     {
         base.OnGotKeyboardFocus(e);
         _ = FocusGameWindow();
+    }
+
+    private void HookLayoutSync()
+    {
+        if (_layoutHooked)
+        {
+            return;
+        }
+
+        LayoutUpdated += OnLayoutUpdated;
+        SizeChanged += OnHostSizeChanged;
+        _layoutHooked = true;
+    }
+
+    private void UnhookLayoutSync()
+    {
+        if (!_layoutHooked)
+        {
+            return;
+        }
+
+        LayoutUpdated -= OnLayoutUpdated;
+        SizeChanged -= OnHostSizeChanged;
+        _layoutHooked = false;
+        _syncQueued = false;
+    }
+
+    private void OnLayoutUpdated(object? sender, EventArgs e) => RequestSyncToProxy();
+
+    private void OnHostSizeChanged(object sender, SizeChangedEventArgs e) => RequestSyncToProxy();
+
+    private void RequestSyncToProxy()
+    {
+        if (_proxyWindow == nint.Zero || _syncQueued)
+        {
+            return;
+        }
+
+        _syncQueued = true;
+        _ = Dispatcher.BeginInvoke(DispatcherPriority.Loaded, () =>
+        {
+            _syncQueued = false;
+            SyncGameWindowToProxy(force: false);
+        });
+    }
+
+    private void SyncGameWindowToProxy(bool force)
+    {
+        if (_proxyWindow == nint.Zero)
+        {
+            return;
+        }
+
+        NativeClientSize size = NativeWindowMethods.GetClientSize(_proxyWindow);
+        if (!force &&
+            size.Width == _lastSyncedSize.Width &&
+            size.Height == _lastSyncedSize.Height)
+        {
+            return;
+        }
+
+        _lastSyncedSize = size;
+        _attachment.ResizeTo(_proxyWindow);
     }
 }

@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "version": "1.1.7",
+  "title": {
+    "pt-BR": "Busca de contas, tela dividida e jogo no encaixe",
+    "en-US": "Account search, split view, and game stays in frame",
+    "es-ES": "Búsqueda de cuentas, pantalla dividida y juego encajado"
+  },
+  "notes": {
+    "pt-BR": [
+      "A lista de perfis ganha busca instantânea por nome ou login e barra de rolagem; os cartões de atualização e cofre ficam mais compactos para as contas ocuparem mais altura.",
+      "Trocar de conta ou de layout deixa o jogo no quadrado: sessões fora da tela são estacionadas ocultas, sem overlay por cima do launcher.",
+      "No layout 2, as duas contas da tela aparecem como bolinhas fundidas na lateral; clicar no agrupamento abre as duas em tela dividida. A conta ativa fica destacada.",
+      "Clicar na busca de servidor ou de perfil esconde a dica e coloca o cursor no início do campo."
+    ],
+    "en-US": [
+      "The profile list now has instant search by name or login and a custom scrollbar; the update and vault cards are more compact so accounts get more height.",
+      "Switching accounts or layouts keeps the game in its frame: sessions off-grid stay parked and hidden, without overlaying the launcher.",
+      "In layout 2, the two on-screen accounts appear as fused dots in the sidebar; clicking the pair opens both in split view. The active account is highlighted.",
+      "Clicking the server or profile search hides the hint and places the caret at the start of the field."
+    ],
+    "es-ES": [
+      "La lista de perfiles gana búsqueda instantánea por nombre o usuario y barra de desplazamiento; las tarjetas de actualización y de bóveda quedan más compactas para dar más altura a las cuentas.",
+      "Cambiar de cuenta o de diseño deja el juego en su recuadro: las sesiones fuera de la grilla quedan estacionadas y ocultas, sin superponerse al launcher.",
+      "En el diseño 2, las dos cuentas en pantalla aparecen como puntos fusionados a la izquierda; pulsar el grupo abre ambas en pantalla dividida. La cuenta activa queda resaltada.",
+      "Al pulsar la búsqueda de servidor o de perfil, la pista desaparece y el cursor queda al inicio del campo."
+    ]
+  }
+}

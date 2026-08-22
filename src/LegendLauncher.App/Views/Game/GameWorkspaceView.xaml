@@ -333,7 +333,11 @@
                             </LinearGradientBrush>
                         </Rectangle.Fill>
                     </Rectangle>
-                    <StackPanel Margin="10,12">
+                    <Grid Margin="10,12">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
                         <Button Content="&#xE710;"
                                 FontFamily="Segoe Fluent Icons"
                                 FontSize="16"
@@ -344,46 +348,144 @@
                                 Padding="0"
                                 Margin="0,0,0,12"
                                 ToolTip="{loc:Localize Accounts_Add}" />
-                        <ItemsControl ItemsSource="{Binding Workspace.Sessions}">
+                        <ScrollViewer Grid.Row="1"
+                                      VerticalScrollBarVisibility="Auto"
+                                      HorizontalScrollBarVisibility="Disabled">
+                            <ScrollViewer.Resources>
+                                <Style TargetType="ScrollBar" BasedOn="{StaticResource UrusScrollBarStyle}" />
+                            </ScrollViewer.Resources>
+                            <ItemsControl x:Name="SessionAvatarList" ItemsSource="{Binding Workspace.SidebarAvatars}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Button Width="52"
-                                            Height="52"
-                                            Margin="0,0,0,10"
+                                    <Button Margin="0,0,0,10"
                                             Padding="0"
                                             Background="Transparent"
                                             BorderThickness="0"
-                                            Command="{Binding DataContext.Workspace.SelectSessionCommand, ElementName=WorkspaceRoot}"
+                                            Command="{Binding DataContext.Workspace.ActivateSidebarAvatarCommand, ElementName=WorkspaceRoot}"
                                             CommandParameter="{Binding}"
-                                            ToolTip="{Binding SurfaceTitle}">
-                                        <Grid>
-                                            <Border x:Name="AvatarBorder"
-                                                    Width="44"
-                                                    Height="44"
-                                                    CornerRadius="22"
-                                                    Background="#B8133541"
-                                                    BorderBrush="#47667C"
-                                                    BorderThickness="1">
-                                                <TextBlock Text="{Binding Initial}"
-                                                           Foreground="{StaticResource AccentBrush}"
-                                                           FontWeight="Bold"
-                                                           FontSize="15"
-                                                           HorizontalAlignment="Center"
-                                                           VerticalAlignment="Center" />
-                                            </Border>
-                                            <Ellipse Width="10" Height="10"
-                                                     Fill="{StaticResource SuccessBrush}"
-                                                     Stroke="#071321"
-                                                     StrokeThickness="2"
-                                                     HorizontalAlignment="Right"
-                                                     VerticalAlignment="Bottom"
-                                                     Margin="0,0,1,2" />
+                                            ToolTip="{Binding ToolTip}"
+                                            AutomationProperties.Name="{Binding AutomationName}">
+                                        <Grid Width="52" Height="52">
+                                            <Grid x:Name="SplitPairAvatars">
+                                                <Grid.Style>
+                                                    <Style TargetType="Grid">
+                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsPair}" Value="True">
+                                                                <Setter Property="Visibility" Value="Visible" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Grid.Style>
+                                                <Border Width="36"
+                                                        Height="36"
+                                                        CornerRadius="18"
+                                                        HorizontalAlignment="Left"
+                                                        VerticalAlignment="Top"
+                                                        Margin="0,2,0,0"
+                                                        Background="#B8133541"
+                                                        BorderBrush="#47667C"
+                                                        BorderThickness="1">
+                                                    <TextBlock Text="{Binding RearInitial}"
+                                                               Foreground="{StaticResource AccentBrush}"
+                                                               FontWeight="Bold"
+                                                               FontSize="13"
+                                                               HorizontalAlignment="Center"
+                                                               VerticalAlignment="Center" />
+                                                </Border>
+                                                <Border Width="36"
+                                                        Height="36"
+                                                        CornerRadius="18"
+                                                        HorizontalAlignment="Right"
+                                                        VerticalAlignment="Bottom"
+                                                        Margin="0,0,0,2">
+                                                    <Border.Style>
+                                                        <Style TargetType="Border">
+                                                            <Setter Property="Background" Value="#B8133541" />
+                                                            <Setter Property="BorderBrush" Value="#47667C" />
+                                                            <Setter Property="BorderThickness" Value="1" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsHighlighted}" Value="True">
+                                                                    <Setter Property="Background" Value="#E0205A6A" />
+                                                                    <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+                                                                    <Setter Property="BorderThickness" Value="2" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+                                                    <TextBlock Text="{Binding FrontInitial}"
+                                                               Foreground="{StaticResource AccentBrush}"
+                                                               FontWeight="Bold"
+                                                               FontSize="13"
+                                                               HorizontalAlignment="Center"
+                                                               VerticalAlignment="Center" />
+                                                </Border>
+                                                <Ellipse Width="9" Height="9"
+                                                         Fill="{StaticResource SuccessBrush}"
+                                                         Stroke="#071321"
+                                                         StrokeThickness="2"
+                                                         HorizontalAlignment="Left"
+                                                         VerticalAlignment="Top"
+                                                         Margin="24,2,0,0" />
+                                                <Ellipse Width="9" Height="9"
+                                                         Fill="{StaticResource SuccessBrush}"
+                                                         Stroke="#071321"
+                                                         StrokeThickness="2"
+                                                         HorizontalAlignment="Right"
+                                                         VerticalAlignment="Bottom"
+                                                         Margin="0,0,1,3" />
+                                            </Grid>
+                                            <Grid x:Name="SingleAvatar">
+                                                <Grid.Style>
+                                                    <Style TargetType="Grid">
+                                                        <Setter Property="Visibility" Value="Visible" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsPair}" Value="True">
+                                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Grid.Style>
+                                                <Border x:Name="AvatarBorder"
+                                                        Width="44"
+                                                        Height="44"
+                                                        CornerRadius="22">
+                                                    <Border.Style>
+                                                        <Style TargetType="Border">
+                                                            <Setter Property="Background" Value="#B8133541" />
+                                                            <Setter Property="BorderBrush" Value="#47667C" />
+                                                            <Setter Property="BorderThickness" Value="1" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsHighlighted}" Value="True">
+                                                                    <Setter Property="Background" Value="#E0205A6A" />
+                                                                    <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+                                                                    <Setter Property="BorderThickness" Value="2" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+                                                    <TextBlock Text="{Binding FrontInitial}"
+                                                               Foreground="{StaticResource AccentBrush}"
+                                                               FontWeight="Bold"
+                                                               FontSize="15"
+                                                               HorizontalAlignment="Center"
+                                                               VerticalAlignment="Center" />
+                                                </Border>
+                                                <Ellipse Width="10" Height="10"
+                                                         Fill="{StaticResource SuccessBrush}"
+                                                         Stroke="#071321"
+                                                         StrokeThickness="2"
+                                                         HorizontalAlignment="Right"
+                                                         VerticalAlignment="Bottom"
+                                                         Margin="0,0,1,2" />
+                                            </Grid>
                                         </Grid>
                                     </Button>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
-                    </StackPanel>
+                        </ScrollViewer>
+                    </Grid>
                 </Grid>
             </Border>
 

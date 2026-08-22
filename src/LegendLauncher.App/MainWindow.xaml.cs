@@ -93,6 +93,38 @@ public partial class MainWindow : Window
         eventArgs.Handled = true;
     }
 
+    private void SearchInput_OnPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs eventArgs)
+    {
+        if (sender is not TextBox box)
+        {
+            return;
+        }
+
+        if (!box.IsKeyboardFocusWithin)
+        {
+            box.Focus();
+            box.CaretIndex = 0;
+            eventArgs.Handled = true;
+            return;
+        }
+
+        if (box.Text.Length != 0)
+        {
+            return;
+        }
+
+        box.CaretIndex = 0;
+        eventArgs.Handled = true;
+    }
+
+    private void SearchInput_OnGotKeyboardFocus(object sender, KeyboardFocusChangedEventArgs eventArgs)
+    {
+        if (sender is TextBox { Text.Length: 0 } box)
+        {
+            box.CaretIndex = 0;
+        }
+    }
+
     private void ProfileMenuButton_OnClick(object sender, RoutedEventArgs eventArgs)
     {
         if (sender is not Button { DataContext: ProfileItemViewModel profile } button)

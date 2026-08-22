@@ -8,26 +8,24 @@
         <Style x:Key="UpdateCompactButtonStyle"
                TargetType="Button"
                BasedOn="{StaticResource SecondaryButtonStyle}">
-            <Setter Property="Height" Value="28" />
+            <Setter Property="Height" Value="22" />
             <Setter Property="MinWidth" Value="0" />
-            <Setter Property="Padding" Value="8,3" />
-            <Setter Property="FontSize" Value="8.5" />
+            <Setter Property="Padding" Value="7,1" />
+            <Setter Property="FontSize" Value="8" />
             <Setter Property="FontWeight" Value="SemiBold" />
         </Style>
     </UserControl.Resources>
 
     <Grid Visibility="{Binding IsUpdateCardVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
         <Border x:Name="UpdateCard"
-                MinHeight="72"
-                Padding="11,9"
-                Background="#E30A1828"
+                Padding="8,6"
+                Background="#D00A1828"
                 BorderBrush="{Binding UpdateStatusBrush}"
                 BorderThickness="1"
-                CornerRadius="9"
+                CornerRadius="8"
                 AutomationProperties.Name="{loc:Localize Update_CardAutomation}">
             <Grid>
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
@@ -35,65 +33,70 @@
 
                 <Grid>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="7" />
                         <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    <Ellipse Width="7"
-                             Height="7"
-                             Fill="{Binding UpdateStatusBrush}"
-                             VerticalAlignment="Center" />
-                    <TextBlock Grid.Column="2"
-                               Text="{Binding UpdateEyebrowText}"
-                               FontSize="8"
-                               FontWeight="Bold"
-                               Foreground="{StaticResource AccentBrush}" />
+                    <StackPanel VerticalAlignment="Center">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="6" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Ellipse Width="6"
+                                     Height="6"
+                                     Fill="{Binding UpdateStatusBrush}"
+                                     VerticalAlignment="Center" />
+                            <TextBlock Grid.Column="2"
+                                       Text="{Binding UpdateEyebrowText}"
+                                       FontSize="8"
+                                       FontWeight="Bold"
+                                       Foreground="{StaticResource AccentBrush}"
+                                       VerticalAlignment="Center" />
+                        </Grid>
+                        <TextBlock Margin="0,3,8,0"
+                                   Text="{Binding UpdateTitleText}"
+                                   FontSize="11"
+                                   FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextPrimaryBrush}"
+                                   TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="1"
+                                Orientation="Horizontal"
+                                VerticalAlignment="Center">
+                        <Button Margin="0,0,4,0"
+                                Style="{StaticResource UpdateCompactButtonStyle}"
+                                Content="{Binding UpdateViewNotesText}"
+                                Command="{Binding ToggleUpdateNotesCommand}"
+                                Visibility="{Binding IsUpdateReadyToInstall, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                        <Button Style="{StaticResource UpdateCompactButtonStyle}"
+                                Content="{Binding UpdateActionText}"
+                                Command="{Binding InstallUpdateCommand}"
+                                ToolTip="{loc:Localize Update_ActionTooltip}"
+                                Visibility="{Binding IsUpdateReadyToInstall, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                        <Button Style="{StaticResource UpdateCompactButtonStyle}"
+                                Content="{Binding UpdateCheckActionText}"
+                                Command="{Binding CheckForUpdatesCommand}"
+                                Visibility="{Binding IsUpdateCheckActionVisible, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                    </StackPanel>
                 </Grid>
 
                 <TextBlock Grid.Row="1"
-                           Margin="0,5,0,0"
-                           Text="{Binding UpdateTitleText}"
-                           FontSize="11"
-                           FontWeight="SemiBold"
-                           Foreground="{StaticResource TextPrimaryBrush}"
-                           TextTrimming="CharacterEllipsis" />
-
-                <TextBlock Grid.Row="2"
-                           Margin="0,3,0,0"
+                           Margin="0,2,0,0"
                            Text="{Binding UpdateDetailText}"
                            FontSize="9"
-                           LineHeight="13"
                            Foreground="{StaticResource TextSecondaryBrush}"
-                           TextWrapping="Wrap" />
+                           TextWrapping="NoWrap"
+                           TextTrimming="CharacterEllipsis" />
 
-                <ProgressBar Grid.Row="3"
+                <ProgressBar Grid.Row="2"
                              Height="3"
-                             Margin="0,7,0,0"
+                             Margin="0,5,0,0"
                              Minimum="0"
                              Maximum="100"
                              Value="{Binding UpdateProgress, Mode=OneWay}"
                              Foreground="{StaticResource AccentBrush}"
                              Visibility="{Binding IsUpdateProgressVisible, Converter={StaticResource BooleanToVisibilityConverter}}" />
-
-                <StackPanel Grid.Row="3"
-                            Margin="0,8,0,0"
-                            Orientation="Horizontal"
-                            HorizontalAlignment="Right">
-                    <Button Margin="0,0,6,0"
-                            Style="{StaticResource UpdateCompactButtonStyle}"
-                            Content="{Binding UpdateViewNotesText}"
-                            Command="{Binding ToggleUpdateNotesCommand}"
-                            Visibility="{Binding IsUpdateReadyToInstall, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                    <Button Style="{StaticResource UpdateCompactButtonStyle}"
-                            Content="{Binding UpdateActionText}"
-                            Command="{Binding InstallUpdateCommand}"
-                            ToolTip="{loc:Localize Update_ActionTooltip}"
-                            Visibility="{Binding IsUpdateReadyToInstall, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                    <Button Style="{StaticResource UpdateCompactButtonStyle}"
-                            Content="{Binding UpdateCheckActionText}"
-                            Command="{Binding CheckForUpdatesCommand}"
-                            Visibility="{Binding IsUpdateCheckActionVisible, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                </StackPanel>
             </Grid>
         </Border>
 

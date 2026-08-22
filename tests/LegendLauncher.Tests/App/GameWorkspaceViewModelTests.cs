@@ -183,6 +183,58 @@ public sealed class GameWorkspaceViewModelTests
         Assert.Contains(second, workspace.Sessions);
     }
 
+    [Fact]
+    public void SelectingASessionMarksOnlyThatSessionAsSelected()
+    {
+        using GameWorkspaceViewModel workspace = CreateWorkspace();
+        GameSessionViewModel first = AddSession(workspace, 1);
+        GameSessionViewModel second = AddSession(workspace, 2);
+
+        Assert.True(second.IsSelected);
+        Assert.False(first.IsSelected);
+
+        workspace.SelectSessionCommand.Execute(first);
+        Assert.True(first.IsSelected);
+        Assert.False(second.IsSelected);
+
+        WorkspaceAvatarItem selectedAvatar = Assert.Single(
+            workspace.SidebarAvatars,
+            item => item.IsHighlighted);
+        Assert.Same(first, selectedAvatar.Front);
+        Assert.Contains(first.SurfaceTitle, selectedAvatar.AutomationName, StringComparison.Ordinal);
+        Assert.NotEqual(first.SurfaceTitle, selectedAvatar.AutomationName);
+    }
+
+    [Fact]
+    public void SplitTwoFusesVisibleAvatarsAndClickingThePairShowsBoth()
+    {
+        using GameWorkspaceViewModel workspace = CreateWorkspace();
+        GameSessionViewModel[] sessions = Enumerable.Range(1, 4)
+            .Select(index => AddSession(workspace, index))
+            .ToArray();
+
+        workspace.LayoutMode = GameLayoutMode.SplitTwo;
+
+        Assert.Equal(2, workspace.VisibleSessions.Count);
+        WorkspaceAvatarItem pair = Assert.Single(workspace.SidebarAvatars, item => item.IsPair);
+        Assert.NotNull(pair.Rear);
+        Assert.Contains(pair.Front, workspace.VisibleSessions);
+        Assert.Contains(pair.Rear, workspace.VisibleSessions);
+        Assert.Equal(sessions.Length - 1, workspace.SidebarAvatars.Count);
+        Assert.All(
+            workspace.SidebarAvatars.Where(item => !item.IsPair),
+            item => Assert.DoesNotContain(item.Front, workspace.VisibleSessions));
+
+        workspace.LayoutMode = GameLayoutMode.Single;
+        Assert.All(workspace.SidebarAvatars, item => Assert.False(item.IsPair));
+        Assert.Equal(sessions.Length, workspace.SidebarAvatars.Count);
+
+        workspace.ActivateSidebarAvatarCommand.Execute(pair);
+        Assert.Equal(GameLayoutMode.SplitTwo, workspace.LayoutMode);
+        Assert.Contains(pair.Front, workspace.VisibleSessions);
+        Assert.Contains(pair.Rear!, workspace.VisibleSessions);
+    }
+
     private static GameWorkspaceViewModel CreateWorkspace()
     {
         var audio = new GameAudioService(static (_, _) => { }, TimeSpan.FromHours(1));

@@ -40,7 +40,8 @@ LegendLauncherNext/
 │   │   ├── v1.1.3.json
 │   │   ├── v1.1.4.json
 │   │   ├── v1.1.5.json
-│   │   └── v1.1.6.json
+│   │   ├── v1.1.6.json
+│   │   └── v1.1.7.json
 │   └── modulos/
 │       ├── atualizacao.md
 │       ├── branding.md
@@ -80,6 +81,7 @@ LegendLauncherNext/
 │   │   │   └── selected-server-castle-banner.png
 │   │   ├── GameHosting/
 │   │   │   ├── EmbeddedGameSurfaceHost.cs
+│   │   │   ├── GameHostParkingSurface.cs
 │   │   │   ├── GameSurfacePresenter.cs
 │   │   │   ├── GameWindowAttachment.cs
 │   │   │   └── NativeWindowMethods.cs
@@ -130,7 +132,8 @@ LegendLauncherNext/
 │   │   │   ├── PlatformItemViewModel.cs
 │   │   │   ├── ProfileItemViewModel.cs
 │   │   │   ├── RelayCommand.cs
-│   │   │   └── ServerRowViewModel.cs
+│   │   │   ├── ServerRowViewModel.cs
+│   │   │   └── WorkspaceAvatarItem.cs
 │   │   └── Views/
 │   │       ├── Donation/
 │   │       │   ├── DonationPromptView.xaml
@@ -309,8 +312,8 @@ LegendLauncherNext/
 | --- | --- | --- | --- |
 | `LegendLauncher.App` | Código-fonte WPF x64 do Urus Launcher, publicado como `UrusLauncher.App.exe`; oferece launcher de três colunas, runtime empacotado prioritário, instância única por sessão do Windows, conta compartilhada entre variantes OAS com estado por plataforma, catálogo ordenado, sessões por alvo exato, chrome taskbar/DPI-aware e integração não bloqueante com atualizações públicas. | `App.xaml.cs`, `MainWindow.xaml`, `Themes/Controls.xaml`, `Services/ProfilePlatformCompatibility.cs`, `Services/ServerCatalogPresentation.cs`, `MainWindowViewModel*.cs`, `SessionLaunchCoordinator.cs`, `LauncherComposition.cs` | [launcher-app.md](modulos/launcher-app.md) |
 | `LegendLauncher.App/Branding` | Identidade pública Urus Launcher: logo original transparente, ícone multirresolução, slogan localizado, metadados e remoção de marcadores Next/preview/teste da UI. | `Assets/Branding/*`, `LegendLauncher.App.csproj`, `app.manifest`, `MainWindow.xaml`, `Localization/Resources/*.json` | [branding.md](modulos/branding.md) |
-| `LegendLauncher.App/Game Session Workspace` | Barra única de 44 px com controles/abas de 34 px, abas roláveis, `+ CONTA` persistente, reserva de 150 px para o chrome, layouts 1/2/4, áudio global com refresh concorrente coalescido, detach/reattach, relogar (re-login no mesmo servidor a partir da aba) e incorporação reversível de HWND/PID. | `Views/Game/*`, `GameHosting/*.cs`, `GameWorkspaceViewModel.cs`, `GameSessionViewModel.cs`, `MainWindowViewModel.Relog.cs`, `GameAudioService.cs`, `LauncherSettingsService.cs`, `BorderlessWindowCommands.cs` | [game-session-workspace.md](modulos/game-session-workspace.md) |
-| `LegendLauncher.App/Localization` | Localização dinâmica por 206 chaves em `pt-BR`, `en-US` e `es-ES`, inclusive título/slogan, catálogo, doação e todo o fluxo de atualização preparada, com recursos incorporados, bindings observáveis e persistência da cultura ativa. | `Localization/*.cs`, `Localization/Resources/*.json`, `MainWindowViewModel.Localization.cs`, `MainWindowViewModel.Updates.cs` | [localizacao.md](modulos/localizacao.md) |
+| `LegendLauncher.App/Game Session Workspace` | Barra única de 44 px com controles/abas de 34 px, avatares laterais com conta ativa destacada e par fundido no layout 2, busca de perfis no launcher, layouts 1/2/4, áudio global, detach/reattach, relogar e estacionamento oculto de HWND fora da grade. | `Views/Game/*`, `GameHosting/*.cs`, `GameHostParkingSurface.cs`, `GameWorkspaceViewModel.cs`, `WorkspaceAvatarItem.cs`, `GameSessionViewModel.cs`, `MainWindowViewModel.Relog.cs`, `GameAudioService.cs`, `LauncherSettingsService.cs`, `BorderlessWindowCommands.cs` | [game-session-workspace.md](modulos/game-session-workspace.md) |
+| `LegendLauncher.App/Localization` | Localização dinâmica por 211 chaves em `pt-BR`, `en-US` e `es-ES`, inclusive título/slogan, catálogo, doação, busca de perfis e todo o fluxo de atualização preparada, com recursos incorporados, bindings observáveis e persistência da cultura ativa. | `Localization/*.cs`, `Localization/Resources/*.json`, `MainWindowViewModel.Localization.cs`, `MainWindowViewModel.Updates.cs` | [localizacao.md](modulos/localizacao.md) |
 | `LegendLauncher.App/Donation Prompt` | Pedido opcional PayPal/PIX, lembrete de cinco horas avaliado uma vez por abertura, acesso manual, QR imutável, cópia local do CNPJ e acessibilidade localizada. | `Views/Donation/*`, `MainWindowViewModel.Donation.cs`, `LauncherSettingsService.cs`, `paypal-donation-qr.jpeg` | [donation-prompt.md](modulos/donation-prompt.md) |
 | `LegendLauncher.App/Atualização` | Consulta antecipada do GitHub Releases na abertura, fallback público para `403`/`429`, download/validação automática por usuário com janela de uma hora, manifesto UTF-8 sem BOM, cache revalidado, cartão trilíngue pronto para instalar e execução somente após clique sem sessões ativas nem login em andamento. | `Updates/*.cs`, `Views/Updates/*`, `MainWindowViewModel.Updates.cs`, `AppPaths.UpdatesDirectory` | [atualizacao.md](modulos/atualizacao.md) |
 | `Distribuição Windows` | Publica App e GameHost self-contained para `win-x64`, injeta runtime registration-free fornecido/autorizado e gera setup/ZIP, manifestos, patch notes e checksums; o workflow automático por tag exige a mesma fonte autorizada no runner, enquanto a 1.1.4 foi publicada manualmente a partir do build local validado e autorizado. | `scripts/build-urus-distribution.ps1`, `installer/UrusLauncher.iss`, `.github/workflows/release.yml`, `docs/releases/*.json` | [distribuicao-windows.md](modulos/distribuicao-windows.md) |
@@ -352,7 +355,9 @@ LegendLauncherNext/
 | `docs/releases/v1.1.3.json` | Fonte trilíngue dos títulos e patch notes da versão 1.1.3, incluindo download automático validado, cache exato e instalação sob clique. |
 | `docs/releases/v1.1.4.json` | Fonte trilíngue da correção de instalação limpa, prioridade do runtime interno e estado visual honesto do CTA. |
 | `docs/releases/v1.1.5.json` | Fonte trilíngue da remoção do tradutor, relogar por aba e curl em todos os Passports OAS. |
-| `docs/releases/v1.1.6.json` | Fonte trilíngue da consulta de update sem BOM, âncora do GameHost para Cheat Engine x64 e CET desligado. |
+| `docs/releases/v1.1.6.json` | Fonte trilíngue do manifesto UTF-8 sem BOM, âncora Cheat Engine e CET desligado. |
+| `docs/releases/v1.1.7.json` | Fonte trilíngue da busca de perfis, estacionamento do GameHost, agrupamento no layout 2 e busca com cursor no início. |
+| `src/LegendLauncher.App/GameHosting/GameHostParkingSurface.cs` | HWND oculto do launcher onde sessões fora da grade ficam como `WS_CHILD`, sem reaparecer como janela de jogo solta. |
 | `src/LegendLauncher.App/Updates/UpdateManifestValidator.cs` | Validador único do manifesto normal e alternativo, mantendo versão, setup, bytes, SHA-256 e notas trilíngues sob o mesmo contrato. |
 | `tests/LegendLauncher.Tests/App/Updates/LauncherUpdateServiceFallbackTests.cs` | Contratos do fallback exclusivo para rate limit `403`/`429`, redirects permitidos e rejeição de rotas/documentos inválidos. |
 | `.github/workflows/release.yml` | Tenta gerar e publicar GitHub Release quando uma tag `vMAJOR.MINOR.PATCH` é enviada; exige uma fonte licenciada do runtime no runner. A execução disparada pela tag 1.1.4 foi cancelada e a versão foi publicada manualmente a partir do build local autorizado. |

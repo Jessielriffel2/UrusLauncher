@@ -41,7 +41,8 @@ Desde a preparação da 1.1.4, o build não aceita mais produzir um pacote anunc
 | `docs/releases/v1.1.3.json:1` | Patch notes fonte pública histórica | Download automático validado, cache exato, consulta manual e instalação consentida nos três idiomas. |
 | `docs/releases/v1.1.4.json:1` | Patch notes fonte histórica | Runtime interno prioritário, instalação limpa e estado visual honesto nos três idiomas. |
 | `docs/releases/v1.1.5.json:1` | Patch notes fonte histórica | Remoção do tradutor, relogar por aba e curl em todos os Passports OAS. |
-| `docs/releases/v1.1.6.json:1` | Patch notes fonte pública atual | Manifesto UTF-8 sem BOM, GameHost visível ao Cheat Engine x64 e CET desligado nos executáveis. |
+| `docs/releases/v1.1.6.json:1` | Patch notes fonte histórica | Manifesto UTF-8 sem BOM, GameHost visível ao Cheat Engine x64 e CET desligado nos executáveis. |
+| `docs/releases/v1.1.7.json:1` | Patch notes fonte pública atual | Busca de perfis, estacionamento do GameHost, agrupamento no layout 2 e cursor da busca no início. |
 | `artifacts/urus-distribution/portable/UrusLauncher/` | Payload expandido | Diretório executável usado como origem comum do Inno Setup e do ZIP. |
 | `artifacts/urus-distribution/distribution-manifest.json` | Manifesto | Produto, versão, RID, flag self-contained, data UTC, nomes/tamanhos/hashes e inventário agregado do payload. |
 | `artifacts/urus-distribution/update-manifest.json` | Manifesto de atualização | Contrato estrito consumido pela App com metadados do setup e patch notes localizados. |
@@ -90,6 +91,19 @@ Release: [Urus Launcher 1.1.6](https://github.com/Jessielriffel2/UrusLauncher/re
 | Lista oficial de checksums | `GitHub Release/SHA256SUMS.txt` — 383 bytes — SHA-256 `3FE40F313B47348652B473BABC811BC88F2C42CB8F517D1C4A0F5DBCD8E67754` |
 
 A build local 1.1.6 concluiu **492/492** testes Release. O manifesto de atualização foi gravado em UTF-8 sem BOM. O smoke portátil automático foi omitido porque já havia uma instância do launcher (e GameHost) em execução na máquina de build; a guarda de instância única encerra a segunda abertura com código 0. FileVersion `1.1.6.0`. Payload: 472 arquivos / 231.218.670 bytes. A publicação permanece manual pelo mesmo motivo da 1.1.4: o runner hospedado não tem a origem licenciada do runtime. O workflow disparado pela tag deve ser cancelado se aparecer.
+
+## Entregáveis públicos 1.1.7
+
+Release: [Urus Launcher 1.1.7](https://github.com/Jessielriffel2/UrusLauncher/releases/tag/v1.1.7).
+
+| Tipo | Caminho/resultado |
+| --- | --- |
+| Instalador com runtime | `GitHub Release/UrusLauncher-Setup-1.1.7-win-x64.exe` — 65.855.340 bytes — SHA-256 `9223A3EC912CA90CB3F315834512B96CB0BDD9AC5ED8425215DFE8DD7DE1FE6B` |
+| ZIP portátil | `GitHub Release/UrusLauncher-1.1.7-portable-win-x64.zip` — 92.418.566 bytes — SHA-256 `E2C0CBCFEF7B49410124BB07E7F4B1AE8077FD506BB41C083D076AF88109D72D` |
+| Manifesto do updater | `GitHub Release/update-manifest.json` — 2.292 bytes — SHA-256 `D77D57094DFCAE120E76C8A7EF7A80E723C3D9722505592F783BFA30DF071FB1` |
+| Lista oficial de checksums | `GitHub Release/SHA256SUMS.txt` — 383 bytes — SHA-256 `89EA23ABFD750873DE380696D499F798F3479D23D3843E4F52C47224446B2D83` |
+
+A build local 1.1.7 concluiu **501/501** testes Release. O smoke portátil automático foi omitido porque a guarda de instância única encerrou a segunda abertura com código 0. FileVersion `1.1.7.0`. Payload: 472 arquivos / 231.228.910 bytes. A publicação permanece manual pelo mesmo motivo da 1.1.4: o runner hospedado não tem a origem licenciada do runtime. O workflow disparado pela tag deve ser cancelado se aparecer.
 
 ## Fluxo de construção
 

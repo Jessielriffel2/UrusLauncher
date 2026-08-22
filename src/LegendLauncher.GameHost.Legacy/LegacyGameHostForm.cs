@@ -161,6 +161,8 @@ internal sealed class LegacyGameHostForm : Form
         ControlBox = false;
         MinimizeBox = false;
         MaximizeBox = false;
+        StartPosition = FormStartPosition.Manual;
+        Location = new Point(-32000, -32000);
     }
 
     private static Control BuildLoadingContent() => new Label

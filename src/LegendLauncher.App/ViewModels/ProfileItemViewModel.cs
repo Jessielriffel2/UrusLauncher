@@ -13,4 +13,16 @@ internal sealed class ProfileItemViewModel(AccountProfile model)
         : DisplayName.Trim()[..1].ToUpperInvariant();
 
     public string Summary => $"{Model.UserName} · {Model.PlatformId}";
+
+    public bool MatchesSearch(string query)
+    {
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            return true;
+        }
+
+        string needle = query.Trim();
+        return DisplayName.Contains(needle, StringComparison.OrdinalIgnoreCase) ||
+            Model.UserName.Contains(needle, StringComparison.OrdinalIgnoreCase);
+    }
 }

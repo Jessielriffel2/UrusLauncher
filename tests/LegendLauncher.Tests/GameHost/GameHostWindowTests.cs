@@ -19,12 +19,20 @@ public sealed class GameHostWindowTests
                     "https://lobr.creaction-network.com/client/Loading.swf")),
                 new GameRuntimeOptions(Path.GetTempPath()),
                 static (_, _) => { });
-            return (form.FormBorderStyle, form.ShowInTaskbar, form.ControlBox);
+            return (
+                form.FormBorderStyle,
+                form.ShowInTaskbar,
+                form.ControlBox,
+                form.StartPosition,
+                form.Location);
         });
 
         Assert.Equal(FormBorderStyle.None, result.FormBorderStyle);
         Assert.False(result.ShowInTaskbar);
         Assert.False(result.ControlBox);
+        Assert.Equal(FormStartPosition.Manual, result.StartPosition);
+        Assert.True(result.Location.X <= -30000);
+        Assert.True(result.Location.Y <= -30000);
     }
 
     [Fact]

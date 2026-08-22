@@ -28,6 +28,8 @@ internal sealed partial class MainWindowViewModel
             _suppressProfileCatalogReload = false;
         }
 
+        NotifyFilteredProfiles();
+
         if (SelectedProfile is null)
         {
             IsProfileEditorVisible = true;
@@ -49,6 +51,7 @@ internal sealed partial class MainWindowViewModel
 
         var replacement = new ProfileItemViewModel(updated);
         Profiles[index] = replacement;
+        NotifyFilteredProfiles();
         if (ReferenceEquals(_selectedProfile, original))
         {
             _selectedProfile = replacement;
@@ -262,4 +265,10 @@ internal sealed partial class MainWindowViewModel
             }
         }
     }
+
+    private bool IsProfileVisibleInCurrentFilter(ProfileItemViewModel profile) =>
+        profile.MatchesSearch(_profileSearchText);
+
+    private void NotifyFilteredProfiles() =>
+        OnPropertyChanged(nameof(FilteredProfiles));
 }

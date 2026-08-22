@@ -16,7 +16,7 @@ Adotar um workspace multissessão com as seguintes regras:
 1. Cada sessão executa em um processo `LegendLauncher.GameHost.Legacy` próprio. O ActiveX e o activation context nunca são carregados pelo WPF.
 2. O handshake do GameHost devolve o HWND por resposta binária versionada, sem relação com o transporte HTTP. O runtime valida pelo kernel que o HWND pertence ao PID iniciado e expõe `GameSession` com PID, handle e instante UTC.
 3. A App valida novamente HWND/PID e usa um HWND-proxy criado no processo WPF. O proxy é devolvido ao `HwndHost`; a janela GameHost é um descendente cross-process com estilos de filho, sem chrome standalone enquanto incorporada.
-4. `GameWindowAttachment` torna a associação reversível, preserva o estilo original, redimensiona para o client rect e impede um presenter antigo de desanexar uma janela já movida.
+4. `GameWindowAttachment` torna a associação reversível, redimensiona para o client rect e impede um presenter antigo de desanexar uma janela já movida. Sessões vivas que saem da grade são estacionadas como `WS_CHILD` de um HWND oculto do launcher, em vez de voltarem visíveis ao desktop.
 5. O workspace rastreia todas as sessões em abas. Layouts 1, 2 e 4 limitam somente quantas superfícies aparecem simultaneamente; não limitam o número de contas em execução. Na grade, uma sessão usa 1×1, duas usam 1×2 e três ou quatro usam 2×2.
 6. Há no máximo uma sessão em execução por perfil. Nova tentativa com o mesmo perfil seleciona a aba existente.
 7. Desacoplar move a mesma janela/processo para outra janela WPF. Fechar essa janela acopla novamente no máximo uma vez; criação/exibição falha executa cleanup e rollback, e shutdown suprime reattach e tenta fechar todas as janelas.
@@ -49,7 +49,7 @@ Adotar um workspace multissessão com as seguintes regras:
 
 - A linha de comando do GameHost continua sem URL, token, senha ou sessão.
 - O HWND é tratado como identificador opaco e validado contra o PID esperado tanto no runtime quanto antes da incorporação.
-- O proxy precisa pertencer ao processo do launcher; `DetachIfParent` só atua quando ele ainda é o pai atual.
+- O proxy precisa pertencer ao processo do launcher; `ParkIfParent` e `DetachIfParent` só atuam quando ele ainda é o pai atual. Sessões fora da grade permanecem filhas do HWND de estacionamento.
 - Settings não armazenam identidade secreta, tokens, cookies, URLs autenticadas, PID ou HWND.
 - O ActiveX permanece registration-free e restrito ao processo GameHost.
 - O monitor do processo pai recebe apenas o PID não sensível já presente na linha de comando interna e não amplia o conteúdo do IPC.
