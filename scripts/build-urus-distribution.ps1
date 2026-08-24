@@ -70,6 +70,81 @@ function Assert-FileExists {
     }
 }
 
+function Assert-JsonStringsHaveNoRawControlCharacters {
+    param(
+        [Parameter(Mandatory)]
+        [byte[]]$Bytes
+    )
+
+    $inString = $false
+    $escaping = $false
+    foreach ($byteValue in $Bytes) {
+        if ($escaping) {
+            $escaping = $false
+            continue
+        }
+
+        if ($inString) {
+            if ($byteValue -eq 0x5C) {
+                $escaping = $true
+                continue
+            }
+
+            if ($byteValue -eq 0x22) {
+                $inString = $false
+                continue
+            }
+
+            if ($byteValue -lt 0x20) {
+                throw 'update-manifest.json contains an unescaped control character in a JSON string.'
+            }
+
+            continue
+        }
+
+        if ($byteValue -eq 0x22) {
+            $inString = $true
+        }
+    }
+}
+
+function Assert-ValidUpdateManifest {
+    param(
+        [Parameter(Mandatory)]
+        [string]$Path
+    )
+
+    $bytes = [System.IO.File]::ReadAllBytes($Path)
+    if ($bytes.Length -ge 3 -and
+        $bytes[0] -eq 0xEF -and
+        $bytes[1] -eq 0xBB -and
+        $bytes[2] -eq 0xBF) {
+        throw 'update-manifest.json must be UTF-8 without a BOM.'
+    }
+
+    Assert-JsonStringsHaveNoRawControlCharacters $bytes
+
+    $utf8 = [System.Text.UTF8Encoding]::new($false, $true)
+    $text = $utf8.GetString($bytes)
+    try {
+        $parsed = $text | ConvertFrom-Json
+    }
+    catch {
+        throw 'update-manifest.json is not valid JSON.'
+    }
+
+    if ($null -eq $parsed.schema -or
+        $null -eq $parsed.repository -or
+        $null -eq $parsed.version -or
+        $null -eq $parsed.installer -or
+        $null -eq $parsed.notes -or
+        $null -eq $parsed.notes.'pt-BR' -or
+        $null -eq $parsed.notes.'en-US' -or
+        $null -eq $parsed.notes.'es-ES') {
+        throw 'update-manifest.json is missing required fields.'
+    }
+}
+
 function Write-Utf8NoBomFile {
     param(
         [Parameter(Mandatory)]
@@ -545,7 +620,9 @@ $updateManifest = [ordered]@{
     }
     notes = $localizedNotes
 }
+# ConvertTo-Json escapes newlines in notes. Never rewrite this file with a here-string.
 Write-Utf8NoBomFile $updateManifestPath ($updateManifest | ConvertTo-Json -Depth 5)
+Assert-ValidUpdateManifest $updateManifestPath
 
 $releaseNotesPath = Join-Path $distributionRoot 'RELEASE_NOTES.md'
 $releaseNotesMarkdown = [System.Collections.Generic.List[string]]::new()

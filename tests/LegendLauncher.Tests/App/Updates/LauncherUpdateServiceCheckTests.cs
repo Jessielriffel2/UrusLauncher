@@ -297,6 +297,61 @@ public sealed class LauncherUpdateServiceCheckTests
     }
 
     [Fact]
+    public async Task ManifestWithUnescapedNewlinesIsRejected()
+    {
+        using var directory = new TemporaryUpdateDirectory();
+        using var handler = new QueueHttpMessageHandler();
+        JsonObject manifest = UpdateTestData.CreateManifest();
+        byte[] invalidManifest = """
+            {
+              "schema": 1,
+              "repository": "Jessielriffel2/UrusLauncher",
+              "version": "1.2.3",
+              "installer": {
+                "name": "UrusLauncher-Setup-1.2.3-win-x64.exe",
+                "bytes": 1,
+                "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              },
+              "notes": {
+                "pt-BR": "- primeira
+            - segunda",
+                "en-US": "English notes",
+                "es-ES": "Notas en español"
+              }
+            }
+            """u8.ToArray();
+        JsonObject release = UpdateTestData.CreateRelease(manifest);
+        release["assets"]![0]!["size"] = invalidManifest.LongLength;
+        release["assets"]![0]!["digest"] =
+            $"sha256:{Convert.ToHexString(SHA256.HashData(invalidManifest)).ToLowerInvariant()}";
+        handler.Enqueue(UpdateTestData.Response(UpdateTestData.Serialize(release)));
+        handler.Enqueue(UpdateTestData.Response(invalidManifest));
+        var service = CreateService(handler, directory);
+
+        await Assert.ThrowsAsync<InvalidDataException>(() =>
+            service.CheckForUpdateAsync(new Version(1, 0, 0)));
+    }
+
+    [Fact]
+    public async Task ManifestWithEscapedMultilineNotesIsAccepted()
+    {
+        using var directory = new TemporaryUpdateDirectory();
+        using var handler = new QueueHttpMessageHandler();
+        JsonObject manifest = UpdateTestData.CreateManifest();
+        manifest["notes"]!["pt-BR"] = "- primeira\n- segunda";
+        manifest["notes"]!["en-US"] = "- first\n- second";
+        manifest["notes"]!["es-ES"] = "- primera\n- segunda";
+        UpdateTestData.EnqueueCheck(handler, manifest);
+        var service = CreateService(handler, directory);
+
+        LauncherUpdateRelease? update =
+            await service.CheckForUpdateAsync(new Version(1, 0, 0));
+
+        Assert.NotNull(update);
+        Assert.Equal("- primeira\n- segunda", update.LocalizedNotes["pt-BR"]);
+    }
+
+    [Fact]
     public async Task AllowedGitHubRedirectIsFollowedManually()
     {
         using var directory = new TemporaryUpdateDirectory();

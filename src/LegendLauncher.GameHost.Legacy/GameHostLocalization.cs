@@ -19,7 +19,6 @@ internal enum GameHostText
     VerifiedFolderLabel,
     MissingFlashActiveXFromManifest,
     ProcessAnchorTitle,
-    ProcessAnchorDescription,
 }
 
 internal static class GameHostLocalization
@@ -55,8 +54,6 @@ internal static class GameHostLocalization
                 [GameHostText.MissingFlashActiveXFromManifest] =
                     "Flash ActiveX referenciado pelo manifesto",
                 [GameHostText.ProcessAnchorTitle] = "Urus GameHost",
-                [GameHostText.ProcessAnchorDescription] =
-                    "Este é o processo do jogo. No Cheat Engine x64, abra LegendLauncher.GameHost.Legacy.exe — não o UrusLauncher.App.exe.",
             },
             ["en-US"] = new Dictionary<GameHostText, string>
             {
@@ -82,8 +79,6 @@ internal static class GameHostLocalization
                 [GameHostText.MissingFlashActiveXFromManifest] =
                     "Flash ActiveX referenced by the manifest",
                 [GameHostText.ProcessAnchorTitle] = "Urus GameHost",
-                [GameHostText.ProcessAnchorDescription] =
-                    "This is the game process. In Cheat Engine x64, open LegendLauncher.GameHost.Legacy.exe — not UrusLauncher.App.exe.",
             },
             ["es-ES"] = new Dictionary<GameHostText, string>
             {
@@ -109,8 +104,6 @@ internal static class GameHostLocalization
                 [GameHostText.MissingFlashActiveXFromManifest] =
                     "Flash ActiveX al que hace referencia el manifiesto",
                 [GameHostText.ProcessAnchorTitle] = "Urus GameHost",
-                [GameHostText.ProcessAnchorDescription] =
-                    "Este es el proceso del juego. En Cheat Engine x64, abra LegendLauncher.GameHost.Legacy.exe — no UrusLauncher.App.exe.",
             },
         };
 

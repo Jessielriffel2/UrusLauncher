@@ -52,6 +52,10 @@ public sealed class WindowsDistributionContractTests
         Assert.Contains("distribution-manifest.json", source);
         Assert.Contains("SHA256SUMS.txt", source);
         Assert.Contains("update-manifest.json", source);
+        Assert.Contains("Assert-ValidUpdateManifest $updateManifestPath", source);
+        Assert.Contains("must be UTF-8 without a BOM", source);
+        Assert.Contains("unescaped control character in a JSON string", source);
+        Assert.Contains("Never rewrite this file with a here-string", source);
         Assert.Contains("RELEASE_NOTES.md", source);
         Assert.Contains("repository = 'Jessielriffel2/UrusLauncher'", source);
         Assert.Contains("Write-Utf8NoBomFile", source);

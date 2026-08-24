@@ -2,7 +2,7 @@
 
 Fonte da verdade para a estrutura e os módulos do projeto.
 
-- **Última atualização:** 2026-08-23
+- **Última atualização:** 2026-08-24
 - **Raiz:** `LegendLauncherNext/`
 - **Escopo da árvore:** fontes, testes e documentação; `bin/`, `obj/` e `artifacts/` são saídas geradas e ficam fora.
 
@@ -42,7 +42,8 @@ LegendLauncherNext/
 │   │   ├── v1.1.5.json
 │   │   ├── v1.1.6.json
 │   │   ├── v1.1.7.json
-│   │   └── v1.1.8.json
+│   │   ├── v1.1.8.json
+│   │   └── v1.1.9.json
 │   └── modulos/
 │       ├── atualizacao.md
 │       ├── branding.md
@@ -370,12 +371,13 @@ LegendLauncherNext/
 | `docs/releases/v1.1.6.json` | Fonte trilíngue do manifesto UTF-8 sem BOM, âncora Cheat Engine e CET desligado. |
 | `docs/releases/v1.1.7.json` | Fonte trilíngue da busca de perfis, estacionamento do GameHost, agrupamento no layout 2 e busca com cursor no início. |
 | `docs/releases/v1.1.8.json` | Fonte trilíngue do log de falhas em Documentos/uruslauncher/logs, com data/hora e detalhes técnicos sem senha. |
+| `docs/releases/v1.1.9.json` | Fonte trilíngue da âncora oculta do GameHost, sem popup do Cheat Engine no login. |
 | `src/LegendLauncher.App/GameHosting/GameHostParkingSurface.cs` | HWND oculto do launcher onde sessões fora da grade ficam como `WS_CHILD`, sem reaparecer como janela de jogo solta. |
 | `src/LegendLauncher.App/Updates/UpdateManifestValidator.cs` | Validador único do manifesto normal e alternativo, mantendo versão, setup, bytes, SHA-256 e notas trilíngues sob o mesmo contrato. |
 | `tests/LegendLauncher.Tests/App/Updates/LauncherUpdateServiceFallbackTests.cs` | Contratos do fallback exclusivo para rate limit `403`/`429`, redirects permitidos e rejeição de rotas/documentos inválidos. |
 | `.github/workflows/release.yml` | Tenta gerar e publicar GitHub Release quando uma tag `vMAJOR.MINOR.PATCH` é enviada; exige uma fonte licenciada do runtime no runner. A execução disparada pela tag 1.1.4 foi cancelada e a versão foi publicada manualmente a partir do build local autorizado. |
 | `docs/modulos/game-session-workspace.md` | Contrato funcional e técnico do workspace multissessão. |
-| `docs/modulos/game-host-legacy.md` | Isolamento Flash, IPC, âncora visível a ferramentas de memória x64 e CET desligado nos executáveis. |
+| `docs/modulos/game-host-legacy.md` | Isolamento Flash, IPC, âncora oculta para ferramentas de memória x64 e CET desligado nos executáveis. |
 | `docs/modulos/localizacao.md` | Contrato dos três idiomas, atualização em runtime, limites e integração com settings/GameHost. |
 | `docs/modulos/donation-prompt.md` | Contrato temporal, visual, de integridade do QR, PIX, acessibilidade e persistência do pedido de apoio. |
 | `installer/UrusLauncher.iss` | Receita Inno Setup x64, per-user e trilíngue do instalador Urus Launcher. |

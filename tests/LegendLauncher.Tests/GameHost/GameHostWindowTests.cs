@@ -50,12 +50,12 @@ public sealed class GameHostWindowTests
     }
 
     [Fact]
-    public void ProcessAnchor_RemainsTopLevelForExternalMemoryTools()
+    public void ProcessAnchor_RemainsTopLevelForExternalMemoryToolsWithoutShowingUi()
     {
         var result = RunInSta(() =>
         {
-            using var form = new GameHostProcessAnchorForm();
-            _ = form.Handle;
+            using GameHostProcessAnchorForm form = GameHostProcessAnchorForm.Start();
+            Application.DoEvents();
             form.Close();
             return (
                 form.Text,
@@ -63,17 +63,28 @@ public sealed class GameHostWindowTests
                 form.FormBorderStyle,
                 form.IsEnumeratedByExternalWindowTools,
                 form.IsDisposed,
-                form.WindowState);
+                form.WindowState,
+                form.Opacity,
+                form.Location,
+                form.Controls.Count,
+                form.ClientSize.Width,
+                form.ClientSize.Height);
         });
 
         Assert.Equal(
             GameHostLocalization.Get(GameHostText.ProcessAnchorTitle),
             result.Text);
-        Assert.True(result.ShowInTaskbar);
+        Assert.False(result.ShowInTaskbar);
         Assert.Equal(FormBorderStyle.FixedSingle, result.FormBorderStyle);
         Assert.True(result.IsEnumeratedByExternalWindowTools);
         Assert.False(result.IsDisposed);
         Assert.Equal(FormWindowState.Minimized, result.WindowState);
+        Assert.Equal(0, result.Opacity);
+        Assert.True(result.Location.X <= -30000);
+        Assert.True(result.Location.Y <= -30000);
+        Assert.Equal(0, result.Count);
+        Assert.Equal(1, result.Width);
+        Assert.Equal(1, result.Height);
     }
 
     [Theory]

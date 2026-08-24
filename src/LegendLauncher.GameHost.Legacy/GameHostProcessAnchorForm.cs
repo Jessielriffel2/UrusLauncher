@@ -1,42 +1,36 @@
 namespace LegendLauncher.GameHost.Legacy;
 
 /// <summary>
-/// Keeps a top-level, taskbar-visible window in the GameHost process so memory tools
-/// can find the Flash process after the session form is reparented into the launcher.
+/// Keeps a top-level HWND in the GameHost process so memory tools can find Flash
+/// after the session form is reparented. The window stays off-screen and invisible.
 /// </summary>
 internal sealed class GameHostProcessAnchorForm : Form
 {
     internal const int ExtendedStyleAppWindow = 0x00040000;
     internal const int ExtendedStyleToolWindow = 0x00000080;
+    private const int ExtendedStyleNoActivate = 0x08000000;
+    private const int OffScreenCoordinate = -32000;
+    private const int WmSysCommand = 0x0112;
+    private const int SystemCommandRestore = 0xF120;
+    private const int SystemCommandMaximize = 0xF030;
+    private bool _hidingFromUser;
 
     internal GameHostProcessAnchorForm()
     {
         Text = GameHostLocalization.Get(GameHostText.ProcessAnchorTitle);
         FormBorderStyle = FormBorderStyle.FixedSingle;
-        ShowInTaskbar = true;
-        ShowIcon = true;
-        ControlBox = true;
-        MinimizeBox = true;
+        ShowInTaskbar = false;
+        ShowIcon = false;
+        ControlBox = false;
+        MinimizeBox = false;
         MaximizeBox = false;
         StartPosition = FormStartPosition.Manual;
-        ClientSize = new Size(420, 96);
-        MinimumSize = new Size(360, 120);
-        MaximumSize = new Size(640, 180);
-        BackColor = Color.FromArgb(8, 13, 24);
-        ForeColor = Color.FromArgb(244, 247, 251);
-        Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point);
-        Padding = new Padding(16);
-        Controls.Add(new Label
-        {
-            Dock = DockStyle.Fill,
-            AutoSize = false,
-            Text = GameHostLocalization.Get(GameHostText.ProcessAnchorDescription),
-            ForeColor = Color.FromArgb(170, 182, 200),
-        });
+        MinimumSize = new Size(1, 1);
+        MaximumSize = new Size(1, 1);
+        HideFromUser();
     }
 
     internal bool IsEnumeratedByExternalWindowTools =>
-        ShowInTaskbar &&
         FormBorderStyle != FormBorderStyle.None &&
         (CreateParams.ExStyle & ExtendedStyleAppWindow) != 0 &&
         (CreateParams.ExStyle & ExtendedStyleToolWindow) == 0;
@@ -46,7 +40,7 @@ internal sealed class GameHostProcessAnchorForm : Form
         get
         {
             CreateParams createParams = base.CreateParams;
-            createParams.ExStyle |= ExtendedStyleAppWindow;
+            createParams.ExStyle |= ExtendedStyleAppWindow | ExtendedStyleNoActivate;
             createParams.ExStyle &= ~ExtendedStyleToolWindow;
             return createParams;
         }
@@ -55,7 +49,19 @@ internal sealed class GameHostProcessAnchorForm : Form
     protected override void OnShown(EventArgs e)
     {
         base.OnShown(e);
-        WindowState = FormWindowState.Minimized;
+        HideFromUser();
+    }
+
+    protected override void OnActivated(EventArgs e)
+    {
+        base.OnActivated(e);
+        HideFromUser();
+    }
+
+    protected override void OnResize(EventArgs e)
+    {
+        base.OnResize(e);
+        HideFromUser();
     }
 
     protected override void OnFormClosing(FormClosingEventArgs e)
@@ -63,17 +69,54 @@ internal sealed class GameHostProcessAnchorForm : Form
         if (e.CloseReason == CloseReason.UserClosing)
         {
             e.Cancel = true;
-            WindowState = FormWindowState.Minimized;
+            HideFromUser();
             return;
         }
 
         base.OnFormClosing(e);
     }
 
+    protected override void WndProc(ref Message message)
+    {
+        if (message.Msg == WmSysCommand)
+        {
+            int command = message.WParam.ToInt32() & 0xFFF0;
+            if (command is SystemCommandRestore or SystemCommandMaximize)
+            {
+                HideFromUser();
+                return;
+            }
+        }
+
+        base.WndProc(ref message);
+    }
+
     internal static GameHostProcessAnchorForm Start()
     {
         var form = new GameHostProcessAnchorForm();
         form.Show();
+        form.HideFromUser();
         return form;
+    }
+
+    private void HideFromUser()
+    {
+        if (_hidingFromUser)
+        {
+            return;
+        }
+
+        _hidingFromUser = true;
+        try
+        {
+            Opacity = 0;
+            WindowState = FormWindowState.Minimized;
+            Location = new Point(OffScreenCoordinate, OffScreenCoordinate);
+            ClientSize = new Size(1, 1);
+        }
+        finally
+        {
+            _hidingFromUser = false;
+        }
     }
 }

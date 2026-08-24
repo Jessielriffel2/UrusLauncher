@@ -51,7 +51,7 @@ A consulta ocorre uma vez em cada abertura, logo depois de carregar as preferên
 
 Cada versão possui uma definição fonte em `docs/releases/vX.Y.Z.json`, com `schemaVersion`, versão, título e notas em `pt-BR`, `en-US` e `es-ES`. O pipeline converte essa definição em:
 
-- `update-manifest.json`, consumido pelo launcher e contendo o instalador, bytes, SHA-256 e notas trilíngues, sempre em UTF-8 **sem** BOM; o parser também ignora um BOM se um asset antigo ainda o tiver;
+- `update-manifest.json`, consumido pelo launcher e contendo o instalador, bytes, SHA-256 e notas trilíngues, sempre em UTF-8 **sem** BOM e com quebras de linha **escapadas** dentro das strings; o parser ignora um BOM se um asset antigo ainda o tiver, mas recusa JSON inválido;
 - `RELEASE_NOTES.md`, usado como corpo do GitHub Release;
 - registros correspondentes em `distribution-manifest.json` e `SHA256SUMS.txt`.
 
@@ -93,13 +93,13 @@ Antes de existir um primeiro release válido, a consulta pode apresentar falha r
 
 ## Testes
 
-- `LauncherUpdateServiceCheckTests.cs:7` cobre versão, manifesto, notas, URLs, redirects, limites, duplicatas, BOM UTF-8 e falhas de contrato.
+- `LauncherUpdateServiceCheckTests.cs:7` cobre versão, manifesto, notas, URLs, redirects, limites, duplicatas, BOM UTF-8, quebras de linha sem escape nas notas e falhas de contrato.
 - `LauncherUpdateServiceFallbackTests.cs:8` cobre `403`/`429`, redirect permitido, recusa de fallback para `500`/JSON inválido/erro posterior e rejeição de manifesto alternativo inválido.
 - `LauncherUpdateServiceDownloadTests.cs:8` cobre streaming, progresso, tamanho, SHA-256, `.part`, confinamento, reutilização exata de cache, substituição de cache inválido e argumentos do setup.
 - `UpdateDownloadCleanupTests.cs:6` cobre idade mínima, reconhecimento exato, escopo top-level e tolerância a arquivo em uso/inacessível.
 - `LauncherUpdateViewModelTests.cs:10` cobre consulta e download automáticos na abertura, `ReadyToInstall`, execução somente após **INSTALAR**, jogo disponível durante download, nova verificação em `Current`/`Failed`, idioma dinâmico e bloqueio da instalação com sessão ativa ou login ainda em abertura.
 - `LauncherUpdateLayoutTests.cs:3` fixa cartão inferior esquerdo, popup, ações e bindings.
-- `GitHubReleaseContractTests.cs:5` fixa workflow por tag, ausência de PAT incorporado e definições trilíngues versionadas, incluindo a 1.1.8.
+- `GitHubReleaseContractTests.cs:5` fixa workflow por tag, ausência de PAT incorporado e definições trilíngues versionadas, incluindo a 1.1.9.
 - `AppPathsTests.cs:18` fixa o diretório de updates sob a raiz privada do aplicativo.
 
-Na alteração desta política, o conjunto focado de updater, localização e contratos de distribuição concluiu **82/82**. A suíte completa concluiu **507/507** em Release.
+Na alteração desta política, o conjunto focado de updater, localização e contratos de distribuição concluiu **82/82**. A suíte completa concluiu **510/510** em Release.

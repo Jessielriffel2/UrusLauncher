@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "version": "1.1.9",
+  "title": {
+    "pt-BR": "Janela do GameHost some no login",
+    "en-US": "GameHost window no longer appears at login",
+    "es-ES": "La ventana de GameHost ya no aparece al entrar"
+  },
+  "notes": {
+    "pt-BR": [
+      "Ao entrar na conta, a janela Urus GameHost com texto do Cheat Engine deixa de aparecer. O processo do jogo continua anexável por ferramentas de memória x64, sem popup nem botão extra na barra de tarefas.",
+      "O log de falhas em Documentos/uruslauncher/logs, a busca de perfis e o estacionamento do jogo da 1.1.8 continuam nesta versão."
+    ],
+    "en-US": [
+      "Signing in no longer shows the Urus GameHost window with Cheat Engine text. The game process remains attachable to 64-bit memory tools, without a popup or extra taskbar button.",
+      "Failure logs in Documents/uruslauncher/logs, profile search, and parked game windows from 1.1.8 remain in this version."
+    ],
+    "es-ES": [
+      "Al entrar en la cuenta, la ventana Urus GameHost con texto de Cheat Engine deja de aparecer. El proceso del juego sigue pudiendo adjuntarse a herramientas de memoria x64, sin popup ni botón extra en la barra de tareas.",
+      "El registro de fallos en Documentos/uruslauncher/logs, la búsqueda de perfiles y el estacionamiento del juego de la 1.1.8 siguen en esta versión."
+    ]
+  }
+}

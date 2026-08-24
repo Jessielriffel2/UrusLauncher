@@ -2,11 +2,21 @@
 
 As mudanças relevantes do Urus Launcher são registradas aqui. As versões públicas seguem versionamento semântico e são publicadas em `vMAJOR.MINOR.PATCH`.
 
+## 1.1.9 — 23/08/2026
+
+### Corrigido
+
+- A âncora do GameHost deixa de abrir a janela visível com texto do Cheat Engine ao entrar na conta. O HWND top-level permanece oculto para ferramentas de memória x64.
+
 ## 1.1.8 — 23/08/2026
 
 ### Adicionado
 
 - Falhas que não sejam login aceito e jogo aberto são gravadas em `Documentos/uruslauncher/logs`, com data/hora, operação, detalhes técnicos e texto da exceção, sem senha.
+
+### Corrigido
+
+- O `update-manifest.json` da 1.1.8 foi republicado em JSON válido. A consulta da 1.1.7 deixa de falhar na preparação da atualização.
 
 ## 1.1.7 — 21/08/2026
 
