@@ -36,6 +36,38 @@ internal sealed partial class MainWindowViewModel
         }
     }
 
+    private async Task ApplyLaunchedProfileAsync(
+        AccountProfile? requestedProfile,
+        AccountProfile launchedProfile,
+        bool wasProfilePersisted)
+    {
+        if (requestedProfile is not null && requestedProfile.Id == launchedProfile.Id)
+        {
+            ProfileItemViewModel? requestedItem = Profiles
+                .FirstOrDefault(profile => profile.Model.Id == requestedProfile.Id);
+            ReplaceProfile(requestedItem, launchedProfile);
+            if (wasProfilePersisted)
+            {
+                await LoadServersAsync(forceRefresh: false).ConfigureAwait(true);
+            }
+            else
+            {
+                RefreshRecentServers();
+            }
+
+            return;
+        }
+
+        if (wasProfilePersisted)
+        {
+            await LoadProfilesAsync(launchedProfile.Id).ConfigureAwait(true);
+            await LoadServersAsync(forceRefresh: false).ConfigureAwait(true);
+            return;
+        }
+
+        RefreshRecentServers();
+    }
+
     private void ReplaceProfile(ProfileItemViewModel? original, AccountProfile updated)
     {
         if (original is null)
@@ -92,8 +124,14 @@ internal sealed partial class MainWindowViewModel
                 ? "Profile_SavedWithCredential"
                 : "Profile_SavedWithoutCredential");
         }
-        catch (Exception)
+        catch (Exception exception)
         {
+            LogFailure(
+                "profile.save",
+                "The account profile could not be saved.",
+                exception,
+                ("platformId", SelectedPlatform.Id),
+                ("login", userName));
             SetStatusMessage("Profile_SaveFailed");
             CatalogStatusBrush = ErrorBrush;
         }
@@ -120,8 +158,14 @@ internal sealed partial class MainWindowViewModel
 
             SetStatusMessage("Profile_Deleted");
         }
-        catch (Exception)
+        catch (Exception exception)
         {
+            LogFailure(
+                "profile.delete",
+                "The account profile could not be deleted.",
+                exception,
+                ("profileId", profile.Model.Id.ToString()),
+                ("login", profile.Model.UserName));
             SetStatusMessage("Profile_DeleteFailed");
             CatalogStatusBrush = ErrorBrush;
         }
@@ -182,7 +226,11 @@ internal sealed partial class MainWindowViewModel
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
         {
-            // The current selection remains valid for this run.
+            LogFailure(
+                "settings.selected_profile",
+                "The last selected profile could not be saved.",
+                exception,
+                ("profileId", profileId?.ToString()));
         }
     }
 

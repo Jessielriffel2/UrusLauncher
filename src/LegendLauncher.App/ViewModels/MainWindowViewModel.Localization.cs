@@ -117,7 +117,11 @@ internal sealed partial class MainWindowViewModel
         catch (Exception exception) when (
             exception is IOException or UnauthorizedAccessException)
         {
-            // Keep the selected language for this execution.
+            LogFailure(
+                "language.persist",
+                "The selected language could not be saved.",
+                exception,
+                ("languageCode", languageCode));
         }
     }
 

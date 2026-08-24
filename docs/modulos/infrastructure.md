@@ -10,9 +10,13 @@ O módulo não lê nem migra dados do cliente antigo. Chaves do cofre devem come
 
 | Referência aproximada | Tipo/função | Responsabilidade, entrada e saída |
 | --- | --- | --- |
-| `src/LegendLauncher.Infrastructure/Paths/AppPaths.cs:6` | `AppPaths` | Calcula caminhos sob `%LocalAppData%\LegendLauncherNext`. Expõe raiz, cache, dados e updates. |
+| `src/LegendLauncher.Infrastructure/Paths/AppPaths.cs:6` | `AppPaths` | Calcula caminhos sob `%LocalAppData%\LegendLauncherNext` e o diretório visível de logs em `Documentos/uruslauncher/logs`. Expõe raiz, cache, dados, updates e logs. |
 | `src/LegendLauncher.Infrastructure/Paths/AppPaths.cs:42` | `UpdatesDirectory` | Define `%LocalAppData%\LegendLauncherNext\updates`, separado de cache/dados e usado somente por instaladores temporários/validados. |
-| `src/LegendLauncher.Infrastructure/Paths/AppPaths.cs:65` | `EnsureDirectories()` | Cria somente `cache/`, `data/` e `updates/` pertencentes ao launcher novo. |
+| `src/LegendLauncher.Infrastructure/Paths/AppPaths.cs:86` | `LogsDirectory` | Define `Documentos/uruslauncher/logs`, fora de `%LocalAppData%`, para o usuário localizar falhas com data e hora. |
+| `src/LegendLauncher.Infrastructure/Paths/AppPaths.cs:91` | `EnsureDirectories()` | Cria somente `cache/`, `data/` e `updates/` pertencentes ao launcher novo. Não cria a pasta de logs. |
+| `src/LegendLauncher.Infrastructure/Logging/IDiagnosticLog.cs` via Core | `IDiagnosticLog.WriteFailure(...)` | Contrato para gravar falhas que não sejam login aceito e jogo aberto. Nunca lança e nunca persiste senha/token. Referência: `src/LegendLauncher.Core/Contracts/IDiagnosticLog.cs:7`. |
+| `src/LegendLauncher.Infrastructure/Logging/FileDiagnosticLog.cs:16` | `FileDiagnosticLog` | Implementação em arquivo diário `uruslauncher-yyyyMMdd.log`, com timestamp local, versão, SO, processo, runtime, máquina, detalhes e `Exception.ToString()`. |
+| `src/LegendLauncher.Infrastructure/Logging/DiagnosticLogSanitizer.cs:7` | `DiagnosticLogSanitizer.Redact(...)` | Remove senha, token, cookie, authorization, secret e credential de texto livre, Bearer/Basic e JSON. |
 | `src/LegendLauncher.Infrastructure/Persistence/AtomicJsonFileStore.cs:10` | `AtomicJsonFileStore<TDocument>` | Primitiva JSON com trava compartilhada por caminho e opções de serialização seguras. Entrada: arquivo/documento; saída: documento tipado ou alteração persistida. |
 | `src/LegendLauncher.Infrastructure/Persistence/AtomicJsonFileStore.cs:35` | `ReadAsync(...)` | Lê um documento sob trava, devolvendo `null` quando o arquivo não existe. |
 | `src/LegendLauncher.Infrastructure/Persistence/AtomicJsonFileStore.cs:48` | `WriteAsync(...)` | Serializa para temporário no mesmo diretório e move sobre o destino; limpa o temporário em falhas. |
@@ -45,6 +49,7 @@ O módulo não lê nem migra dados do cliente antigo. Chaves do cofre devem come
 - `%LocalAppData%\LegendLauncherNext\data\profiles.json` armazena perfis sem senha: identidade, chave opaca e, por variante OAS, UID opcional e histórico recente de servidores. Os campos escalares legados espelham a plataforma selecionada para leitura compatível com versões anteriores.
 - `%LocalAppData%\LegendLauncherNext\data\settings.json` armazena somente mudo global, layout 1/2/4, GUID do último perfil selecionado, `languageCode` normalizado para `pt-BR`, `en-US` ou `es-ES` e `lastDonationPromptUtc`. PID, HWND, login, senha, cookie, token e URI autenticada não são persistidos.
 - `%LocalAppData%\LegendLauncherNext\updates` recebe `.part` durante download e o instalador final somente após validação. Não contém perfil, senha, cookie ou token.
+- `Documentos/uruslauncher/logs` recebe arquivos diários de falha. Login aceito e jogo aberto não são gravados. Senha, token e cookie são redigidos.
 - O Windows Credential Manager guarda `CredentialSecret` em alvos próprios; o JSON não recebe senha.
 - O probe recebe caminho configurado opcional e pasta inicial e devolve apenas metadados de diagnóstico. O App passa a raiz aprovada ao GameHost; o projeto Infrastructure não inicia esse processo.
 
@@ -58,14 +63,14 @@ O módulo não lê nem migra dados do cliente antigo. Chaves do cofre devem come
 - Atualizações de `lastDonationPromptUtc` são independentes: registrar o modal não apaga mudo, layout, perfil ou idioma. Falha recuperável de I/O não impede o modal, login ou jogo.
 - A leitura do manifesto bloqueia DTD/entidades externas e confina o caminho do OCX à raiz candidata.
 - Nenhuma classe deste módulo executa `H2Proxy.exe`; o caminho de jogo atual é direto.
-- `AppPaths` fornece apenas a raiz de updates. Download, allowlist, hashing e execução pertencem ao módulo [Atualização](atualizacao.md); Infrastructure não acessa GitHub nem inicia instalador.
+- `AppPaths` fornece a raiz de updates e o diretório visível de logs. Download, allowlist, hashing e execução pertencem ao módulo [Atualização](atualizacao.md). A gravação de log nunca impede catálogo, login ou jogo.
+- `FileDiagnosticLog` cria `Documentos/uruslauncher/logs` somente no primeiro registro de falha.
 
 ## Dependências e consumidores
 
-- O projeto referencia somente [`core.md`](core.md), cujos contratos `IServerCatalogCache`, `IProfileStore` e `ICredentialVault` são implementados aqui.
+- O projeto referencia somente [`core.md`](core.md), cujos contratos `IServerCatalogCache`, `IProfileStore`, `ICredentialVault` e `IDiagnosticLog` são implementados aqui.
 - Usa apenas APIs da plataforma .NET e interoperabilidade Win32; não possui pacote de produção adicional.
-- É consumido por [`launcher-app.md`](launcher-app.md), pelo [workspace multissessão](game-session-workspace.md), por [localizacao.md](localizacao.md), pelo [pedido de doação](donation-prompt.md) e pela [atualização](atualizacao.md) para composição, persistência, diretórios privados e diagnóstico do runtime.
-- O GameHost descrito em [`game-host-legacy.md`](game-host-legacy.md) não referencia Infrastructure. O App apenas entrega a ele a raiz previamente descoberta.
+- É consumido por [`launcher-app.md`](launcher-app.md), pelo [workspace multissessão](game-session-workspace.md), por [localizacao.md](localizacao.md), pelo [pedido de doação](donation-prompt.md), pela [atualização](atualizacao.md) e pelo [`game-host-legacy.md`](game-host-legacy.md) para composição, persistência, diretórios privados e diagnóstico de falha.
 
 ## Referências cruzadas
 
@@ -76,4 +81,4 @@ O módulo não lê nem migra dados do cliente antigo. Chaves do cofre devem come
 
 ## Testes
 
-`tests/LegendLauncher.Tests/Infrastructure/` cobre paths — inclusive `UpdatesDirectory` nas linhas 18 e 35 de `AppPathsTests.cs` —, leitura/escrita/atualização atômicas, concorrência por arquivo, cache, CRUD de perfis, validação de chaves e descoberta segura do runtime. `tests/LegendLauncher.Tests/App/ProfileStorageCoordinatorTests.cs` cobre materialização Reborn→Classic, preservação da credencial entre variantes OAS e isolamento OAS→7wan; `LauncherSettingsServiceTests.cs` cobre defaults, atualizações independentes, compatibilidade e recuperação de JSON corrompido. Os testes do updater usam diretórios temporários isolados e nunca acessam Downloads, perfis ou credenciais reais do usuário.
+`tests/LegendLauncher.Tests/Infrastructure/` cobre paths — inclusive `UpdatesDirectory` e `LogsDirectory` em `AppPathsTests.cs`/`FileDiagnosticLogTests.cs` —, redação de senha no arquivo diário, leitura/escrita/atualização atômicas, concorrência por arquivo, cache, CRUD de perfis, validação de chaves e descoberta segura do runtime. `tests/LegendLauncher.Tests/App/ProfileStorageCoordinatorTests.cs` cobre materialização Reborn→Classic, preservação da credencial entre variantes OAS e isolamento OAS→7wan; `LauncherSettingsServiceTests.cs` cobre defaults, atualizações independentes, compatibilidade e recuperação de JSON corrompido. Os testes do updater usam diretórios temporários isolados e nunca acessam Downloads, perfis ou credenciais reais do usuário.

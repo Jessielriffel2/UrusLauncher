@@ -1,5 +1,6 @@
 using LegendLauncher.Core.Contracts;
 using LegendLauncher.Core.Models;
+using LegendLauncher.Infrastructure.Logging;
 using LegendLauncher.Infrastructure.Security;
 
 namespace LegendLauncher.App.Services;
@@ -83,8 +84,15 @@ internal sealed class ProfileStorageCoordinator
                     .ConfigureAwait(false);
             }
         }
-        catch (Exception) when (!cancellationToken.IsCancellationRequested)
+        catch (Exception exception) when (!cancellationToken.IsCancellationRequested)
         {
+            DiagnosticLog.Current.WriteFailure(
+                "profile.credential_save",
+                "The credential vault operation failed after the profile metadata was saved.",
+                exception,
+                ("profileId", profile.Id.ToString()),
+                ("platformId", input.PlatformId),
+                ("rememberPassword", input.RememberPassword.ToString()));
             credentialPersisted = false;
         }
 
@@ -96,8 +104,14 @@ internal sealed class ProfileStorageCoordinator
                     .DeleteAsync(existingProfile!.CredentialKey, cancellationToken)
                     .ConfigureAwait(false);
             }
-            catch (Exception) when (!cancellationToken.IsCancellationRequested)
+            catch (Exception exception) when (!cancellationToken.IsCancellationRequested)
             {
+                DiagnosticLog.Current.WriteFailure(
+                    "profile.credential_rotate",
+                    "The previous credential could not be deleted after the account identity changed.",
+                    exception,
+                    ("profileId", profile.Id.ToString()),
+                    ("platformId", input.PlatformId));
                 credentialPersisted = false;
             }
         }

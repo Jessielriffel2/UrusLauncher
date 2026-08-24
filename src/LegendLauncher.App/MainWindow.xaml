@@ -200,31 +200,12 @@
 
                                 <Grid Grid.Row="1" Margin="0,12,0,8">
                                     <TextBox x:Name="ProfileSearchInput" Style="{StaticResource SearchInputStyle}"
-                                             Height="40" Padding="46,0,14,0"
+                                             Height="40"
+                                             Tag="{loc:Localize Profiles_SearchPlaceholder}"
                                              Text="{Binding ProfileSearchText, UpdateSourceTrigger=PropertyChanged}"
                                              PreviewMouseLeftButtonDown="SearchInput_OnPreviewMouseLeftButtonDown"
                                              GotKeyboardFocus="SearchInput_OnGotKeyboardFocus"
                                              AutomationProperties.Name="{loc:Localize Profiles_SearchAutomation}" />
-                                    <TextBlock Text="&#xE721;" FontFamily="Segoe Fluent Icons" FontSize="16"
-                                               Foreground="{StaticResource TextMutedBrush}" Margin="17,0,0,0"
-                                               HorizontalAlignment="Left" VerticalAlignment="Center" IsHitTestVisible="False" />
-                                    <TextBlock Text="{loc:Localize Profiles_SearchPlaceholder}" Foreground="{StaticResource TextMutedBrush}"
-                                               FontSize="12" Margin="47,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False">
-                                        <TextBlock.Style>
-                                            <Style TargetType="TextBlock">
-                                                <Setter Property="Visibility" Value="Collapsed" />
-                                                <Style.Triggers>
-                                                    <MultiDataTrigger>
-                                                        <MultiDataTrigger.Conditions>
-                                                            <Condition Binding="{Binding Text.Length, ElementName=ProfileSearchInput}" Value="0" />
-                                                            <Condition Binding="{Binding IsKeyboardFocused, ElementName=ProfileSearchInput}" Value="False" />
-                                                        </MultiDataTrigger.Conditions>
-                                                        <Setter Property="Visibility" Value="Visible" />
-                                                    </MultiDataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </TextBlock.Style>
-                                    </TextBlock>
                                 </Grid>
 
                                 <ListBox x:Name="ProfileList" Grid.Row="2" ItemsSource="{Binding FilteredProfiles}" SelectedItem="{Binding SelectedProfile}"
@@ -391,30 +372,11 @@
                                 </Grid.ColumnDefinitions>
                                 <Grid>
                                     <TextBox x:Name="ServerSearchInput" Style="{StaticResource SearchInputStyle}"
-                                             Padding="46,0,14,0" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                                             Tag="{loc:Localize Servers_SearchPlaceholder}"
+                                             Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
                                              PreviewMouseLeftButtonDown="SearchInput_OnPreviewMouseLeftButtonDown"
                                              GotKeyboardFocus="SearchInput_OnGotKeyboardFocus"
                                              AutomationProperties.Name="{loc:Localize Servers_SearchAutomation}" />
-                                    <TextBlock Text="&#xE721;" FontFamily="Segoe Fluent Icons" FontSize="18"
-                                               Foreground="{StaticResource TextMutedBrush}" Margin="17,0,0,0"
-                                               HorizontalAlignment="Left" VerticalAlignment="Center" IsHitTestVisible="False" />
-                                    <TextBlock Text="{loc:Localize Servers_SearchPlaceholder}" Foreground="{StaticResource TextMutedBrush}"
-                                               FontSize="12" Margin="47,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False">
-                                        <TextBlock.Style>
-                                            <Style TargetType="TextBlock">
-                                                <Setter Property="Visibility" Value="Collapsed" />
-                                                <Style.Triggers>
-                                                    <MultiDataTrigger>
-                                                        <MultiDataTrigger.Conditions>
-                                                            <Condition Binding="{Binding Text.Length, ElementName=ServerSearchInput}" Value="0" />
-                                                            <Condition Binding="{Binding IsKeyboardFocused, ElementName=ServerSearchInput}" Value="False" />
-                                                        </MultiDataTrigger.Conditions>
-                                                        <Setter Property="Visibility" Value="Visible" />
-                                                    </MultiDataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </TextBlock.Style>
-                                    </TextBlock>
                                 </Grid>
                                 <TextBlock Grid.Column="1" Text="{Binding ServerCountLabel}" FontSize="11"
                                            Foreground="{StaticResource TextSecondaryBrush}"

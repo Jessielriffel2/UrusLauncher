@@ -6,6 +6,7 @@ using LegendLauncher.App.Services;
 using LegendLauncher.App.Updates;
 using LegendLauncher.Core.Contracts;
 using LegendLauncher.Core.Models;
+using LegendLauncher.Infrastructure.Logging;
 using LegendLauncher.Infrastructure.Runtime;
 using LegendLauncher.Infrastructure.Security;
 
@@ -24,6 +25,7 @@ internal sealed partial class MainWindowViewModel : ObservableObject, IDisposabl
     private readonly LauncherSettingsService _settingsService;
     private readonly LegacyRuntimeProbeResult _runtimeProbe;
     private readonly Action<int> _terminateUnadoptedProcess;
+    private readonly IDiagnosticLog _diagnosticLog;
     private readonly TimeProvider _timeProvider;
     private readonly List<ServerRowViewModel> _allServers = [];
     private CancellationTokenSource? _catalogCancellation;
@@ -63,7 +65,8 @@ internal sealed partial class MainWindowViewModel : ObservableObject, IDisposabl
         Action<int>? terminateUnadoptedProcess = null,
         LocalizationService? localization = null,
         ILauncherUpdateService? updateService = null,
-        Version? currentVersion = null)
+        Version? currentVersion = null,
+        IDiagnosticLog? diagnosticLog = null)
     {
         _serverDirectory = serverDirectory;
         _profileStorage = profileStorage;
@@ -74,6 +77,7 @@ internal sealed partial class MainWindowViewModel : ObservableObject, IDisposabl
         _localization = localization ?? LocalizationService.Current;
         _terminateUnadoptedProcess = terminateUnadoptedProcess ??
             SessionLaunchCoordinator.TryTerminateProcess;
+        _diagnosticLog = diagnosticLog ?? DiagnosticLog.Current;
         Workspace = workspace ?? new GameWorkspaceViewModel(
             new GameAudioService(static (_, _) => { }, TimeSpan.FromHours(1)),
             _settingsService,
@@ -544,6 +548,7 @@ internal sealed partial class MainWindowViewModel : ObservableObject, IDisposabl
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
         {
+            LogFailure("settings.load", "Launcher settings could not be loaded.", exception);
             SetStatusMessage("Settings_LoadFailed");
         }
 
@@ -556,7 +561,7 @@ internal sealed partial class MainWindowViewModel : ObservableObject, IDisposabl
         }
         catch (Exception exception)
         {
-            System.Diagnostics.Debug.WriteLine($"Profile loading failed: {exception}");
+            LogFailure("profiles.load", "Saved profiles could not be loaded.", exception);
             SetStatusMessage("Profiles_LoadFailed");
             CatalogStatusBrush = ErrorBrush;
         }
@@ -582,168 +587,6 @@ internal sealed partial class MainWindowViewModel : ObservableObject, IDisposabl
         Workspace.Dispose();
     }
 
-    internal async Task StartGameAsync()
-    {
-        if (SelectedProfile?.Model is { } activeProfile &&
-            SelectedServer?.Model is { } activeServer &&
-            Workspace.TryActivateSession(
-                activeProfile.Id,
-                SelectedPlatform.Id,
-                activeServer.Id))
-        {
-            IsWorkspaceVisible = true;
-            SetCatalogStatus("Session_AlreadyActive");
-            CatalogStatusBrush = OnlineBrush;
-            SetStatusMessage("Session_AlreadyActiveMessage");
-            return;
-        }
-
-        if (!CanStartGame || SelectedServer is null)
-        {
-            SetStatusMessage(_runtimeProbe.IsUsable
-                ? "Session_ChooseServerAndLogin"
-                : "Runtime_NotAvailable");
-            CatalogStatusBrush = WarningBrush;
-            return;
-        }
-
-
-        ProfileItemViewModel? requestedProfile = SelectedProfile;
-        PlatformDefinition launchedPlatform = SelectedPlatform.Model;
-        GameServer launchedServer = SelectedServer.Model;
-        var launchInput = new SessionLaunchInput(
-            requestedProfile?.Model,
-            launchedPlatform,
-            launchedServer,
-            ProfileLabel.Trim(),
-            LoginHint.Trim(),
-            PendingPassword,
-            RememberPassword);
-
-        await LaunchAsync(launchInput);
-    }
-
-    private async Task LaunchAsync(SessionLaunchInput launchInput)
-    {
-        _launchCancellation?.Cancel();
-        _launchCancellation?.Dispose();
-        var launchCancellation = new CancellationTokenSource();
-        _launchCancellation = launchCancellation;
-        CancellationToken cancellationToken = launchCancellation.Token;
-
-        IsLaunching = true;
-        SetCatalogStatus("Auth_Authenticating");
-        CatalogStatusBrush = WarningBrush;
-        SetStatusMessage("Auth_Connecting");
-
-        GameSession? pendingGameSession = null;
-        bool gameSessionAdopted = false;
-        try
-        {
-            SessionLaunchOutcome outcome = await _sessionLauncher
-                .LaunchAsync(launchInput, cancellationToken)
-                .ConfigureAwait(true);
-            if (outcome.State == SessionLaunchState.CredentialRequired)
-            {
-                SetCatalogStatus("Auth_PasswordRequired");
-                CatalogStatusBrush = WarningBrush;
-                SetStatusMessage("Auth_PasswordRequiredMessage");
-                return;
-            }
-
-            if (outcome.State == SessionLaunchState.AuthenticationRejected)
-            {
-                CatalogStatusBrush = ErrorBrush;
-                IsProfileEditorVisible = true;
-                if (outcome.CredentialSource == SessionCredentialSource.Stored &&
-                    IsCredentialRejection(outcome.ErrorCode))
-                {
-                    HasSavedCredential = false;
-                    IsProfileEditorVisible = true;
-                    SetCatalogStatus("Auth_RetypePassword");
-                    SetStatusMessage("Auth_SavedPasswordRejected");
-                    return;
-                }
-
-                SetCatalogStatus("Auth_LoginNotConfirmed");
-                SetStatusMessage(BuildAuthenticationFailureKey(outcome.ErrorCode),
-                    string.IsNullOrWhiteSpace(outcome.ErrorCode) ? [] : [outcome.ErrorCode]);
-                return;
-            }
-
-            GameSession gameSession = outcome.GameSession ??
-                throw new InvalidOperationException("The session launcher returned no game process.");
-            pendingGameSession = gameSession;
-            AccountProfile launchedProfile = outcome.EffectiveProfile ??
-                throw new InvalidOperationException("The session launcher returned no profile snapshot.");
-            if (outcome.WasProfilePersisted)
-            {
-                if (launchInput.Profile is { Id: var requestedId } && requestedId == launchedProfile.Id)
-                {
-                    ProfileItemViewModel? requestedItem = Profiles
-                        .FirstOrDefault(profile => profile.Model.Id == requestedId);
-                    ReplaceProfile(requestedItem, launchedProfile);
-                }
-                else
-                {
-                    await LoadProfilesAsync(launchedProfile.Id).ConfigureAwait(true);
-                }
-
-                await LoadServersAsync(forceRefresh: false).ConfigureAwait(true);
-            }
-
-            PendingPassword = string.Empty;
-            Workspace.AddSession(
-                launchedProfile,
-                launchInput.Platform,
-                launchInput.Server,
-                gameSession);
-            gameSessionAdopted = true;
-            NotifyGameReadiness();
-            IsWorkspaceVisible = true;
-            ShowWorkspaceCommand.NotifyCanExecuteChanged();
-            SetCatalogStatus("Game_Started");
-            CatalogStatusBrush = OnlineBrush;
-            SetStatusMessage(
-                !outcome.WasProfilePersisted
-                    ? "Game_ProfileUpdateFailed"
-                    : !outcome.WasCredentialPersisted
-                        ? "Game_CredentialSaveFailed"
-                        : "Game_Opened",
-                gameSession.ProcessId);
-        }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-        {
-            SetCatalogStatus("Game_Cancelled");
-            CatalogStatusBrush = MutedBrush;
-            SetStatusMessage("Game_CancelledMessage");
-        }
-        catch (Exception)
-        {
-            SetCatalogStatus("Game_StartFailed");
-            CatalogStatusBrush = ErrorBrush;
-            SetStatusMessage("Game_StartFailedMessage");
-        }
-        finally
-        {
-            if (pendingGameSession is not null &&
-                !gameSessionAdopted &&
-                !Workspace.Sessions.Any(session =>
-                    session.ProcessId == pendingGameSession.ProcessId &&
-                    session.NativeWindowHandle == pendingGameSession.NativeWindowHandle))
-            {
-                _terminateUnadoptedProcess(pendingGameSession.ProcessId);
-            }
-
-            if (ReferenceEquals(_launchCancellation, launchCancellation))
-            {
-                _launchCancellation = null;
-            }
-
-            launchCancellation.Dispose();
-            IsLaunching = false;
-        }
-    }
 
     private static string BuildAuthenticationFailureKey(string? errorCode)
     {

@@ -148,6 +148,33 @@ public sealed class MainWindowViewModelTests
     }
 
     [Fact]
+    public async Task RecentServersFallBackToLastServerIdWhenPlatformHistoryIsEmpty()
+    {
+        AccountProfile profile = AppTestData.Profile("tiago@example.test", null, "100") with
+        {
+            RecentServerIds = [],
+            RecentServerIdsByPlatform = new Dictionary<string, IReadOnlyList<string>>(
+                StringComparer.OrdinalIgnoreCase)
+            {
+                [OasPlatformCatalog.Brazil.Id] = [],
+            },
+        };
+        var directory = new StubServerDirectory((_, _, _) =>
+            Task.FromResult(AppTestData.Catalog(
+                [AppTestData.Server("100"), AppTestData.Server("99")])));
+        using MainWindowViewModel viewModel = CreateViewModel(
+            directory,
+            new InMemoryProfileStore(profile),
+            new InMemoryCredentialVault());
+
+        await viewModel.InitializeAsync();
+        viewModel.SyncRecentServers();
+
+        Assert.Equal(["100"], viewModel.RecentServers.Select(server => server.Id));
+        Assert.Equal("S100", viewModel.RecentServers[0].Code);
+    }
+
+    [Fact]
     public async Task GameReadinessRequiresTypedOrSavedCredential()
     {
         AccountProfile profile = AppTestData.Profile("player@example.test", null, "100");

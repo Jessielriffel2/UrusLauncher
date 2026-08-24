@@ -17,13 +17,15 @@ public sealed class OasServerDirectory : IServerDirectory
     private readonly TimeSpan _requestTimeout;
     private readonly TimeProvider _timeProvider;
     private readonly int _maxResponseBytes;
+    private readonly Action<Exception, string>? _onRecoverableFailure;
 
     public OasServerDirectory(
         HttpClient httpClient,
         IServerCatalogCache? cache = null,
         TimeSpan? requestTimeout = null,
         TimeProvider? timeProvider = null,
-        int maxResponseBytes = DefaultMaxResponseBytes)
+        int maxResponseBytes = DefaultMaxResponseBytes,
+        Action<Exception, string>? onRecoverableFailure = null)
     {
         ArgumentNullException.ThrowIfNull(httpClient);
 
@@ -32,6 +34,7 @@ public sealed class OasServerDirectory : IServerDirectory
         _requestTimeout = requestTimeout ?? DefaultRequestTimeout;
         _timeProvider = timeProvider ?? TimeProvider.System;
         _maxResponseBytes = maxResponseBytes;
+        _onRecoverableFailure = onRecoverableFailure;
 
         if (_requestTimeout != Timeout.InfiniteTimeSpan && _requestTimeout <= TimeSpan.Zero)
         {
@@ -69,6 +72,7 @@ public sealed class OasServerDirectory : IServerDirectory
         }
         catch (Exception exception) when (IsRecoverable(exception))
         {
+            _onRecoverableFailure?.Invoke(exception, platform.Id);
             var cached = await TryReadCacheAsync(platform.Id, cancellationToken).ConfigureAwait(false);
             if (cached is not null)
             {

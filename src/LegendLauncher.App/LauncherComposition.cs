@@ -6,6 +6,7 @@ using LegendLauncher.App.ViewModels;
 using LegendLauncher.App.Localization;
 using LegendLauncher.App.Updates;
 using LegendLauncher.GameHost.Legacy;
+using LegendLauncher.Infrastructure.Logging;
 using LegendLauncher.Infrastructure.Paths;
 using LegendLauncher.Infrastructure.Persistence;
 using LegendLauncher.Infrastructure.Runtime;
@@ -35,8 +36,20 @@ internal static class LauncherComposition
         var profiles = new JsonProfileStore(paths.ProfilesFile);
         var credentialVault = new WindowsCredentialVault();
         LocalizationService localization = LocalizationService.Current;
-        var oasServerDirectory = new OasServerDirectory(httpClient, cache);
-        var sevenWanServerDirectory = new SevenWanServerDirectory(httpClient, cache);
+        Action<Exception, string> onCatalogFailure = (exception, platformId) =>
+            DiagnosticLog.Current.WriteFailure(
+                "catalog.remote",
+                "The remote server catalog failed; a local cache will be used if one exists.",
+                exception,
+                ("platformId", platformId));
+        var oasServerDirectory = new OasServerDirectory(
+            httpClient,
+            cache,
+            onRecoverableFailure: onCatalogFailure);
+        var sevenWanServerDirectory = new SevenWanServerDirectory(
+            httpClient,
+            cache,
+            onRecoverableFailure: onCatalogFailure);
         var oasAuthentication = new OasAuthenticationService();
         var sevenWanAuthentication = new UnavailablePlatformAuthenticationService(
             "sevenwan_service_unavailable",
@@ -80,7 +93,8 @@ internal static class LauncherComposition
             settingsService: settings,
             workspace: workspace,
             localization: localization,
-            updateService: updateService);
+            updateService: updateService,
+            diagnosticLog: DiagnosticLog.Current);
     }
 
     public static HttpClient CreateHttpClient()

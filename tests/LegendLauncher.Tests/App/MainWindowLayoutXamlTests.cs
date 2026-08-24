@@ -71,7 +71,8 @@ public sealed class MainWindowLayoutXamlTests
             Assert.Equal(
                 "SearchInput_OnGotKeyboardFocus",
                 search.Attribute("GotKeyboardFocus")?.Value);
-            Assert.Contains("IsKeyboardFocused", search.Parent!.ToString(), StringComparison.Ordinal);
+            Assert.StartsWith("{loc:Localize ", search.Attribute("Tag")?.Value, StringComparison.Ordinal);
+            Assert.DoesNotContain("Padding=\"46,0,14,0\"", search.ToString(), StringComparison.Ordinal);
         }
 
         string styles = File.ReadAllText(FindRepositoryFile(
@@ -80,7 +81,9 @@ public sealed class MainWindowLayoutXamlTests
             "Themes",
             "Controls.xaml"));
         Assert.Contains("SearchInputStyle", styles, StringComparison.Ordinal);
+        Assert.Contains("SearchWatermark", styles, StringComparison.Ordinal);
         Assert.Contains("HorizontalContentAlignment\" Value=\"Left\"", styles, StringComparison.Ordinal);
+        Assert.Contains("TextAlignment\" Value=\"Left\"", styles, StringComparison.Ordinal);
     }
 
     [Fact]

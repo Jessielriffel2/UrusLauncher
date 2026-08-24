@@ -1,7 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <ItemGroup>
+    <ItemGroup>
     <ProjectReference Include="..\LegendLauncher.Core\LegendLauncher.Core.csproj" />
+    <ProjectReference Include="..\LegendLauncher.Infrastructure\LegendLauncher.Infrastructure.csproj" />
     <ProjectReference Include="..\LegendLauncher.NetworkBridge\LegendLauncher.NetworkBridge.csproj" />
   </ItemGroup>
 

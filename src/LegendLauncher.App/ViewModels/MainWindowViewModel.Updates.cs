@@ -211,7 +211,12 @@ internal sealed partial class MainWindowViewModel
         }
         catch (Exception exception) when (IsExpectedUpdateException(exception))
         {
-            System.Diagnostics.Debug.WriteLine($"Update preparation failed: {exception.Message}");
+            LogFailure(
+                "update.prepare",
+                "The launcher update could not be prepared.",
+                exception,
+                ("currentVersion", _currentVersion.ToString()),
+                ("availableVersion", _availableUpdate?.Version.ToString()));
             SetUpdateState(LauncherUpdateState.Failed);
         }
         finally
@@ -246,7 +251,12 @@ internal sealed partial class MainWindowViewModel
         }
         catch (Exception exception) when (IsExpectedUpdateException(exception))
         {
-            System.Diagnostics.Debug.WriteLine($"Update installation failed: {exception.Message}");
+            LogFailure(
+                "update.install",
+                "The launcher installer could not be started.",
+                exception,
+                ("currentVersion", _currentVersion.ToString()),
+                ("availableVersion", _availableUpdate?.Version.ToString()));
             SetUpdateState(LauncherUpdateState.Failed);
         }
         finally

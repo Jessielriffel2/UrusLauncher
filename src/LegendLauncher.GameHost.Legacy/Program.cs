@@ -1,4 +1,6 @@
 using LegendLauncher.Core.Models;
+using LegendLauncher.Infrastructure.Logging;
+using LegendLauncher.Infrastructure.Paths;
 
 namespace LegendLauncher.GameHost.Legacy;
 
@@ -10,10 +12,17 @@ internal static class Program
     private static int Main(string[] args)
     {
         GameHostLocalization.InitializeFromEnvironment();
+        InitializeDiagnosticLog();
         ApplicationConfiguration.Initialize();
 
-        if (!GameHostOptions.TryParse(args, out GameHostOptions? options, out _) || options is null)
+        if (!GameHostOptions.TryParse(args, out GameHostOptions? options, out string? parseError) || options is null)
         {
+            DiagnosticLog.Current.WriteFailure(
+                "gamehost.options",
+                "The GameHost process received invalid launch options.",
+                exception: null,
+                ("parseError", parseError),
+                ("argumentCount", args.Length.ToString(System.Globalization.CultureInfo.InvariantCulture)));
             MessageBox.Show(
                 GameHostLocalization.Get(GameHostText.InvalidOptions),
                 "Urus GameHost",
@@ -31,6 +40,12 @@ internal static class Program
 
         if (!assets.IsComplete)
         {
+            DiagnosticLog.Current.WriteFailure(
+                "gamehost.runtime_incomplete",
+                "The GameHost Flash runtime is incomplete.",
+                exception: null,
+                ("runtimeRoot", options.RuntimeRoot),
+                ("missingFiles", string.Join(",", assets.MissingFiles)));
             MessageBox.Show(
                 GameHostLocalization.Get(GameHostText.FlashRuntimeIncomplete),
                 "Urus GameHost",
@@ -62,6 +77,12 @@ internal static class Program
             exception is IOException or UnauthorizedAccessException or ArgumentException or
             InvalidOperationException or OperationCanceledException)
         {
+            DiagnosticLog.Current.WriteFailure(
+                "gamehost.session",
+                "The GameHost local session pipe failed before the game window opened.",
+                exception,
+                ("pipeName", options.PipeName),
+                ("parentProcessId", options.ParentProcessId?.ToString()));
             MessageBox.Show(
                 GameHostLocalization.Get(GameHostText.LocalSessionInvalid),
                 "Urus GameHost",
@@ -104,5 +125,20 @@ internal static class Program
             form.RequestCloseBecauseParentExited);
         session = null;
         Application.Run(form);
+    }
+
+    private static void InitializeDiagnosticLog()
+    {
+        try
+        {
+            var paths = new AppPaths();
+            DiagnosticLog.Current = new FileDiagnosticLog(
+                paths.LogsDirectory,
+                launcherVersion: typeof(Program).Assembly.GetName().Version?.ToString());
+        }
+        catch (Exception)
+        {
+            DiagnosticLog.Current = NullDiagnosticLog.Instance;
+        }
     }
 }

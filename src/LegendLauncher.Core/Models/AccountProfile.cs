@@ -64,7 +64,8 @@ public sealed record AccountProfile(
             return [];
         }
 
-        if (TryGetRecentServerIdsFromMap(normalizedPlatformId, out IReadOnlyList<string> recentServerIds))
+        if (TryGetRecentServerIdsFromMap(normalizedPlatformId, out IReadOnlyList<string> recentServerIds) &&
+            recentServerIds.Count > 0)
         {
             return recentServerIds;
         }

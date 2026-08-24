@@ -2,8 +2,10 @@ using System.Diagnostics;
 using System.Windows;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Windows.Threading;
 using LegendLauncher.App.Localization;
 using LegendLauncher.App.Services;
+using LegendLauncher.Infrastructure.Logging;
 using LegendLauncher.Infrastructure.Paths;
 
 namespace LegendLauncher.App;
@@ -29,6 +31,7 @@ public partial class App : Application
             return;
         }
 
+        InitializeDiagnosticLogging();
         LocalizationService localization = LocalizationService.Current;
         try
         {
@@ -41,6 +44,10 @@ public partial class App : Application
         catch (Exception exception) when (
             exception is IOException or UnauthorizedAccessException or System.Text.Json.JsonException)
         {
+            DiagnosticLog.Current.WriteFailure(
+                "app.settings",
+                "Launcher settings could not be loaded during startup.",
+                exception);
             localization.SetLanguage(LocalizationService.DefaultLanguageCode);
         }
 
@@ -58,6 +65,41 @@ public partial class App : Application
         }
 
         base.OnExit(eventArgs);
+    }
+
+    private static void InitializeDiagnosticLogging()
+    {
+        try
+        {
+            var paths = new AppPaths();
+            var log = new FileDiagnosticLog(
+                paths.LogsDirectory,
+                launcherVersion: typeof(App).Assembly.GetName().Version?.ToString());
+            DiagnosticLog.Current = log;
+        }
+        catch (Exception)
+        {
+            DiagnosticLog.Current = NullDiagnosticLog.Instance;
+        }
+
+        AppDomain.CurrentDomain.UnhandledException += (_, args) =>
+            DiagnosticLog.Current.WriteFailure(
+                "app.unhandled",
+                "An unhandled exception occurred in the launcher process.",
+                args.ExceptionObject as Exception);
+        TaskScheduler.UnobservedTaskException += (_, args) =>
+        {
+            DiagnosticLog.Current.WriteFailure(
+                "app.unobserved_task",
+                "An unobserved task exception was raised.",
+                args.Exception);
+            args.SetObserved();
+        };
+        Current.DispatcherUnhandledException += (_, args) =>
+            DiagnosticLog.Current.WriteFailure(
+                "app.dispatcher",
+                "An unhandled dispatcher exception was raised.",
+                args.Exception);
     }
 
     private static void TryActivateExistingInstance()

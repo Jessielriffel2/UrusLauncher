@@ -16,6 +16,16 @@ internal sealed partial class MainWindowViewModel
         {
             // Relog cancellation must never crash the workspace.
         }
+        catch (Exception exception)
+        {
+            LogFailure(
+                "session.relog",
+                "Relog failed with an unexpected exception.",
+                exception,
+                ("profileId", session.Profile.Id.ToString()),
+                ("platformId", session.Platform.Id),
+                ("serverId", session.Server.Id));
+        }
     }
 
     internal async Task RelogSessionAsync(GameSessionViewModel session)

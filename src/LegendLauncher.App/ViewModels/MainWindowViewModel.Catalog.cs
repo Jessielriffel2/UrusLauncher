@@ -84,6 +84,15 @@ internal sealed partial class MainWindowViewModel
             RefreshRecentServers();
             ApplyServerFilter();
             System.Diagnostics.Debug.WriteLine($"Catalog loading failed: {exception}");
+            LogFailure(
+                "catalog.load",
+                "The server catalog could not be loaded.",
+                exception,
+                ("platformId", requestedPlatform.Id),
+                ("platformName", requestedPlatform.DisplayName),
+                ("profileId", requestedProfileId?.ToString()),
+                ("providerUserId", requestedUserId.ToString(System.Globalization.CultureInfo.InvariantCulture)),
+                ("forceRefresh", forceRefresh.ToString()));
             SetCatalogStatus("Catalog_Unavailable");
             CatalogStatusBrush = ErrorBrush;
             SetStatusMessage("Catalog_LoadFailed");
@@ -132,7 +141,7 @@ internal sealed partial class MainWindowViewModel
 
         var resolved = new List<ServerRowViewModel>(capacity: 5);
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        foreach (string serverId in profile.GetRecentServerIds(SelectedPlatform.Id))
+        foreach (string serverId in EnumerateRecentServerIds(profile, SelectedPlatform.Id))
         {
             if (string.IsNullOrWhiteSpace(serverId) || !seen.Add(serverId.Trim()))
             {
@@ -154,6 +163,31 @@ internal sealed partial class MainWindowViewModel
         }
 
         RecentServers = resolved;
+    }
+
+    internal void SyncRecentServers() => RefreshRecentServers();
+
+    private static IEnumerable<string> EnumerateRecentServerIds(
+        AccountProfile profile,
+        string selectedPlatformId)
+    {
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (string serverId in profile.GetRecentServerIds(selectedPlatformId)
+            .Concat(profile.GetRecentServerIds(profile.PlatformId))
+            .Concat(profile.RecentServerIds)
+            .Append(profile.LastServerId ?? string.Empty))
+        {
+            if (string.IsNullOrWhiteSpace(serverId))
+            {
+                continue;
+            }
+
+            string trimmed = serverId.Trim();
+            if (seen.Add(trimmed))
+            {
+                yield return trimmed;
+            }
+        }
     }
 
     private void SelectRecentServer(ServerRowViewModel? server)

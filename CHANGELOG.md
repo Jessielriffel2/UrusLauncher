@@ -2,6 +2,12 @@
 
 As mudanças relevantes do Urus Launcher são registradas aqui. As versões públicas seguem versionamento semântico e são publicadas em `vMAJOR.MINOR.PATCH`.
 
+## 1.1.8 — 23/08/2026
+
+### Adicionado
+
+- Falhas que não sejam login aceito e jogo aberto são gravadas em `Documentos/uruslauncher/logs`, com data/hora, operação, detalhes técnicos e texto da exceção, sem senha.
+
 ## 1.1.7 — 21/08/2026
 
 ### Interface

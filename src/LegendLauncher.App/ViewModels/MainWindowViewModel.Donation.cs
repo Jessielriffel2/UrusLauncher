@@ -59,7 +59,10 @@ internal sealed partial class MainWindowViewModel
         catch (Exception exception) when (
             exception is IOException or UnauthorizedAccessException)
         {
-            // The prompt remains usable even if its display time cannot be persisted.
+            LogFailure(
+                "donation.persist",
+                "The donation reminder timestamp could not be saved.",
+                exception);
         }
     }
 

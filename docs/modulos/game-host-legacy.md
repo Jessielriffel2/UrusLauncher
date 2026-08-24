@@ -49,11 +49,13 @@ Depois do handshake, a App pode aplicar `SetParent` à janela validada para comp
 
 Os executáveis nativos `UrusLauncher.App.exe` e `LegendLauncher.GameHost.Legacy.exe` publicam `<CETCompat>false</CETCompat>` para o shadow stack do Windows 11 não impedir o attach de depuradores e scanners de memória em modo usuário. Ferramentas de 32 bits não listam estes processos x64.
 
+Falhas de opções inválidas, runtime incompleto, pipe da sessão e inicialização do Flash são gravadas em `Documentos/uruslauncher/logs` via `FileDiagnosticLog`, com data/hora e detalhes técnicos, sem senha ou URI autenticada.
+
 O carregamento atual é direto. `H2Proxy.exe` não é requisito do GameHost, não é iniciado e não participa do caminho de sessão; qualquer ponte/cache futura deverá usar o módulo seguro próprio, nunca executar o proxy legado implicitamente.
 
 ## Dependências e consumidores
 
-Usa Windows Forms/AxHost, [Core](core.md) para os contratos e [Network Bridge](network-bridge.md) para a allowlist de upstream. A aplicação consome `LegacyGameRuntime`, sem referenciar ActiveX nem detalhes do protocolo IPC, entrega o `GameSession` ao [Game Session Workspace](game-session-workspace.md) e propaga a cultura definida por [Localização](localizacao.md). A decisão está em [ADR-005](../decisoes/ADR-005-localizacao-dinamica.md).
+Usa Windows Forms/AxHost, [Core](core.md) para os contratos, [Infrastructure](infrastructure.md) somente para o log de falhas em arquivo e [Network Bridge](network-bridge.md) para a allowlist de upstream. A aplicação consome `LegacyGameRuntime`, sem referenciar ActiveX nem detalhes do protocolo IPC, entrega o `GameSession` ao [Game Session Workspace](game-session-workspace.md) e propaga a cultura definida por [Localização](localizacao.md). A decisão está em [ADR-005](../decisoes/ADR-005-localizacao-dinamica.md).
 
 ## Testes e lacunas de validação
 

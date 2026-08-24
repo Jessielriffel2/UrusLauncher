@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using LegendLauncher.Core.Contracts;
 using LegendLauncher.Core.Models;
+using LegendLauncher.Infrastructure.Logging;
 using LegendLauncher.Infrastructure.Security;
 
 namespace LegendLauncher.App.Services;
@@ -165,8 +166,16 @@ internal sealed class SessionLaunchCoordinator
         {
             await _profileStore.SaveAsync(effectiveProfile, cancellationToken).ConfigureAwait(false);
         }
-        catch (Exception) when (!cancellationToken.IsCancellationRequested)
+        catch (Exception exception) when (!cancellationToken.IsCancellationRequested)
         {
+            DiagnosticLog.Current.WriteFailure(
+                "session.profile_save",
+                "The profile could not be saved after a successful authentication.",
+                exception,
+                ("profileId", effectiveProfile.Id.ToString()),
+                ("platformId", input.Platform.Id),
+                ("serverId", input.Server.Id),
+                ("login", input.Login));
             return (effectiveProfile, false, false);
         }
 
@@ -190,8 +199,16 @@ internal sealed class SessionLaunchCoordinator
 
             return (effectiveProfile, true, true);
         }
-        catch (Exception) when (!cancellationToken.IsCancellationRequested)
+        catch (Exception exception) when (!cancellationToken.IsCancellationRequested)
         {
+            DiagnosticLog.Current.WriteFailure(
+                "session.credential_save",
+                "The saved password could not be updated after a successful authentication.",
+                exception,
+                ("profileId", effectiveProfile.Id.ToString()),
+                ("platformId", input.Platform.Id),
+                ("login", input.Login),
+                ("rememberPassword", input.RememberPassword.ToString()));
             return (effectiveProfile, true, false);
         }
     }

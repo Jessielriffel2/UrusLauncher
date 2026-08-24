@@ -7,6 +7,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using LegendLauncher.App.ViewModels;
 using LegendLauncher.App.Views.Game;
+using LegendLauncher.Infrastructure.Logging;
 
 namespace LegendLauncher.App;
 
@@ -133,6 +134,7 @@ public partial class MainWindow : Window
         }
 
         _viewModel.SelectedProfile = profile;
+        _viewModel.SyncRecentServers();
         ContextMenu menu = BuildRecentServersMenu(button);
         button.ContextMenu = menu;
         menu.IsOpen = true;
@@ -413,8 +415,12 @@ internal static class DetachedWindowCoordinator
             }
 
             rollback();
-            System.Diagnostics.Debug.WriteLine(
-                $"Detached window creation failed and was rolled back: {exception}");
+            DiagnosticLog.Current.WriteFailure(
+                "window.detach",
+                "Creating a detached game window failed and was rolled back.",
+                exception,
+                ("sessionId", sessionId.ToString()),
+                ("windowType", typeof(TWindow).FullName));
             return false;
         }
     }
@@ -443,7 +449,11 @@ internal static class DetachedWindowCoordinator
         }
         catch (Exception exception)
         {
-            System.Diagnostics.Debug.WriteLine($"Detached window cleanup failed: {exception}");
+            DiagnosticLog.Current.WriteFailure(
+                "window.detach_cleanup",
+                "Closing a detached game window failed.",
+                exception,
+                ("windowType", typeof(TWindow).FullName));
         }
     }
 }

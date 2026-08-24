@@ -2,7 +2,7 @@
 
 Fonte da verdade para a estrutura e os módulos do projeto.
 
-- **Última atualização:** 2026-08-21
+- **Última atualização:** 2026-08-23
 - **Raiz:** `LegendLauncherNext/`
 - **Escopo da árvore:** fontes, testes e documentação; `bin/`, `obj/` e `artifacts/` são saídas geradas e ficam fora.
 
@@ -41,7 +41,8 @@ LegendLauncherNext/
 │   │   ├── v1.1.4.json
 │   │   ├── v1.1.5.json
 │   │   ├── v1.1.6.json
-│   │   └── v1.1.7.json
+│   │   ├── v1.1.7.json
+│   │   └── v1.1.8.json
 │   └── modulos/
 │       ├── atualizacao.md
 │       ├── branding.md
@@ -124,7 +125,9 @@ LegendLauncherNext/
 │   │   │   ├── MainWindowViewModel.Catalog.cs
 │   │   │   ├── MainWindowViewModel.cs
 │   │   │   ├── MainWindowViewModel.Donation.cs
+│   │   │   ├── MainWindowViewModel.Launch.cs
 │   │   │   ├── MainWindowViewModel.Localization.cs
+│   │   │   ├── MainWindowViewModel.Logging.cs
 │   │   │   ├── MainWindowViewModel.Profiles.cs
 │   │   │   ├── MainWindowViewModel.Relog.cs
 │   │   │   ├── MainWindowViewModel.Updates.cs
@@ -150,6 +153,7 @@ LegendLauncherNext/
 │   │   ├── LegendLauncher.Core.csproj
 │   │   ├── Contracts/
 │   │   │   ├── ICredentialVault.cs
+│   │   │   ├── IDiagnosticLog.cs
 │   │   │   ├── IGameAuthenticationService.cs
 │   │   │   ├── IGameRuntime.cs
 │   │   │   ├── IProfileStore.cs
@@ -195,6 +199,12 @@ LegendLauncherNext/
 │   │   ├── LegendLauncher.Infrastructure.csproj
 │   │   ├── Paths/
 │   │   │   └── AppPaths.cs
+│   │   ├── Logging/
+│   │   │   ├── DiagnosticLog.cs
+│   │   │   ├── DiagnosticLogExtensions.cs
+│   │   │   ├── DiagnosticLogSanitizer.cs
+│   │   │   ├── FileDiagnosticLog.cs
+│   │   │   └── NullDiagnosticLog.cs
 │   │   ├── Persistence/
 │   │   │   ├── AtomicJsonFileStore.cs
 │   │   │   ├── JsonProfileRepository.cs
@@ -276,6 +286,7 @@ LegendLauncherNext/
         │       ├── UpdateDownloadCleanupTests.cs
         │       └── UpdateTestSupport.cs
         ├── Core/
+        │   ├── AccountProfileTests.cs
         │   ├── AuthenticationModelsTests.cs
         │   └── RuntimeModelsTests.cs
         ├── GameHost/
@@ -287,6 +298,7 @@ LegendLauncherNext/
         │   └── ParentProcessLifetimeMonitorTests.cs
         ├── Infrastructure/
         │   ├── AppPathsTests.cs
+        │   ├── FileDiagnosticLogTests.cs
         │   ├── AtomicJsonFileStoreTests.cs
         │   ├── CredentialKeyTests.cs
         │   ├── JsonPersistenceTests.cs
@@ -318,7 +330,7 @@ LegendLauncherNext/
 | `LegendLauncher.App/Atualização` | Consulta antecipada do GitHub Releases na abertura, fallback público para `403`/`429`, download/validação automática por usuário com janela de uma hora, manifesto UTF-8 sem BOM, cache revalidado, cartão trilíngue pronto para instalar e execução somente após clique sem sessões ativas nem login em andamento. | `Updates/*.cs`, `Views/Updates/*`, `MainWindowViewModel.Updates.cs`, `AppPaths.UpdatesDirectory` | [atualizacao.md](modulos/atualizacao.md) |
 | `Distribuição Windows` | Publica App e GameHost self-contained para `win-x64`, injeta runtime registration-free fornecido/autorizado e gera setup/ZIP, manifestos, patch notes e checksums; o workflow automático por tag exige a mesma fonte autorizada no runner, enquanto a 1.1.4 foi publicada manualmente a partir do build local validado e autorizado. | `scripts/build-urus-distribution.ps1`, `installer/UrusLauncher.iss`, `.github/workflows/release.yml`, `docs/releases/*.json` | [distribuicao-windows.md](modulos/distribuicao-windows.md) |
 | `LegendLauncher.Core` | Modelos imutáveis e contratos sem dependência de UI, rede, JSON ou chamadas Win32; inclui diagnóstico de autenticação limitado a fase/transporte/status, `AccountProfile` com UID/recentes por plataforma e HWND opaco. | `Models/*.cs`, `Contracts/*.cs` | [core.md](modulos/core.md) |
-| `LegendLauncher.Infrastructure` | Paths — incluindo updates/modelos de tradução —, JSON atômico para perfis/cache/settings, namespaces separados no Windows Credential Manager e probe somente leitura do Flash empacotado/instalado. | `AppPaths.cs`, `AtomicJsonFileStore.cs`, `CredentialKey.cs`, `WindowsCredentialVault.cs`, `LegacyRuntimeProbe.cs` | [infrastructure.md](modulos/infrastructure.md) |
+| `LegendLauncher.Infrastructure` | Paths — incluindo updates e `Documentos/uruslauncher/logs` —, log de falhas em arquivo diário, JSON atômico para perfis/cache/settings, namespaces separados no Windows Credential Manager e probe somente leitura do Flash empacotado/instalado. | `AppPaths.cs`, `FileDiagnosticLog.cs`, `AtomicJsonFileStore.cs`, `CredentialKey.cs`, `WindowsCredentialVault.cs`, `LegacyRuntimeProbe.cs` | [infrastructure.md](modulos/infrastructure.md) |
 | `LegendLauncher.Providers.Oas` | Oito plataformas OAS, catálogo/cache, Passports Creaction e OAS Games em wrapper curl único, launch em wrapper curl separado, executor comum, diagnóstico saneado, parsers e allowlists. | `OasAuthenticationService.cs`, `OasCurlPassportTransport.cs`, `OasCurlLaunchTransport.cs`, `OasSystemCurlTransport.cs`, `OasOriginPolicy.cs` | [providers-oas.md](modulos/providers-oas.md) |
 | `LegendLauncher.Providers.SevenWan` | Quatorze variantes Wartune/7wan e catálogo público normalizado; autenticação permanece indisponível. | `SevenWanPlatformCatalog.cs`, `SevenWanServerDirectory.cs`, `SevenWanServerPayloadParser.cs` | [providers-sevenwan.md](modulos/providers-sevenwan.md) |
 | `LegendLauncher.GameHost.Legacy` | Processo x64 separado que herda a cultura normalizada, recebe sessão por Named Pipe, ativa COM sem registro, hospeda Flash ActiveX, permanece anexável a ferramentas de memória x64, devolve uma superfície nativa validada e encerra quando o processo pai desaparece. | `LegacyGameRuntime.cs`, `GameHostLocalization.cs`, `GameHostProcessAnchorForm.cs`, `GameHostWindowIdentity.cs`, `ParentProcessLifetimeMonitor.cs`, `PipeCompletionProtocol.cs`, `FlashActiveXControl.cs` | [game-host-legacy.md](modulos/game-host-legacy.md) |
@@ -357,6 +369,7 @@ LegendLauncherNext/
 | `docs/releases/v1.1.5.json` | Fonte trilíngue da remoção do tradutor, relogar por aba e curl em todos os Passports OAS. |
 | `docs/releases/v1.1.6.json` | Fonte trilíngue do manifesto UTF-8 sem BOM, âncora Cheat Engine e CET desligado. |
 | `docs/releases/v1.1.7.json` | Fonte trilíngue da busca de perfis, estacionamento do GameHost, agrupamento no layout 2 e busca com cursor no início. |
+| `docs/releases/v1.1.8.json` | Fonte trilíngue do log de falhas em Documentos/uruslauncher/logs, com data/hora e detalhes técnicos sem senha. |
 | `src/LegendLauncher.App/GameHosting/GameHostParkingSurface.cs` | HWND oculto do launcher onde sessões fora da grade ficam como `WS_CHILD`, sem reaparecer como janela de jogo solta. |
 | `src/LegendLauncher.App/Updates/UpdateManifestValidator.cs` | Validador único do manifesto normal e alternativo, mantendo versão, setup, bytes, SHA-256 e notas trilíngues sob o mesmo contrato. |
 | `tests/LegendLauncher.Tests/App/Updates/LauncherUpdateServiceFallbackTests.cs` | Contratos do fallback exclusivo para rate limit `403`/`429`, redirects permitidos e rejeição de rotas/documentos inválidos. |

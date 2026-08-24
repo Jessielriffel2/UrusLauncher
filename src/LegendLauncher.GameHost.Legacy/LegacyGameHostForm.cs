@@ -1,4 +1,5 @@
 using LegendLauncher.Core.Models;
+using LegendLauncher.Infrastructure.Logging;
 
 namespace LegendLauncher.GameHost.Legacy;
 
@@ -55,8 +56,15 @@ internal sealed class LegacyGameHostForm : Form
             flashControl.InitializeAndLoad(_pendingSession, _runtimeOptions);
             CompleteHandshake(isLoaded: true, nativeWindowHandle: Handle);
         }
-        catch (Exception)
+        catch (Exception exception)
         {
+            DiagnosticLog.Current.WriteFailure(
+                "gamehost.flash_init",
+                "The Flash ActiveX control could not be created or loaded.",
+                exception,
+                ("runtimeRoot", _assets.RuntimeRoot),
+                ("flashOcxPath", _assets.FlashOcxPath),
+                ("launchHost", _pendingSession?.LaunchUri.Host));
             TryCompleteHandshake(isLoaded: false, nativeWindowHandle: nint.Zero);
             _activationContext?.Dispose();
             _activationContext = null;

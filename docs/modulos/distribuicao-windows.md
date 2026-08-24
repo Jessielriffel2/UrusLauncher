@@ -42,7 +42,8 @@ Desde a preparação da 1.1.4, o build não aceita mais produzir um pacote anunc
 | `docs/releases/v1.1.4.json:1` | Patch notes fonte histórica | Runtime interno prioritário, instalação limpa e estado visual honesto nos três idiomas. |
 | `docs/releases/v1.1.5.json:1` | Patch notes fonte histórica | Remoção do tradutor, relogar por aba e curl em todos os Passports OAS. |
 | `docs/releases/v1.1.6.json:1` | Patch notes fonte histórica | Manifesto UTF-8 sem BOM, GameHost visível ao Cheat Engine x64 e CET desligado nos executáveis. |
-| `docs/releases/v1.1.7.json:1` | Patch notes fonte pública atual | Busca de perfis, estacionamento do GameHost, agrupamento no layout 2 e cursor da busca no início. |
+| `docs/releases/v1.1.7.json:1` | Patch notes fonte pública histórica | Busca de perfis, estacionamento do GameHost, agrupamento no layout 2 e cursor da busca no início. |
+| `docs/releases/v1.1.8.json:1` | Patch notes fonte pública atual | Log de falhas em Documentos/uruslauncher/logs, com data/hora e detalhes técnicos sem senha. |
 | `artifacts/urus-distribution/portable/UrusLauncher/` | Payload expandido | Diretório executável usado como origem comum do Inno Setup e do ZIP. |
 | `artifacts/urus-distribution/distribution-manifest.json` | Manifesto | Produto, versão, RID, flag self-contained, data UTC, nomes/tamanhos/hashes e inventário agregado do payload. |
 | `artifacts/urus-distribution/update-manifest.json` | Manifesto de atualização | Contrato estrito consumido pela App com metadados do setup e patch notes localizados. |
@@ -104,6 +105,19 @@ Release: [Urus Launcher 1.1.7](https://github.com/Jessielriffel2/UrusLauncher/re
 | Lista oficial de checksums | `GitHub Release/SHA256SUMS.txt` — 383 bytes — SHA-256 `89EA23ABFD750873DE380696D499F798F3479D23D3843E4F52C47224446B2D83` |
 
 A build local 1.1.7 concluiu **501/501** testes Release. O smoke portátil automático foi omitido porque a guarda de instância única encerrou a segunda abertura com código 0. FileVersion `1.1.7.0`. Payload: 472 arquivos / 231.228.910 bytes. A publicação permanece manual pelo mesmo motivo da 1.1.4: o runner hospedado não tem a origem licenciada do runtime. O workflow disparado pela tag deve ser cancelado se aparecer.
+
+## Entregáveis públicos 1.1.8
+
+Release: a publicar após a build local autorizada com runtime.
+
+| Tipo | Caminho/resultado |
+| --- | --- |
+| Instalador com runtime | Pendente da build local 1.1.8 |
+| ZIP portátil | Pendente da build local 1.1.8 |
+| Manifesto do updater | Pendente da build local 1.1.8 |
+| Lista oficial de checksums | Pendente da build local 1.1.8 |
+
+A suíte Release da 1.1.8 precisa concluir antes da publicação. FileVersion `1.1.8.0`. A publicação permanece manual pelo mesmo motivo da 1.1.4: o runner hospedado não tem a origem licenciada do runtime. O workflow disparado pela tag deve ser cancelado se aparecer.
 
 ## Fluxo de construção
 

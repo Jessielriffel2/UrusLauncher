@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "version": "1.1.8",
+  "title": {
+    "pt-BR": "Diagnóstico gravado quando o jogo não abre",
+    "en-US": "Diagnostic logs when the game does not open",
+    "es-ES": "Diagnóstico guardado cuando el juego no abre"
+  },
+  "notes": {
+    "pt-BR": [
+      "Qualquer falha que não seja login aceito e jogo aberto passa a ser gravada em Documentos/uruslauncher/logs, com data, hora, operação, detalhes técnicos e exceção.",
+      "O arquivo diário ajuda a ver o motivo de catálogo, senha, runtime, atualização ou GameHost sem expor a senha.",
+      "A busca de perfis, o agrupamento do layout 2 e o estacionamento do jogo no quadrado da 1.1.7 continuam nesta versão."
+    ],
+    "en-US": [
+      "Any failure other than an accepted login and opened game is now written to Documents/uruslauncher/logs, with date, time, operation, technical details, and exception text.",
+      "The daily file helps show why catalog, password, runtime, update, or GameHost failed, without storing the password.",
+      "Profile search, layout 2 grouping, and parked game windows from 1.1.7 remain in this version."
+    ],
+    "es-ES": [
+      "Cualquier fallo que no sea un login aceptado y el juego abierto se guarda en Documentos/uruslauncher/logs, con fecha, hora, operación, detalles técnicos y excepción.",
+      "El archivo diario ayuda a ver el motivo de catálogo, contraseña, runtime, actualización o GameHost, sin guardar la contraseña.",
+      "La búsqueda de perfiles, el agrupamiento del diseño 2 y el estacionamiento del juego de la 1.1.7 siguen en esta versión."
+    ]
+  }
+}

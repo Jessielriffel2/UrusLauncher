@@ -75,7 +75,9 @@
 
     <Style x:Key="SearchInputStyle" TargetType="TextBox" BasedOn="{StaticResource InputStyle}">
         <Setter Property="Height" Value="46" />
+        <Setter Property="Padding" Value="0" />
         <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Setter Property="TextAlignment" Value="Left" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="TextBox">
@@ -84,12 +86,46 @@
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
                             CornerRadius="23">
-                        <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="40" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="&#xE721;"
+                                       FontFamily="Segoe Fluent Icons"
+                                       FontSize="16"
+                                       Foreground="{StaticResource TextMutedBrush}"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       IsHitTestVisible="False" />
+                            <Grid Grid.Column="1" Margin="0,0,14,0">
+                                <ScrollViewer x:Name="PART_ContentHost"
+                                              HorizontalAlignment="Stretch"
+                                              VerticalAlignment="Center" />
+                                <TextBlock x:Name="SearchWatermark"
+                                           Text="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}"
+                                           FontSize="12"
+                                           Foreground="{StaticResource TextMutedBrush}"
+                                           HorizontalAlignment="Left"
+                                           VerticalAlignment="Center"
+                                           TextAlignment="Left"
+                                           TextTrimming="CharacterEllipsis"
+                                           Visibility="Collapsed"
+                                           IsHitTestVisible="False" />
+                            </Grid>
+                        </Grid>
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsKeyboardFocused" Value="True">
                             <Setter TargetName="SearchBorder" Property="BorderBrush" Value="{StaticResource AccentStrongBrush}" />
                         </Trigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="Text" Value="" />
+                                <Condition Property="IsKeyboardFocused" Value="False" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="SearchWatermark" Property="Visibility" Value="Visible" />
+                        </MultiTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
