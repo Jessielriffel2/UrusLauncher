@@ -108,16 +108,16 @@ A build local 1.1.7 concluiu **501/501** testes Release. O smoke portátil autom
 
 ## Entregáveis públicos 1.1.8
 
-Release: a publicar após a build local autorizada com runtime.
+Release: [Urus Launcher 1.1.8](https://github.com/Jessielriffel2/UrusLauncher/releases/tag/v1.1.8).
 
 | Tipo | Caminho/resultado |
 | --- | --- |
-| Instalador com runtime | Pendente da build local 1.1.8 |
-| ZIP portátil | Pendente da build local 1.1.8 |
-| Manifesto do updater | Pendente da build local 1.1.8 |
-| Lista oficial de checksums | Pendente da build local 1.1.8 |
+| Instalador com runtime | `GitHub Release/UrusLauncher-Setup-1.1.8-win-x64.exe` — 65.861.229 bytes — SHA-256 `6590650689776B08B7A9C416A34CBF26BB39538CB081FCD1FAA9945F44D21A2C` |
+| ZIP portátil | `GitHub Release/UrusLauncher-1.1.8-portable-win-x64.zip` — 92.432.441 bytes — SHA-256 `F9D80EA012D1971B35ECF1872E237A5F8F52E7173D5AB9EB59FB9F46D8DB6789` |
+| Manifesto do updater | `GitHub Release/update-manifest.json` — 1.560 bytes — SHA-256 `F551991D677C22E7EB882DD43DB2B3A390D993AC9E5C1D3E383BADD041081C70` |
+| Lista oficial de checksums | `GitHub Release/SHA256SUMS.txt` — 379 bytes — SHA-256 `C45AA0BBC7EDFC6BA679249042CB3FB4B078DF0EA5A9A9F29267F431E4B25079` |
 
-A suíte Release da 1.1.8 precisa concluir antes da publicação. FileVersion `1.1.8.0`. A publicação permanece manual pelo mesmo motivo da 1.1.4: o runner hospedado não tem a origem licenciada do runtime. O workflow disparado pela tag deve ser cancelado se aparecer.
+A build local 1.1.8 concluiu **507/507** testes Release. O smoke portátil automático foi omitido porque a compactação do ZIP ocorreu depois da compilação do instalador. FileVersion `1.1.8.0`. Payload: 472 arquivos / 231.262.229 bytes. A publicação permanece manual pelo mesmo motivo da 1.1.4: o runner hospedado não tem a origem licenciada do runtime. O workflow disparado pela tag deve ser cancelado se aparecer.
 
 ## Fluxo de construção
 
