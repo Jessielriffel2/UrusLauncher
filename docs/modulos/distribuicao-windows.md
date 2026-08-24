@@ -45,7 +45,8 @@ Desde a preparação da 1.1.4, o build não aceita mais produzir um pacote anunc
 | `docs/releases/v1.1.5.json:1` | Patch notes fonte histórica | Remoção do tradutor, relogar por aba e curl em todos os Passports OAS. |
 | `docs/releases/v1.1.6.json:1` | Patch notes fonte histórica | Manifesto UTF-8 sem BOM, GameHost visível ao Cheat Engine x64 e CET desligado nos executáveis. |
 | `docs/releases/v1.1.7.json:1` | Patch notes fonte pública histórica | Busca de perfis, estacionamento do GameHost, agrupamento no layout 2 e cursor da busca no início. |
-| `docs/releases/v1.1.8.json:1` | Patch notes fonte pública atual | Log de falhas em Documentos/uruslauncher/logs, com data/hora e detalhes técnicos sem senha. |
+| `docs/releases/v1.1.8.json:1` | Patch notes fonte pública histórica | Log de falhas em Documentos/uruslauncher/logs, com data/hora e detalhes técnicos sem senha. |
+| `docs/releases/v1.1.9.json:1` | Patch notes fonte pública atual | Âncora oculta do GameHost no login, sem popup do Cheat Engine, nos três idiomas. |
 | `artifacts/urus-distribution/portable/UrusLauncher/` | Payload expandido | Diretório executável usado como origem comum do Inno Setup e do ZIP. |
 | `artifacts/urus-distribution/distribution-manifest.json` | Manifesto | Produto, versão, RID, flag self-contained, data UTC, nomes/tamanhos/hashes e inventário agregado do payload. |
 | `artifacts/urus-distribution/update-manifest.json` | Manifesto de atualização | Contrato estrito consumido pela App com metadados do setup e patch notes localizados. |
@@ -122,6 +123,21 @@ Release: [Urus Launcher 1.1.8](https://github.com/Jessielriffel2/UrusLauncher/re
 A build local 1.1.8 concluiu **507/507** testes Release; a republicação do manifesto e as novas guardas de JSON validaram **509/509**. O smoke portátil automático foi omitido porque a compactação do ZIP ocorreu depois da compilação do instalador. FileVersion `1.1.8.0`. Payload: 472 arquivos / 231.262.229 bytes. A publicação permanece manual pelo mesmo motivo da 1.1.4: o runner hospedado não tem a origem licenciada do runtime. O workflow disparado pela tag deve ser cancelado se aparecer.
 
 O `update-manifest.json` inicial da 1.1.8 foi reescrito à mão com quebras de linha cruas nas notas, o que o `System.Text.Json` da 1.1.7 recusa. O asset foi republicado no mesmo tag `v1.1.8` em JSON válido; instalador e ZIP não mudaram. O pipeline agora recusa manifesto com controle sem escape dentro de string.
+
+## Entregáveis públicos 1.1.9
+
+Release: [Urus Launcher 1.1.9](https://github.com/Jessielriffel2/UrusLauncher/releases/tag/v1.1.9).
+
+| Tipo | Caminho/resultado |
+| --- | --- |
+| Instalador com runtime | `GitHub Release/UrusLauncher-Setup-1.1.9-win-x64.exe` — 65.859.268 bytes — SHA-256 `F67E8703784730BEF757B9F9B84D08CAFD2D8C7C23B64B50D5D59ADCD7345437` |
+| ZIP portátil | `GitHub Release/UrusLauncher-1.1.9-portable-win-x64.zip` — 92.432.557 bytes — SHA-256 `504141FFF31FAC3D88620BD476A8F911238EB77E9C40F8F6D047DBAC94BAE204` |
+| Manifesto do updater | `GitHub Release/update-manifest.json` — 1.509 bytes — SHA-256 `AB99A0B81CB6CA27539A3293671D5A795885C9CA65EC7D7A360DB53EB59ABF1A` |
+| Lista oficial de checksums | `GitHub Release/SHA256SUMS.txt` — 383 bytes — SHA-256 `7E95C750FBF9EC6B5C8DA347FFDB4EE45DB8FAD43C134EF4156ACA727C3B88C4` |
+
+A build local 1.1.9 concluiu **510/510** testes Release. O smoke portátil automático foi omitido porque a compactação do ZIP ocorreu depois da compilação do instalador. FileVersion `1.1.9.0`. Payload: 472 arquivos / 231.261.717 bytes. A publicação permanece manual pelo mesmo motivo da 1.1.4: o runner hospedado não tem a origem licenciada do runtime. O workflow `32687584553` disparado pela tag foi cancelado.
+
+A âncora do GameHost deixa de abrir a janela visível com texto do Cheat Engine ao entrar na conta. O HWND top-level permanece oculto para ferramentas de memória x64.
 
 ## Fluxo de construção
 
