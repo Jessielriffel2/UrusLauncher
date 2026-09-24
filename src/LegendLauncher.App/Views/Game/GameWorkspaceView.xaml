@@ -123,7 +123,7 @@
             <ScrollViewer x:Name="SessionTabsScrollViewer"
                           Grid.Column="2"
                           VerticalAlignment="Center"
-                          HorizontalScrollBarVisibility="Hidden"
+                          HorizontalScrollBarVisibility="Disabled"
                           VerticalScrollBarVisibility="Disabled"
                           Focusable="False"
                           shell:WindowChrome.IsHitTestVisibleInChrome="True">
@@ -136,15 +136,15 @@
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <Border Style="{StaticResource SessionTabBorderStyle}"
-                                    MinWidth="132"
-                                    MaxWidth="210"
+                                    MinWidth="180"
+                                    MaxWidth="250"
                                     Height="34"
                                     Margin="0,0,5,0">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="26" />
-                                        <ColumnDefinition Width="26" />
+                                        <ColumnDefinition Width="30" />
+                                        <ColumnDefinition Width="30" />
                                     </Grid.ColumnDefinitions>
                                     <Button Background="Transparent"
                                             BorderThickness="0"
@@ -186,12 +186,17 @@
                                             BorderThickness="0"
                                             Foreground="{StaticResource TextMutedBrush}"
                                             FontFamily="Segoe Fluent Icons"
-                                            FontSize="10"
+
                                             Content="&#xE711;"
                                             Cursor="Hand"
                                             Command="{Binding DataContext.Workspace.CloseSessionCommand, ElementName=WorkspaceRoot}"
                                             CommandParameter="{Binding}"
-                                            AutomationProperties.Name="{loc:Localize Session_End}" />
+                                            AutomationProperties.Name="{loc:Localize Session_End}"
+                                             Width="30" FontSize="12"
+                                             Height="34"
+
+
+                                             ToolTip="{loc:Localize Session_End}" />
                                 </Grid>
                             </Border>
                         </DataTemplate>
@@ -594,10 +599,45 @@
         </Grid>
 
         <Border Grid.Row="2" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0">
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0">
-                <Ellipse Width="9" Height="9" Fill="{StaticResource SuccessBrush}" Margin="0,0,10,0" />
-                <TextBlock Text="{Binding Workspace.FooterStatus}" FontSize="11" Foreground="{StaticResource TextMutedBrush}" />
-            </StackPanel>
+            <Grid Margin="8,0,8,0">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Ellipse Width="9" Height="9" Fill="{StaticResource SuccessBrush}" Margin="0,0,10,0" />
+                    <TextBlock Text="{Binding Workspace.FooterStatus}" FontSize="11" Foreground="{StaticResource TextMutedBrush}" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding Workspace.MacroAssistant.ErrorText}"
+                               Foreground="{StaticResource DangerBrush}"
+                               MaxWidth="360"
+                               TextTrimming="CharacterEllipsis"
+
+                               VerticalAlignment="Center"
+                               Margin="0,0,10,0"
+                               ToolTip="{Binding Workspace.MacroAssistant.ErrorText}"
+                               Visibility="{Binding Workspace.MacroAssistant.HasError, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                    <TextBlock Text="{Binding Workspace.MacroAssistant.StatusLabel}"
+                               FontSize="10"
+                               Foreground="{StaticResource TextMutedBrush}"
+                               VerticalAlignment="Center"
+                               Margin="0,0,10,0" />
+                    <Button Content="{Binding Workspace.MacroAssistant.ModeLabel}"
+                            Command="{Binding Workspace.MacroAssistant.CycleModeCommand}"
+                            Style="{StaticResource WorkspaceToolbarButtonStyle}"
+                            Height="26"
+                            Padding="9,0"
+                            Margin="0,0,6,0"
+                            ToolTip="{loc:Localize Macro_ModeTooltip}"
+                            AutomationProperties.Name="{Binding Workspace.MacroAssistant.ModeLabel}" />
+                    <Button Content="{Binding Workspace.MacroAssistant.ToggleLabel}"
+                            Command="{Binding Workspace.MacroAssistant.ToggleAllCommand}"
+                            Style="{StaticResource WorkspaceToolbarButtonStyle}"
+                            Height="26"
+                            Padding="10,0"
+                            ToolTip="{loc:Localize Macro_ToggleTooltip}"
+                             AutomationProperties.Name="{Binding Workspace.MacroAssistant.ToggleLabel}"
+                            BorderBrush="#7BCB55"
+                            Foreground="#B8F58A" />
+                </StackPanel>
+            </Grid>
         </Border>
     </Grid>
 </UserControl>

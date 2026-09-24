@@ -8,6 +8,8 @@ public sealed class DonationPromptAssetTests
 {
     private const string ExpectedQrSha256 =
         "EADCCECE3D8D2EC926C81AF0386A169178FA0795D6BADF7FC90794648601C6FC";
+    private const string ExpectedPayPalLogoSha256 =
+        "B32A8F3A0A545D558E1451F1214FD0EAA0AC5FB61B4CCFEE2B7CBB90CAEACA25";
     private static readonly XNamespace Presentation =
         "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
     private static readonly XNamespace Xaml =
@@ -41,6 +43,45 @@ public sealed class DonationPromptAssetTests
                 element.Attribute("Include")?.Value,
                 "Assets\\paypal-donation-qr.jpeg",
                 StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Header_UsesOfficialTransparentPayPalLogo()
+    {
+        string root = FindRepositoryRoot();
+        string assetPath = Path.Combine(
+            root,
+            "src",
+            "LegendLauncher.App",
+            "Assets",
+            "paypal-logo.png");
+        byte[] asset = File.ReadAllBytes(assetPath);
+
+        Assert.Equal(1_986, asset.Length);
+        Assert.Equal(ExpectedPayPalLogoSha256, Convert.ToHexString(SHA256.HashData(asset)));
+
+        XDocument project = XDocument.Load(FindRepositoryFile(
+            "src",
+            "LegendLauncher.App",
+            "LegendLauncher.App.csproj"));
+        Assert.Contains(
+            project.Descendants("Resource"),
+            element => string.Equals(
+                element.Attribute("Include")?.Value,
+                "Assets\\*.png",
+                StringComparison.Ordinal));
+
+        XDocument mainWindow = XDocument.Load(FindRepositoryFile(
+            "src",
+            "LegendLauncher.App",
+            "MainWindow.xaml"));
+        XElement button = FindNamedElement(mainWindow, "Button", "DonationHeaderButton");
+        XElement logo = button
+            .Descendants(Presentation + "Image")
+            .Single();
+
+        Assert.Equal("Assets/paypal-logo.png", logo.Attribute("Source")?.Value);
+        Assert.Equal("72", button.Attribute("Width")?.Value);
     }
 
     [Fact]

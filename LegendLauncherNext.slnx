@@ -7,6 +7,7 @@
     <Project Path="src/LegendLauncher.NetworkBridge/LegendLauncher.NetworkBridge.csproj" />
     <Project Path="src/LegendLauncher.Providers.Oas/LegendLauncher.Providers.Oas.csproj" />
     <Project Path="src/LegendLauncher.Providers.SevenWan/LegendLauncher.Providers.SevenWan.csproj" />
+    <Project Path="src/LegendLauncher.Providers.Elarionis/LegendLauncher.Providers.Elarionis.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/LegendLauncher.Tests/LegendLauncher.Tests.csproj" />

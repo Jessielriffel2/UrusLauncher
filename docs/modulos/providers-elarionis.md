@@ -1,0 +1,31 @@
+# Módulo Providers Elarionis
+
+## Objetivo do módulo
+
+`LegendLauncher.Providers.Elarionis` reconhece o catálogo público do servidor privado Elarionis Online e autentica contas nele, reaproveitando o GameHost Flash interno do launcher em vez do navegador. O módulo fornece catálogo/cache e autenticação completa: o login acontece contra `https://elarionis.online/api/login`, a trava de capacidade por `api/can_enter` e a sessão do jogo é extraída da página `play` de cada shard para ser carregada pelo Flash ActiveX isolado.
+
+## Funções e classes principais
+
+- `ElarionisPlatformCatalog` — plataforma única `elarionis-lo` (“Elarionis Online”, gamecode `elo`, locale `pt-BR`) sobre o endpoint público `https://elarionis.online/api/shards`. `All` expõe somente `PlatformDefinition`; `Find` valida por ID. Uma única plataforma cobre os 15 servidores (S1 RACON … S15 ASGARD), então a mesma identidade de conta vale para todos, com UID/histórico separados por servidor como nas variantes OAS. Referência: `src/LegendLauncher.Providers.Elarionis/ElarionisPlatformCatalog.cs:11`, `:23` e `:26`.
+- `ElarionisServerDirectory(...)` — implementação de `IServerDirectory` com `HttpClient`, cache, timeout, relógio e cota injetáveis. Defaults: 12 segundos e 2 MiB. Referência: `src/LegendLauncher.Providers.Elarionis/ElarionisServerDirectory.cs:12` e `:49`.
+- `ElarionisServerDirectory.GetServersAsync(platform, userId, cancellationToken)` — exige a plataforma exata, busca o catálogo remoto sem token (o endpoint `shards` é público), atualiza o cache e usa fallback em falhas recuperáveis. Referência: `src/LegendLauncher.Providers.Elarionis/ElarionisServerDirectory.cs:49`.
+- `ElarionisShardPayloadParser.ParseAsync` — converte o array `shards` (`number`, `site`, `name`, `label`, `path`, `state`) em `GameServer`s ordenados por número; `offline` marca o servidor como inválido e os demais ficam válidos. Referência: `src/LegendLauncher.Providers.Elarionis/ElarionisShardPayloadParser.cs:7`.
+- `ElarionisShardPayloadParser.BuildPlayDocumentUri` — monta o documento de entrada sem token (`https://elarionis.online{path}play?site={site}`); o token é anexado somente durante a autenticação. Referência: `src/LegendLauncher.Providers.Elarionis/ElarionisShardPayloadParser.cs:117`.
+- `ElarionisOriginPolicy` — restringe catálogo, login, `can_enter`, `play` e SWF ao HTTPS de `elarionis.online:443`, e valida que o `LaunchUri` do servidor é um documento `play` com `site=`. Referência: `src/LegendLauncher.Providers.Elarionis/ElarionisOriginPolicy.cs:8`.
+- `ElarionisAuthenticationService(...)` — implementação de `IGameAuthenticationService` com `HttpClient`, timeout, relógio e cotas injetáveis. Defaults: 15 segundos, 64 KiB JSON e 1 MiB HTML. Cada chamada usa um transporte independente, sem cookies compartilhados. Referência: `src/LegendLauncher.Providers.Elarionis/ElarionisAuthenticationService.cs:17` e `:70`.
+- Fluxo `AuthenticateAsync` — valida credencial/plataforma/servidor; `POST /api/login` (`username`, `password`, `site: "local"`) devolve o token opaco; `GET {shard}/api/can_enter?token=` barra sessão expirada (`relogin`) e servidor cheio (`full` + `limit`); `GET {shard}/play?site=&token=` resolve o SWF pelos parsers. Cada tentativa mantém um `CookieContainer` próprio que captura `Set-Cookie` do login e o reenvia em `can_enter`/`play`, espelhando o `withCredentials` do navegador. O token é tratado como senha: viaja só em corpo/query e nunca chega a logs ou diagnósticos. Falhas de credencial usam os mesmos códigos do OAS (`invalid_credentials`/`authentication_rejected`), então as mensagens localizadas existentes se aplicam sem novas chaves.
+- `ElarionisLaunchPageParser.Parse` — extrai o endereço `.swf` (parâmetros `movie`, `embed`, URLs em scripts; preferência por `Loading`) e as FlashVars (`param`, `embed`, JS e query do próprio SWF) da página `play`, resolve relativos contra o documento e acompanha um único `iframe` interno. SWF fora da origem permitida retorna origem negada. Referência: `src/LegendLauncher.Providers.Elarionis/ElarionisLaunchPageParser.cs:35`.
+- `ElarionisAuthenticationErrorCodes` — códigos estáveis do lado do launcher, com os mesmos valores do OAS para reaproveitar `Auth_*` sem novas chaves de localização. Referência: `src/LegendLauncher.Providers.Elarionis/ElarionisAuthenticationErrorCodes.cs:8`.
+- `ElarionisServerDirectoryException` — erro público contextual para catálogo ausente, origem inesperada, JSON inválido ou falta de cache utilizável. Referência: `src/LegendLauncher.Providers.Elarionis/ElarionisServerDirectoryException.cs:6`.
+
+## Dependências e consumidores
+
+O módulo depende da BCL (`HttpClient`, JSON e APIs de URI/tempo), dos modelos/contratos do [Core](core.md) e opcionalmente de `IServerCatalogCache`, implementado na [Infrastructure](infrastructure.md). A [aplicação](launcher-app.md) registra a plataforma por `PlatformAdapterRegistry` com o cache compartilhado e o serviço de autenticação próprio. O endereço final do filme passa pela allowlist do [NetworkBridge](network-bridge.md) (`elarionis.online`) e pela política do GameHost antes de chegar ao ActiveX. O provider não depende de WPF, cofre, Passport OAS ou navegador.
+
+## Testes e estado funcional
+
+`tests/LegendLauncher.Tests/Elarionis/` cobre plataforma única, parsing/ordenação dos shards, URIs `play`, plataforma adulterada, origem efetiva, cache, fallback, extração de SWF/FlashVars, `iframe`, login, trava `can_enter` (cheio/expirado), rejeição de credencial e sessão de jogo com token. A allowlist inclui o host nos testes de `BridgeSecurityPolicy` e `LegacyLaunchUriPolicy`.
+
+Limite conhecido: o token de exemplo original expirou durante o desenvolvimento (`verify_token` responde sessão inválida), então a extração do SWF foi validada contra páginas sintéticas no formato observado (`object`/`embed`/JS) e precisa de uma conferência com sessão válida em runtime — basta logar no launcher e abrir um servidor; se a página `play` real usar outro padrão de embed, o erro `invalid_launch_response` aparece antes de qualquer processo de jogo ser criado.
+
+Referências cruzadas: o registro comum está descrito em [Launcher App](launcher-app.md); o provider jogável principal está em [Providers OAS](providers-oas.md).

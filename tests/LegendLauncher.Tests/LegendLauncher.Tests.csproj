@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
@@ -27,6 +27,7 @@
     <ProjectReference Include="..\..\src\LegendLauncher.NetworkBridge\LegendLauncher.NetworkBridge.csproj" />
     <ProjectReference Include="..\..\src\LegendLauncher.Providers.Oas\LegendLauncher.Providers.Oas.csproj" />
     <ProjectReference Include="..\..\src\LegendLauncher.Providers.SevenWan\LegendLauncher.Providers.SevenWan.csproj" />
+    <ProjectReference Include="..\..\src\LegendLauncher.Providers.Elarionis\LegendLauncher.Providers.Elarionis.csproj" />
   </ItemGroup>
 
 </Project>

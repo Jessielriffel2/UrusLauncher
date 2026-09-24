@@ -13,6 +13,7 @@ using LegendLauncher.Infrastructure.Runtime;
 using LegendLauncher.Infrastructure.Security;
 using LegendLauncher.Providers.Oas;
 using LegendLauncher.Providers.SevenWan;
+using LegendLauncher.Providers.Elarionis;
 
 namespace LegendLauncher.App;
 
@@ -54,6 +55,11 @@ internal static class LauncherComposition
         var sevenWanAuthentication = new UnavailablePlatformAuthenticationService(
             "sevenwan_service_unavailable",
             "O catálogo 7wan foi reconhecido, mas seus servidores estão marcados como encerrados pela plataforma.");
+        var elarionisServerDirectory = new ElarionisServerDirectory(
+            httpClient,
+            cache,
+            onRecoverableFailure: onCatalogFailure);
+        var elarionisAuthentication = new ElarionisAuthenticationService();
         var adapters = OasPlatformCatalog.All
             .Select(platform => new PlatformAdapter(
                 platform,
@@ -62,7 +68,11 @@ internal static class LauncherComposition
             .Concat(SevenWanPlatformCatalog.All.Select(platform => new PlatformAdapter(
                 platform,
                 sevenWanServerDirectory,
-                sevenWanAuthentication)));
+                sevenWanAuthentication)))
+            .Concat(ElarionisPlatformCatalog.All.Select(platform => new PlatformAdapter(
+                platform,
+                elarionisServerDirectory,
+                elarionisAuthentication)));
         var platformRegistry = new PlatformAdapterRegistry(adapters);
         var gameRuntime = new LegacyGameRuntime();
         var profileStorage = new ProfileStorageCoordinator(profiles, credentialVault);

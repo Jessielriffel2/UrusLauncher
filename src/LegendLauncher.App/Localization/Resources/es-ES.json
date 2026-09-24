@@ -209,5 +209,21 @@
   "Update_CardAutomation": "Estado de actualización de Urus Launcher",
   "Update_NotesTitle": "Novedades de la versión {0}",
   "Update_NotesAutomation": "Notas de la actualización disponible",
-  "Update_ActionTooltip": "Instalar la actualización ya descargada y verificada"
+  "Update_ActionTooltip": "Instalar la actualización ya descargada y verificada",
+  "Macro_ModeGems": "Gemas/Cristales",
+  "Macro_ModeCosmo": "Cosmo",
+  "Macro_ModeClicks": "Clics",
+  "Macro_StartAll": "INICIAR MACRO",
+  "Macro_StopAll": "DETENER MACRO",
+  "Macro_StatusFormat": "Macro: {0} sesiones · {1} activas",
+  "Macro_ModeTooltip": "Cambiar entre Gemas/Cristales, Cosmo y Clics",
+  "Macro_ToggleTooltip": "Iniciar o detener el ratón virtual de todas las sesiones",
+  "FeatureCatalog_Button": "NOVEDADES",
+  "FeatureCatalog_Title": "Recursos y releases",
+  "FeatureCatalog_CloseTooltip": "Cerrar catálogo",
+  "FeatureCatalog_CloseAutomation": "Cerrar catálogo de novedades",
+  "FeatureCatalog_MacroTitle": "Macro Assistant",
+  "FeatureCatalog_MacroGuide": "Cómo usar:\n1. Abre una cuenta y entra en una sesión.\n2. En el pie, elige Gemas/Cristales, Cosmo o Clics.\n3. Pulsa INICIAR MACRO. Para los clics, ajusta cantidad e intervalo.\n4. Usa el mismo botón para DETENER MACRO; detiene todas las sesiones activas.\n5. Arrastra el marco sobre el área que debe seguir el macro.",
+  "FeatureCatalog_HistoryTitle": "Historial de releases",
+  "FeatureCatalog_Close": "CERRAR"
 }

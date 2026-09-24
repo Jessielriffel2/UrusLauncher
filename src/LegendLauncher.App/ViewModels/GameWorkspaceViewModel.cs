@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Windows;
 using LegendLauncher.App.GameHosting;
 using LegendLauncher.App.Localization;
+using LegendLauncher.App.MacroAssistant;
 using LegendLauncher.App.Services;
 using LegendLauncher.Core.Models;
 
@@ -35,6 +36,7 @@ internal sealed class GameWorkspaceViewModel : ObservableObject, IDisposable
         _attachmentFactory = attachmentFactory ??
             ((windowHandle, processId) => new GameWindowAttachment(windowHandle, processId));
         Sessions = [];
+        MacroAssistant = new MacroAssistantViewModel(_localization);
         _localization.LanguageChanged += LocalizationOnLanguageChanged;
 
         SelectSessionCommand = new RelayCommand<GameSessionViewModel>(
@@ -65,6 +67,8 @@ internal sealed class GameWorkspaceViewModel : ObservableObject, IDisposable
     public event EventHandler<GameSessionViewModel>? SessionRemoved;
 
     public ObservableCollection<GameSessionViewModel> Sessions { get; }
+
+    public MacroAssistantViewModel MacroAssistant { get; }
 
     public RelayCommand<GameSessionViewModel> SelectSessionCommand { get; }
 
@@ -316,6 +320,7 @@ internal sealed class GameWorkspaceViewModel : ObservableObject, IDisposable
 
         _disposed = true;
         _localization.LanguageChanged -= LocalizationOnLanguageChanged;
+        MacroAssistant.Dispose();
         foreach (GameSessionViewModel session in Sessions.ToArray())
         {
             session.Exited -= SessionOnExited;

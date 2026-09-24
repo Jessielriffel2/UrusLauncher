@@ -108,12 +108,41 @@
             </Border>
 
             <Border Grid.Row="2" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0">
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="12,0,0,0">
-                    <Ellipse Width="8" Height="8" Fill="{StaticResource SuccessBrush}" Margin="0,0,9,0" />
-                    <TextBlock Text="{Binding Session.SurfaceTitle}" FontSize="10.5" Foreground="{StaticResource TextMutedBrush}" />
-                    <TextBlock Text="{loc:Localize Detached_FooterHint}" FontSize="10.5"
-                               Foreground="{StaticResource TextMutedBrush}" />
-                </StackPanel>
+                <Grid Margin="12,0,12,0">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <Ellipse Width="8" Height="8" Fill="{StaticResource SuccessBrush}" Margin="0,0,9,0" />
+                        <TextBlock Text="{Binding Session.SurfaceTitle}" FontSize="10.5" Foreground="{StaticResource TextMutedBrush}" />
+                        <TextBlock Text="{loc:Localize Detached_FooterHint}" FontSize="10.5"
+                                   Foreground="{StaticResource TextMutedBrush}" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Workspace.MacroAssistant.ErrorText}"
+                                   MaxWidth="280"
+                                   TextTrimming="CharacterEllipsis"
+                                   Foreground="{StaticResource DangerBrush}"
+                                   VerticalAlignment="Center"
+                                   Margin="0,0,10,0"
+                                   ToolTip="{Binding Workspace.MacroAssistant.ErrorText}"
+                                   Visibility="{Binding Workspace.MacroAssistant.HasError, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                        <Button Content="{Binding Workspace.MacroAssistant.ModeLabel}"
+                                Command="{Binding Workspace.MacroAssistant.CycleModeCommand}"
+                                Style="{StaticResource SecondaryButtonStyle}"
+                                Height="26"
+                                Padding="9,0"
+                                Margin="0,0,6,0"
+                                ToolTip="{loc:Localize Macro_ModeTooltip}"
+                                AutomationProperties.Name="{Binding Workspace.MacroAssistant.ModeLabel}" />
+                        <Button Content="{Binding Workspace.MacroAssistant.ToggleLabel}"
+                                Command="{Binding Workspace.MacroAssistant.ToggleAllCommand}"
+                                Style="{StaticResource SecondaryButtonStyle}"
+                                Height="26"
+                                Padding="10,0"
+                                ToolTip="{loc:Localize Macro_ToggleTooltip}"
+                                AutomationProperties.Name="{Binding Workspace.MacroAssistant.ToggleLabel}"
+                                BorderBrush="#7BCB55"
+                                Foreground="#B8F58A" />
+                    </StackPanel>
+                </Grid>
             </Border>
         </Grid>
     </Border>

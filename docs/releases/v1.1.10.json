@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "version": "1.1.10",
+  "title": {
+    "pt-BR": "Macro Assistant com controle de parada e catálogo de recursos",
+    "en-US": "Macro Assistant with reliable stop control and feature catalog",
+    "es-ES": "Macro Assistant con control de parada fiable y catálogo de recursos"
+  },
+  "notes": {
+    "pt-BR": [
+      "Corrigido: o rodapé agora tem um único controle de Macro Assistant. Quando existe qualquer macro ativa, o mesmo botão sempre executa Parar macro em todas as sessões, sem o segundo botão que podia confundir o clique.",
+      "Novo: Macro Assistant oferece modos Gemas/Cristais, Cosmo e Cliques, com configuração de moldura, quantidade e intervalo para cliques.",
+      "Novo: o catálogo de recursos e releases pode ser aberto pelo cabeçalho, mostra como usar os macros e reúne o histórico das versões anteriores.",
+      "Elarionis Online e a identidade visual PayPal do cabeçalho também passam a fazer parte desta versão."
+    ],
+    "en-US": [
+      "Fixed: the footer now has one Macro Assistant control. Whenever any macro is active, that same button always stops all sessions, without a second button that could confuse clicks.",
+      "New: Macro Assistant provides Gems/Crystals, Cosmo, and Clicks modes, with frame configuration plus count and interval settings for clicks.",
+      "New: the feature and release catalog can be opened from the header, shows how to use macros, and brings together the history of previous versions.",
+      "Elarionis Online and the PayPal visual identity in the header are also included in this release."
+    ],
+    "es-ES": [
+      "Corregido: el pie de página ahora tiene un único control de Macro Assistant. Cuando existe cualquier macro activa, ese mismo botón siempre detiene todas las sesiones, sin un segundo botón que podía confundir el clic.",
+      "Nuevo: Macro Assistant ofrece modos Gemas/Cristales, Cosmo y Clics, con configuración del marco, cantidad e intervalo para los clics.",
+      "Nuevo: el catálogo de recursos y releases se puede abrir desde el encabezado, muestra cómo usar los macros y reúne el historial de versiones anteriores.",
+      "Elarionis Online y la identidad visual de PayPal en el encabezado también forman parte de esta versión."
+    ]
+  }
+}

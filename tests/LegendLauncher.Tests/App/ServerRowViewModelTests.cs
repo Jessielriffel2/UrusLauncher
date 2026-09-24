@@ -41,17 +41,49 @@ public sealed class ServerRowViewModelTests
         Assert.False(row.CanLaunch);
     }
 
+    [Theory]
+    [InlineData("https://lobr.creaction-network.com/serverlist/s3257", true)]
+    [InlineData("https://elarionis.online/s7/play?site=s7", true)]
+    [InlineData("https://elarionis.online/play?site=local", true)]
+    [InlineData("https://attacker.example/s7/play?site=s7", false)]
+    [InlineData("http://elarionis.online/s7/play?site=s7", false)]
+    public void CanLaunch_ValidatesSecureLaunchAddressPerProvider(
+        string address,
+        bool expectedCanLaunch)
+    {
+        GameServer server = CreateServerWithUri(
+            recommended: false,
+            valid: true,
+            opensAt: Now.AddDays(-1),
+            launchUri: new Uri(address));
+
+        var row = new ServerRowViewModel(server, Now);
+
+        Assert.Equal(expectedCanLaunch, row.CanLaunch);
+    }
+
     private static GameServer CreateServer(
         bool recommended,
         bool valid,
         DateTimeOffset opensAt) =>
+        CreateServerWithUri(
+            recommended,
+            valid,
+            opensAt,
+            new Uri("https://lobr.creaction-network.com/serverlist/s3257"));
+
+    private static GameServer CreateServerWithUri(
+        bool recommended,
+        bool valid,
+        DateTimeOffset opensAt,
+        Uri launchUri) =>
         new(
             Id: "3257",
             NumericId: 3257,
             Code: "S3257",
             Name: "Sombra sob a Lua",
             FullName: "OAS1257:Sombra sob a Lua",
-            LaunchUri: new Uri("https://lobr.creaction-network.com/serverlist/s3257"),
+            LaunchUri: launchUri,
             IsRecommended: recommended,
             IsValid: valid,
             Merger: null,

@@ -11,6 +11,7 @@ public sealed class BridgeSecurityPolicy
     [
         "oasgames.com",
         "creaction-network.com",
+        "elarionis.online",
     ];
 
     private readonly HashSet<string> _allowedHostSuffixes;

@@ -115,9 +115,13 @@ internal sealed class ServerRowViewModel(
         }
 
         string host = uri.IdnHost.TrimEnd('.');
-        return string.Equals(host, "creaction-network.com", StringComparison.OrdinalIgnoreCase) ||
-            host.EndsWith(".creaction-network.com", StringComparison.OrdinalIgnoreCase);
+        return IsAllowedLaunchSuffix(host, "creaction-network.com") ||
+            IsAllowedLaunchSuffix(host, "elarionis.online");
     }
+
+    private static bool IsAllowedLaunchSuffix(string host, string suffix) =>
+        string.Equals(host, suffix, StringComparison.OrdinalIgnoreCase) ||
+        host.EndsWith("." + suffix, StringComparison.OrdinalIgnoreCase);
 
     private bool IsGeneratedFallback(string value) =>
         string.IsNullOrWhiteSpace(value) ||

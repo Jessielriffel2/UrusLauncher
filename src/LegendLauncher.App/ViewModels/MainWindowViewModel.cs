@@ -87,6 +87,7 @@ internal sealed partial class MainWindowViewModel : ObservableObject, IDisposabl
         Workspace.RelogRequested += WorkspaceOnRelogRequested;
         InitializeLocalization();
         InitializeUpdater(updateService, currentVersion);
+        InitializeFeatureCatalog();
 
         OpenDonationPromptCommand = new AsyncRelayCommand(OpenDonationPromptAsync);
         CloseDonationPromptCommand = new RelayCommand(CloseDonationPrompt);

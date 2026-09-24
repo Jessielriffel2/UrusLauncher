@@ -40,6 +40,8 @@ public sealed class LegacyLaunchUriPolicyTests
     [InlineData("https://odp3.oasgames.com/client/Loading.swf")]
     [InlineData("https://lobr.creaction-network.com/client/Loading.swf?token=test")]
     [InlineData("https://s1.lobr.creaction-network.com:443/client/Loading.swf")]
+    [InlineData("https://elarionis.online/client/Loading.swf")]
+    [InlineData("https://elarionis.online/client/Loading.swf?token=test")]
     public void IsAllowed_AcceptsHttpsOasAndCreactionHosts(string address)
     {
         Assert.True(LegacyLaunchUriPolicy.IsAllowed(new Uri(address)));

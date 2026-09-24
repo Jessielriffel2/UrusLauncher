@@ -28,6 +28,9 @@ public sealed class BridgeSecurityPolicyTests
     [InlineData("https://odp3.oasgames.com/api/game/serverlist")]
     [InlineData("https://lobr.creaction-network.com/serverlist/s3257")]
     [InlineData("wss://s1.lobr.creaction-network.com/websocket2")]
+    [InlineData("https://elarionis.online/api/shards")]
+    [InlineData("https://elarionis.online/s7/play?site=s7")]
+    [InlineData("https://elarionis.online/client/Loading.swf?token=test")]
     public void ValidateUpstream_AllowsKnownGameDomains(string address)
     {
         BridgeValidationResult result = _policy.ValidateUpstream(new Uri(address));

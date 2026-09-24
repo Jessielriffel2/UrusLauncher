@@ -2,6 +2,19 @@
 
 As mudanças relevantes do Urus Launcher são registradas aqui. As versões públicas seguem versionamento semântico e são publicadas em `vMAJOR.MINOR.PATCH`.
 
+## 1.1.10 — 24/09/2026
+
+### Adicionado
+
+- Macro Assistant com modos Gemas/Cristais, Cosmo e Cliques, configuração de moldura e controle único para iniciar ou parar todas as sessões.
+- Catálogo de recursos e histórico de releases disponível pelo botão **Novidades**, com instruções de uso dos macros e fechamento por botão, Escape ou clique fora.
+- Elarionis Online integrado ao catálogo e ao fluxo de autenticação.
+- Logo oficial do PayPal no cabeçalho, mantendo o modal de apoio e o caminho PIX.
+
+### Corrigido
+
+- O rodapé não exibe mais dois controles “Parar macro”; qualquer macro ativa é interrompida pelo único botão de Macro Assistant.
+
 ## 1.1.9 — 23/08/2026
 
 ### Corrigido

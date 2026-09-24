@@ -209,5 +209,21 @@
   "Update_CardAutomation": "Urus Launcher update status",
   "Update_NotesTitle": "What's new in version {0}",
   "Update_NotesAutomation": "Available update notes",
-  "Update_ActionTooltip": "Install the update that was already downloaded and verified"
+  "Update_ActionTooltip": "Install the update that was already downloaded and verified",
+  "Macro_ModeGems": "Gems/Crystals",
+  "Macro_ModeCosmo": "Cosmo",
+  "Macro_ModeClicks": "Clicks",
+  "Macro_StartAll": "START MACRO",
+  "Macro_StopAll": "STOP MACRO",
+  "Macro_StatusFormat": "Macro: {0} sessions · {1} active",
+  "Macro_ModeTooltip": "Switch between Gems/Crystals, Cosmo, and Clicks",
+  "Macro_ToggleTooltip": "Start or stop the virtual mouse for all sessions",
+  "FeatureCatalog_Button": "WHAT'S NEW",
+  "FeatureCatalog_Title": "Features and releases",
+  "FeatureCatalog_CloseTooltip": "Close catalog",
+  "FeatureCatalog_CloseAutomation": "Close feature catalog",
+  "FeatureCatalog_MacroTitle": "Macro Assistant",
+  "FeatureCatalog_MacroGuide": "How to use:\n1. Open an account and enter a game session.\n2. In the footer, choose Gems/Crystals, Cosmo, or Clicks.\n3. Click START MACRO. For clicks, adjust the count and interval.\n4. Use the same button to STOP MACRO; it stops every active session.\n5. Drag the frame over the area the macro should watch.",
+  "FeatureCatalog_HistoryTitle": "Release history",
+  "FeatureCatalog_Close": "CLOSE"
 }

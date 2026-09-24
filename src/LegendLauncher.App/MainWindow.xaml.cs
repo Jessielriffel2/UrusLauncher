@@ -7,6 +7,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using LegendLauncher.App.ViewModels;
 using LegendLauncher.App.Views.Game;
+using LegendLauncher.App.MacroAssistant;
 using LegendLauncher.Infrastructure.Logging;
 
 namespace LegendLauncher.App;
@@ -15,6 +16,7 @@ public partial class MainWindow : Window
 {
     private readonly HttpClient _httpClient;
     private readonly MainWindowViewModel _viewModel;
+    private readonly MacroAssistantCoordinator _macroAssistant;
     private readonly Dictionary<Guid, DetachedGameWindow> _detachedWindows = [];
     private bool _initialized;
     private bool _isClosing;
@@ -26,6 +28,7 @@ public partial class MainWindow : Window
 
         _httpClient = LauncherComposition.CreateHttpClient();
         _viewModel = LauncherComposition.CreateMainWindowViewModel(_httpClient);
+        _macroAssistant = new MacroAssistantCoordinator(_viewModel.Workspace, this);
         _viewModel.PropertyChanged += ViewModelOnPropertyChanged;
         _viewModel.UpdateInstallerStarted += ViewModelOnUpdateInstallerStarted;
         _viewModel.Workspace.DetachRequested += WorkspaceOnDetachRequested;
@@ -301,6 +304,7 @@ public partial class MainWindow : Window
         _viewModel.UpdateInstallerStarted -= ViewModelOnUpdateInstallerStarted;
         _viewModel.Workspace.DetachRequested -= WorkspaceOnDetachRequested;
         _viewModel.Workspace.SessionRemoved -= WorkspaceOnSessionRemoved;
+        _macroAssistant.Dispose();
         _viewModel.Dispose();
         _httpClient.Dispose();
     }

@@ -103,6 +103,7 @@ internal sealed partial class MainWindowViewModel
         }
 
         RefreshUpdateProperties();
+        RefreshFeatureCatalogProperties();
         ApplyServerFilter();
     }
 

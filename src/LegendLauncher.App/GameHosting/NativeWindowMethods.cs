@@ -20,7 +20,12 @@ internal static class NativeWindowMethods
     internal const uint WindowStyleVisible = 0x10000000;
 
     private const int WindowLongStyle = -16;
+    private const int WindowLongExStyle = -20;
     private const uint StaticBlackRectangle = 0x00000004;
+    private const uint WindowExStyleLayered = 0x00080000;
+    private const uint WindowExStyleNoActivate = 0x08000000;
+    private const uint WindowExStyleTransparent = 0x00000020;
+    private const uint WindowExStyleToolWindow = 0x00000080;
     private const uint WindowExtendedStyleNoParentNotify = 0x00000004;
     private const uint WindowExtendedStyleToolWindow = 0x00000080;
     private const uint WindowExtendedStyleNoActivate = 0x08000000;
@@ -197,6 +202,137 @@ internal static class NativeWindowMethods
             Math.Max(0, rectangle.Bottom - rectangle.Top));
     }
 
+    internal static NativeClientGeometry GetClientGeometry(nint windowHandle)
+    {
+        NativeClientSize size = GetClientSize(windowHandle);
+        var origin = new NativePoint(0, 0);
+        if (!ClientToScreen(windowHandle, ref origin))
+        {
+            throw CreateLastWin32Exception("The launcher surface origin could not be read.");
+        }
+
+        return new NativeClientGeometry(origin.X, origin.Y, size.Width, size.Height);
+    }
+
+    internal static nint FindDeepestChildAtPoint(nint parentWindow, int x, int y)
+    {
+        if (!IsWindowHandle(parentWindow))
+        {
+            return nint.Zero;
+        }
+
+        nint current = parentWindow;
+        var point = new NativePoint(x, y);
+        var visited = new HashSet<nint>();
+        while (visited.Add(current))
+        {
+            nint child = RealChildWindowFromPoint(current, point);
+            if (child == nint.Zero || child == current)
+            {
+                return current;
+            }
+
+            var childPoint = point;
+            if (!ScreenToClient(child, ref childPoint))
+            {
+                return child;
+            }
+
+            current = child;
+            point = childPoint;
+        }
+
+        return current;
+    }
+
+    internal static bool TryClientToScreen(
+        nint windowHandle,
+        int x,
+        int y,
+        out int screenX,
+        out int screenY)
+    {
+        var point = new NativePoint(x, y);
+        if (!ClientToScreen(windowHandle, ref point))
+        {
+            screenX = x;
+            screenY = y;
+            return false;
+        }
+
+        screenX = point.X;
+        screenY = point.Y;
+        return true;
+    }
+
+    internal static bool TryScreenToClient(
+        nint windowHandle,
+        int screenX,
+        int screenY,
+        out int clientX,
+        out int clientY)
+    {
+        var point = new NativePoint(screenX, screenY);
+        if (!ScreenToClient(windowHandle, ref point))
+        {
+            clientX = screenX;
+            clientY = screenY;
+            return false;
+        }
+
+        clientX = point.X;
+        clientY = point.Y;
+        return true;
+    }
+
+    internal static bool PostMessage(
+        nint windowHandle,
+        uint message,
+        nint wParam,
+        nint lParam) =>
+        PostMessageNative(windowHandle, message, wParam, lParam);
+
+    internal static void SetOverlayBounds(nint windowHandle, int x, int y, int width, int height)
+    {
+        if (!SetWindowPos(
+                windowHandle,
+                nint.Zero,
+                x,
+                y,
+                width,
+                height,
+                SetWindowPositionNoZOrder |
+                SetWindowPositionNoActivate |
+                SetWindowPositionFrameChanged))
+        {
+            throw CreateLastWin32Exception("The macro overlay could not be positioned.");
+        }
+    }
+
+    internal static void SetClickThrough(nint windowHandle)
+    {
+        Marshal.SetLastPInvokeError(0);
+        nint current = IntPtr.Size == 8
+            ? GetWindowLongPtr64(windowHandle, WindowLongExStyle)
+            : new nint(GetWindowLong32(windowHandle, WindowLongExStyle));
+        int error = Marshal.GetLastPInvokeError();
+        if (current == nint.Zero && error != 0)
+        {
+            throw new Win32Exception(error, "The overlay extended style could not be read.");
+        }
+
+        nint updated = current |
+            new nint((long)(WindowExStyleLayered | WindowExStyleNoActivate | WindowExStyleTransparent | WindowExStyleToolWindow));
+        nint previous = IntPtr.Size == 8
+            ? SetWindowLongPtr64(windowHandle, WindowLongExStyle, updated)
+            : new nint(SetWindowLong32(windowHandle, WindowLongExStyle, updated.ToInt32()));
+        error = Marshal.GetLastPInvokeError();
+        if (previous == nint.Zero && error != 0)
+        {
+            throw new Win32Exception(error, "The overlay extended style could not be changed.");
+        }
+    }
+
     internal static void ResizeWindow(nint windowHandle, NativeClientSize size)
     {
         if (!MoveWindow(windowHandle, 0, 0, size.Width, size.Height, repaint: true))
@@ -286,6 +422,25 @@ internal static class NativeWindowMethods
 
     [DllImport("user32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool ClientToScreen(nint windowHandle, ref NativePoint point);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool ScreenToClient(nint windowHandle, ref NativePoint point);
+
+    [DllImport("user32.dll", EntryPoint = "RealChildWindowFromPoint", SetLastError = true)]
+    private static extern nint RealChildWindowFromPoint(nint parentWindow, NativePoint point);
+
+    [DllImport("user32.dll", EntryPoint = "PostMessage", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool PostMessageNative(
+        nint windowHandle,
+        uint message,
+        nint wParam,
+        nint lParam);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool MoveWindow(
         nint windowHandle,
         int x,
@@ -320,6 +475,24 @@ internal static class NativeWindowMethods
         public int Right;
         public int Bottom;
     }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct NativePoint
+    {
+        public NativePoint(int x, int y)
+        {
+            X = x;
+            Y = y;
+        }
+
+        public int X;
+        public int Y;
+    }
+}
+
+internal readonly record struct NativeClientGeometry(int X, int Y, int Width, int Height)
+{
+    public bool HasArea => Width > 0 && Height > 0;
 }
 
 internal readonly record struct NativeClientSize(int Width, int Height)

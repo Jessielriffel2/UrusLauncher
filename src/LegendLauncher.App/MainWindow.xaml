@@ -70,11 +70,11 @@
                                         FontSize="9.5" FontWeight="SemiBold" Foreground="#8DA3B9" />
                         </StackPanel>
                         <Button x:Name="DonationHeaderButton"
-                                Width="44"
+                                Width="72"
                                 Height="38"
                                 Margin="16,0,0,0"
-                                Padding="0"
-                                Background="#102C45"
+                                Padding="4,0"
+                                Background="#F4F8FC"
                                 BorderBrush="#247CB4"
                                 BorderThickness="1"
                                 Command="{Binding OpenDonationPromptCommand}"
@@ -82,27 +82,128 @@
                                 ToolTip="{loc:Localize Donation_HeaderTooltip}"
                                 AutomationProperties.Name="{loc:Localize Donation_HeaderAutomation}"
                                 shell:WindowChrome.IsHitTestVisibleInChrome="True">
-                            <Grid Width="24" Height="25">
-                                <TextBlock Margin="-4,-2,0,0"
-                                           HorizontalAlignment="Center"
-                                           VerticalAlignment="Center"
-                                           FontFamily="Segoe UI Variable Display, Segoe UI"
-                                           FontSize="20"
-                                           FontWeight="Bold"
-                                           FontStyle="Italic"
-                                           Foreground="#003087"
-                                           Text="P" />
-                                <TextBlock Margin="2,3,0,0"
-                                           HorizontalAlignment="Center"
-                                           VerticalAlignment="Center"
-                                           FontFamily="Segoe UI Variable Display, Segoe UI"
-                                           FontSize="20"
-                                           FontWeight="Bold"
-                                           FontStyle="Italic"
-                                           Foreground="#009CDE"
-                                           Text="P" />
-                            </Grid>
+                            <Image Source="Assets/paypal-logo.png"
+                                   Width="62"
+                                   Height="16"
+                                   Stretch="Uniform"
+                                   SnapsToDevicePixels="True" />
                         </Button>
+                        <Button x:Name="FeatureCatalogButton"
+                                Width="104"
+                                Height="38"
+                                Margin="10,0,0,0"
+                                Padding="10,0"
+                                Content="{loc:Localize FeatureCatalog_Button}"
+                                Command="{Binding OpenFeatureCatalogCommand}"
+                                Style="{StaticResource SecondaryButtonStyle}"
+                                ToolTip="{loc:Localize FeatureCatalog_Title}"
+                                AutomationProperties.Name="{loc:Localize FeatureCatalog_Title}"
+                                shell:WindowChrome.IsHitTestVisibleInChrome="True" />
+                        <Popup x:Name="FeatureCatalogPopup"
+                               PlacementTarget="{Binding ElementName=FeatureCatalogButton}"
+                               Placement="Bottom"
+                               VerticalOffset="8"
+                               AllowsTransparency="True"
+                               StaysOpen="False"
+                               DataContext="{Binding}"
+                               IsOpen="{Binding IsFeatureCatalogOpen, Mode=TwoWay}">
+                            <Border Width="520"
+                                    MaxHeight="620"
+                                    Padding="18"
+                                    Background="#FA0A1727"
+                                    BorderBrush="{StaticResource AccentStrongBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="12"
+                                    Focusable="True"
+                                    KeyboardNavigation.TabNavigation="Cycle"
+                                    AutomationProperties.Name="{loc:Localize FeatureCatalog_Title}">
+                                <Border.InputBindings>
+                                    <KeyBinding Key="Escape" Command="{Binding CloseFeatureCatalogCommand}" />
+                                </Border.InputBindings>
+                                <Border.Effect>
+                                    <DropShadowEffect Color="#000000"
+                                                      BlurRadius="24"
+                                                      ShadowDepth="8"
+                                                      Opacity="0.65" />
+                                </Border.Effect>
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="12" />
+                                        <RowDefinition Height="*" />
+                                        <RowDefinition Height="12" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <TextBlock Text="{loc:Localize FeatureCatalog_Title}"
+                                                       FontSize="17"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="{StaticResource TextPrimaryBrush}" />
+                                            <TextBlock Margin="0,4,0,0"
+                                                       Text="{Binding FeatureCatalogCurrentVersionText}"
+                                                       FontSize="10"
+                                                       Foreground="{StaticResource AccentBrush}" />
+                                        </StackPanel>
+                                        <Button Grid.Column="1"
+                                                Width="30"
+                                                Height="30"
+                                                Padding="0"
+                                                Command="{Binding CloseFeatureCatalogCommand}"
+                                                Style="{StaticResource SecondaryButtonStyle}"
+                                                ToolTip="{loc:Localize FeatureCatalog_CloseTooltip}"
+                                                AutomationProperties.Name="{loc:Localize FeatureCatalog_CloseAutomation}">
+                                            <TextBlock Text="&#xE711;"
+                                                       FontFamily="Segoe Fluent Icons"
+                                                       FontSize="11" />
+                                        </Button>
+                                    </Grid>
+                                    <ScrollViewer Grid.Row="2"
+                                                  VerticalScrollBarVisibility="Auto"
+                                                  HorizontalScrollBarVisibility="Disabled">
+                                        <StackPanel>
+                                            <Border Padding="12"
+                                                    Background="#10283A"
+                                                    BorderBrush="#247C78"
+                                                    BorderThickness="1"
+                                                    CornerRadius="9">
+                                                <StackPanel>
+                                                    <TextBlock Text="{loc:Localize FeatureCatalog_MacroTitle}"
+                                                               FontSize="12"
+                                                               FontWeight="SemiBold"
+                                                               Foreground="#8DE8D9" />
+                                                    <TextBlock Margin="0,7,0,0"
+                                                               Text="{Binding FeatureCatalogMacroGuideText}"
+                                                               FontSize="11"
+                                                               LineHeight="18"
+                                                               Foreground="{StaticResource TextSecondaryBrush}"
+                                                               TextWrapping="Wrap" />
+                                                </StackPanel>
+                                            </Border>
+                                            <TextBlock Margin="0,16,0,8"
+                                                       Text="{loc:Localize FeatureCatalog_HistoryTitle}"
+                                                       FontSize="12"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="{StaticResource AccentBrush}" />
+                                            <TextBlock Text="{Binding FeatureCatalogHistoryText}"
+                                                       FontSize="10.5"
+                                                       LineHeight="17"
+                                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                                       TextWrapping="Wrap" />
+                                        </StackPanel>
+                                    </ScrollViewer>
+                                    <Button Grid.Row="4"
+                                            HorizontalAlignment="Right"
+                                            Content="{loc:Localize FeatureCatalog_Close}"
+                                            Command="{Binding CloseFeatureCatalogCommand}"
+                                            Style="{StaticResource SecondaryButtonStyle}" />
+                                </Grid>
+                            </Border>
+                        </Popup>
                     </StackPanel>
 
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center"

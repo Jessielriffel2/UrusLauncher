@@ -16,6 +16,8 @@ Launcher Windows para Legend Online, escrito do zero em C#/.NET 10 e distribuíd
 | Busca, disponibilidade e selos do catálogo | Implementado; último servidor do perfil fica no topo como recomendado, lançamento mais recente recebe selo próprio e os demais formam uma seção separada |
 | Múltiplos perfis/contas | Implementado; o mesmo login OAS pode alternar entre Brasil, Classic, Reborn e demais variantes sem perder a senha, mantendo UID/histórico separados por versão |
 | Workspace multissessão com abas | Implementado; barra única de 44 px, controles/abas de 34 px, abas roláveis e `+ CONTA` sempre visível; um GameHost isolado por perfil + versão + servidor |
+| Macro Assistant | Implementado para Gemas/Cristais, Cosmo e Cliques; o mesmo botão inicia ou interrompe todas as macros ativas |
+| Catálogo de recursos | Implementado; popup no cabeçalho com instruções do Macro Assistant e histórico localizado das releases |
 | Layouts simultâneos 1, 2 e 4 | Implementados; grade adaptativa 1×1, 1×2 ou 2×2, sem limitar o número de abas |
 | Desacoplar/acoplar sessão | Implementado sem reiniciar o jogo, com rollback e shutdown idempotente |
 | Janela principal responsiva | Implementada em 1420×820, com mínimo 1180×700, cabeçalho recolhido no workspace, setup rolável e status/ação/legenda fixos |
@@ -27,7 +29,7 @@ Launcher Windows para Legend Online, escrito do zero em C#/.NET 10 e distribuíd
 | Autenticação Passport OAS | Implementada nas oito variantes; QA abriu o Reborn turco S115 até a interface jogável e validou Passport + sessão do Classic Português S100 |
 | GameHost Flash x64 separado | Implementado, isolado por sessão e encerrado quando o processo pai desaparece; jogabilidade real confirmada no S115 |
 | Execução direta sem `H2Proxy.exe` | Implementada |
-| Distribuição Windows | Pipeline self-contained `win-x64`, runtime registration-free fornecido pelo mantenedor, instalador Inno Setup por usuário, ZIP portátil, manifesto e SHA-256 implementados; a [v1.1.8](https://github.com/Jessielriffel2/UrusLauncher/releases/tag/v1.1.8) é a release pública atual |
+| Distribuição Windows | Pipeline self-contained `win-x64`, runtime registration-free fornecido pelo mantenedor, instalador Inno Setup por usuário, ZIP portátil, manifesto e SHA-256 implementados; a [v1.1.10](https://github.com/Jessielriffel2/UrusLauncher/releases/tag/v1.1.10) é a release pública atual |
 | Atualizações públicas | Consulta antecipada por GitHub Releases ao abrir, download/validação automática por usuário, cache verificado e instalação somente após clique explícito |
 | Ruffle | Avaliação futura |
 | Favoritos/múltiplos servidores fixados por conta | Melhoria futura |
@@ -116,7 +118,7 @@ Os patch notes de cada versão nascem de `docs/releases/vX.Y.Z.json` em `pt-BR`,
 
 A versão 1.0.1 não possui atualizador e precisa receber manualmente o instalador público mais recente. A 1.1.0 foi o primeiro bootstrap, mas sua consulta pode esbarrar na cota da API em redes de IP compartilhado; nesse caso, a passagem também é manual. As versões 1.1.1 e 1.1.2 detectam a 1.1.3 pelo fluxo anterior: nessa passagem única, a pessoa ainda clica em **Atualizar** para baixar e instalar. Depois de instalada a 1.1.3, versões futuras são baixadas e validadas automaticamente e ficam aguardando o clique em **Instalar**. Perfis, settings e senhas permanecem preservados.
 
-A [v1.1.8](https://github.com/Jessielriffel2/UrusLauncher/releases/tag/v1.1.8) é a release pública atual e segue esse fluxo de atualização preparada pela 1.1.3.
+A [v1.1.10](https://github.com/Jessielriffel2/UrusLauncher/releases/tag/v1.1.10) é a release pública atual e segue esse fluxo de atualização preparada pela 1.1.3.
 
 ## Desenvolvimento
 
