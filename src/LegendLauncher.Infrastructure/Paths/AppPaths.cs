@@ -61,6 +61,8 @@ public sealed class AppPaths
         UpdatesDirectory = Path.Combine(RootDirectory, "updates");
         CatalogCacheFile = Path.Combine(CacheDirectory, "server-catalogs.json");
         ProfilesFile = Path.Combine(DataDirectory, "profiles.json");
+        ProfilePreferencesFile = Path.Combine(DataDirectory, "profile-preferences.json");
+        ProfileAvatarsDirectory = Path.Combine(DataDirectory, "avatars");
         SettingsFile = Path.Combine(DataDirectory, "settings.json");
         LogsDirectory = Path.GetFullPath(
             Path.Combine(documentsDirectory, UserLogDirectoryName, "logs"));
@@ -78,6 +80,10 @@ public sealed class AppPaths
 
     public string ProfilesFile { get; }
 
+    public string ProfilePreferencesFile { get; }
+
+    public string ProfileAvatarsDirectory { get; }
+
     public string SettingsFile { get; }
 
     /// <summary>
@@ -92,6 +98,7 @@ public sealed class AppPaths
     {
         Directory.CreateDirectory(CacheDirectory);
         Directory.CreateDirectory(DataDirectory);
+        Directory.CreateDirectory(ProfileAvatarsDirectory);
         Directory.CreateDirectory(UpdatesDirectory);
     }
 

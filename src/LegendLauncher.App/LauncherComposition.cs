@@ -32,6 +32,8 @@ internal static class LauncherComposition
 
         var paths = new AppPaths();
         paths.EnsureDirectories();
+        var profilePreferences = new ProfilePreferencesStore(paths.ProfilePreferencesFile);
+        var avatarStore = new ProfileAvatarStore(paths.ProfileAvatarsDirectory);
 
         var cache = new JsonServerCatalogCache(paths.CatalogCacheFile);
         var profiles = new JsonProfileStore(paths.ProfilesFile);
@@ -75,13 +77,18 @@ internal static class LauncherComposition
                 elarionisAuthentication)));
         var platformRegistry = new PlatformAdapterRegistry(adapters);
         var gameRuntime = new LegacyGameRuntime();
-        var profileStorage = new ProfileStorageCoordinator(profiles, credentialVault);
+        var profileStorage = new ProfileStorageCoordinator(
+            profiles,
+            credentialVault,
+            avatarStore: avatarStore,
+            preferencesStore: profilePreferences);
         var settings = new LauncherSettingsService(paths.SettingsFile);
         var updateService = new LauncherUpdateService(httpClient, paths.UpdatesDirectory);
         var workspace = new GameWorkspaceViewModel(
             new GameAudioService(),
             settings,
-            localization: localization);
+            localization: localization,
+            avatarStore: avatarStore);
 
         string? configuredRuntime = FindLegacyRuntimeCandidate();
         LegacyRuntimeProbeResult runtime = new LegacyRuntimeProbe().Probe(
@@ -104,7 +111,9 @@ internal static class LauncherComposition
             workspace: workspace,
             localization: localization,
             updateService: updateService,
-            diagnosticLog: DiagnosticLog.Current);
+            diagnosticLog: DiagnosticLog.Current,
+            profilePreferences: profilePreferences,
+            avatarStore: avatarStore);
     }
 
     public static HttpClient CreateHttpClient()

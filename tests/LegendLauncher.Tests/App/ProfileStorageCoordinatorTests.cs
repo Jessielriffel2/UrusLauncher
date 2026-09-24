@@ -1,4 +1,5 @@
 using LegendLauncher.Core.Contracts;
+using LegendLauncher.Tests.Infrastructure;
 using LegendLauncher.App.Services;
 using LegendLauncher.Core.Models;
 using LegendLauncher.Infrastructure.Security;
@@ -229,6 +230,40 @@ public sealed class ProfileStorageCoordinatorTests
         Assert.Null(outcome.Profile.LastServerId);
         Assert.DoesNotContain(password, input.ToString(), StringComparison.Ordinal);
         Assert.DoesNotContain("player@example.test", outcome.ToString(), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task SaveAsync_RemovingAvatarDeletesOwnedPreviousFile()
+    {
+        using var temporaryDirectory = new TemporaryDirectory();
+        AccountProfile existing = AppTestData.Profile("player@example.test", 9988, "100") with
+        {
+            AvatarFileName = "old-avatar.png",
+        };
+        var avatarStore = new ProfileAvatarStore(temporaryDirectory.Combine("avatars"));
+        string oldPath = Path.Combine(temporaryDirectory.Path, "avatars", "old-avatar.png");
+        Directory.CreateDirectory(Path.GetDirectoryName(oldPath)!);
+        await File.WriteAllTextAsync(oldPath, "placeholder");
+        var preferencesStore = new ProfilePreferencesStore(
+            temporaryDirectory.Combine("profile-preferences.json"));
+        var coordinator = new ProfileStorageCoordinator(
+            new InMemoryProfileStore(existing),
+            new InMemoryCredentialVault(),
+            avatarStore: avatarStore,
+            preferencesStore: preferencesStore);
+        var input = new ProfileSaveInput(
+            existing,
+            existing.DisplayName,
+            existing.PlatformId,
+            existing.UserName,
+            string.Empty,
+            rememberPassword: false,
+            removeAvatar: true);
+
+        ProfileSaveOutcome outcome = await coordinator.SaveAsync(input);
+
+        Assert.Null(outcome.Profile.AvatarFileName);
+        Assert.False(File.Exists(oldPath));
     }
 
     [Fact]

@@ -3,6 +3,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Threading;
 using LegendLauncher.App.GameHosting;
+using LegendLauncher.App.Services;
 using LegendLauncher.App.ViewModels;
 using LegendLauncher.Infrastructure.Logging;
 
@@ -23,33 +24,51 @@ internal sealed class MacroSessionController : ObservableObject, IMacroSession
     private readonly MacroSetupWindow _setup;
     private readonly DispatcherTimer _setupTimer;
     private readonly MacroBridgeOptions _bridgeOptions;
+    private readonly ProfilePreferencesStore? _profilePreferences;
+    private readonly Guid _profileId;
+    private readonly DispatcherTimer _saveTimer;
     private CancellationTokenSource? _cancellation;
     private Task? _runTask;
     private ClickMacroSettings _clickSettings = new(0, TimeSpan.FromSeconds(0.10));
+    private SurfaceGeometry _surface;
     private SurfaceRegion _frame;
+    private MacroPoint _target;
+    private MacroProfilePreferences _preferences = MacroProfilePreferences.Default;
+    private bool _useLargeFrame;
+    private double _speed = 1.0;
     private MacroMode _mode = MacroMode.Gems;
     private MacroSessionState _state = MacroSessionState.Stopped;
     private string _statusText = "Parado";
     private bool _overlayVisible = true;
     private bool _disposed;
+    private bool _openingSetup;
 
     public MacroSessionController(
         GameSessionViewModel session,
-        Window uiOwner)
+        Window uiOwner,
+        ProfilePreferencesStore? profilePreferences = null)
     {
         _session = session ?? throw new ArgumentNullException(nameof(session));
         ArgumentNullException.ThrowIfNull(uiOwner);
+        _profileId = session.ProfileId;
+        _profilePreferences = profilePreferences;
         _dispatcher = uiOwner.Dispatcher;
         _overlay = new MacroOverlayWindow(session.Id, uiOwner);
         _setup = new MacroSetupWindow(session.TabTitle, uiOwner);
         _setup.PlayRequested += SetupOnPlayRequested;
         _setup.StopRequested += SetupOnStopRequested;
         _setup.RegionChanged += SetupOnRegionChanged;
+        _setup.SettingsChanged += SetupOnSettingsChanged;
         _setupTimer = new DispatcherTimer(DispatcherPriority.Background, _dispatcher)
         {
             Interval = SetupRefreshInterval,
         };
         _setupTimer.Tick += SetupTimerOnTick;
+        _saveTimer = new DispatcherTimer(DispatcherPriority.Background, _dispatcher)
+        {
+            Interval = TimeSpan.FromMilliseconds(350),
+        };
+        _saveTimer.Tick += SaveTimerOnTick;
         _bridgeOptions = GemMacroBridgeLocator.Resolve();
         _session.PropertyChanged += SessionOnPropertyChanged;
     }
@@ -96,25 +115,46 @@ internal sealed class MacroSessionController : ObservableObject, IMacroSession
 
     public void SetMode(MacroMode mode)
     {
+        if (_mode == mode)
+        {
+            return;
+        }
+
+        if (_runTask is not null)
+        {
+            Stop();
+        }
+
+        CaptureSetupState();
+        _saveTimer.Stop();
+        _ = PersistPreferencesAsync(_mode, _preferences);
         _mode = mode;
         _setup.SetMode(mode);
+        if (_state == MacroSessionState.Configuring && _surface.HasArea)
+        {
+            _ = ApplyModePreferencesAsync(mode);
+        }
     }
 
     public void Start()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        if (_runTask is not null || !_session.IsRunning)
+        if (_runTask is not null || _openingSetup || !_session.IsRunning)
         {
             return;
         }
 
-        OpenSetup();
+        _openingSetup = true;
+        _ = OpenSetupAsync();
     }
 
     public void Stop()
     {
         CancelSafely(_cancellation);
         _setupTimer.Stop();
+        _saveTimer.Stop();
+        CaptureSetupState();
+        _ = PersistPreferencesAsync();
         _ = _dispatcher.InvokeAsync(() =>
         {
             _setup.HideSetup();
@@ -137,9 +177,14 @@ internal sealed class MacroSessionController : ObservableObject, IMacroSession
         _disposed = true;
         _setupTimer.Stop();
         _setupTimer.Tick -= SetupTimerOnTick;
+        _saveTimer.Stop();
+        _saveTimer.Tick -= SaveTimerOnTick;
+        CaptureSetupState();
+        _ = PersistPreferencesAsync();
         _setup.PlayRequested -= SetupOnPlayRequested;
         _setup.StopRequested -= SetupOnStopRequested;
         _setup.RegionChanged -= SetupOnRegionChanged;
+        _setup.SettingsChanged -= SetupOnSettingsChanged;
         _session.PropertyChanged -= SessionOnPropertyChanged;
         CancelSafely(_cancellation);
         _ = _dispatcher.InvokeAsync(() =>
@@ -149,22 +194,22 @@ internal sealed class MacroSessionController : ObservableObject, IMacroSession
         });
     }
 
-    private void OpenSetup()
+    private async Task OpenSetupAsync()
     {
-        if (_state == MacroSessionState.Configuring)
+        if (_state == MacroSessionState.Configuring || _disposed)
         {
-            return;
-        }
-
-        GameWindowAttachment? attachment = _session.Attachment;
-        if (attachment is null)
-        {
-            SetError("A sessão não possui uma superfície anexada.");
             return;
         }
 
         try
         {
+            GameWindowAttachment? attachment = _session.Attachment;
+            if (attachment is null)
+            {
+                SetError("A sessão não possui uma superfície anexada.");
+                return;
+            }
+
             SurfaceGeometry surface = _capture.GetGeometry(attachment.GameWindow);
             if (!surface.HasArea)
             {
@@ -172,17 +217,184 @@ internal sealed class MacroSessionController : ObservableObject, IMacroSession
                 return;
             }
 
-            _setup.ShowSetup(surface, _frame);
-            _frame = _setup.Region;
+            MacroProfilePreferences preferences = await LoadPreferencesAsync(_mode).ConfigureAwait(true);
+            _surface = surface;
+            _preferences = preferences;
+            SurfaceRegion region = ToRegion(preferences, surface);
+            MacroPoint target = new(
+                preferences.TargetX * surface.Width,
+                preferences.TargetY * surface.Height);
+            var clickSettings = new ClickMacroSettings(
+                preferences.ClickCount,
+                TimeSpan.FromSeconds(preferences.ClickIntervalSeconds));
+            _setup.ShowSetup(
+                surface,
+                region,
+                target,
+                preferences.UseLargeFrame,
+                preferences.Speed,
+                clickSettings);
+            CaptureSetupState();
             SetState(MacroSessionState.Configuring);
-            SetStatus("Ajuste a moldura e pressione Play.");
+            SetStatus("Ajuste a bolinha e pressione Play.");
             _setupTimer.Start();
         }
         catch (Exception exception) when (
             exception is InvalidOperationException or IOException or System.ComponentModel.Win32Exception)
         {
-            SetError($"Não foi possível abrir a moldura: {exception.Message}");
+            SetError($"Não foi possível abrir a bolinha: {exception.Message}");
         }
+        finally
+        {
+            _openingSetup = false;
+        }
+    }
+
+    private async Task ApplyModePreferencesAsync(MacroMode mode)
+    {
+        MacroProfilePreferences preferences = await LoadPreferencesAsync(mode).ConfigureAwait(true);
+        if (_disposed || _mode != mode || !_surface.HasArea)
+        {
+            return;
+        }
+
+        _preferences = preferences;
+        var clickSettings = new ClickMacroSettings(
+            preferences.ClickCount,
+            TimeSpan.FromSeconds(preferences.ClickIntervalSeconds));
+        _setup.ShowSetup(
+            _surface,
+            ToRegion(preferences, _surface),
+            new MacroPoint(
+                preferences.TargetX * _surface.Width,
+                preferences.TargetY * _surface.Height),
+            preferences.UseLargeFrame,
+            preferences.Speed,
+            clickSettings);
+        CaptureSetupState();
+    }
+
+    private async Task<MacroProfilePreferences> LoadPreferencesAsync(MacroMode mode)
+    {
+        if (_profilePreferences is null)
+        {
+            return _preferences;
+        }
+
+        try
+        {
+            ProfileMacroModes modes = await _profilePreferences
+                .LoadAsync(_profileId)
+                .ConfigureAwait(true);
+            return modes.Get(mode);
+        }
+        catch (Exception exception) when (
+            exception is IOException or UnauthorizedAccessException)
+        {
+            DiagnosticLog.Current.WriteFailure(
+                "macro.preferences_load",
+                "The macro profile preferences could not be loaded.",
+                exception,
+                ("profileId", _profileId.ToString()),
+                ("mode", mode.ToString()));
+            return MacroProfilePreferences.Default;
+        }
+    }
+
+    private SurfaceRegion ToRegion(
+        MacroProfilePreferences preferences,
+        SurfaceGeometry surface)
+    {
+        if (!surface.HasArea)
+        {
+            return _frame;
+        }
+
+        int width = Math.Clamp(
+            (int)Math.Round(preferences.AnalysisWidth * surface.Width),
+            Math.Min(80, surface.Width),
+            surface.Width);
+        int height = Math.Clamp(
+            (int)Math.Round(preferences.AnalysisHeight * surface.Height),
+            Math.Min(80, surface.Height),
+            surface.Height);
+        int x = Math.Clamp(
+            (int)Math.Round(preferences.AnalysisX * surface.Width),
+            0,
+            surface.Width - width);
+        int y = Math.Clamp(
+            (int)Math.Round(preferences.AnalysisY * surface.Height),
+            0,
+            surface.Height - height);
+        return new SurfaceRegion(x, y, width, height);
+    }
+
+    private void CaptureSetupState()
+    {
+        if (!_surface.HasArea)
+        {
+            return;
+        }
+
+        _frame = _setup.Region;
+        _target = _setup.Target;
+        _useLargeFrame = _setup.UseLargeFrame;
+        _speed = _setup.Speed;
+        _preferences = _setup.GetProfilePreferences(_surface);
+    }
+
+    private void ScheduleSave()
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        _saveTimer.Stop();
+        _saveTimer.Start();
+    }
+
+    private async void SaveTimerOnTick(object? sender, EventArgs eventArgs)
+    {
+        _saveTimer.Stop();
+        await PersistPreferencesAsync().ConfigureAwait(true);
+    }
+
+    private Task PersistPreferencesAsync() =>
+        PersistPreferencesAsync(_mode, _preferences);
+
+    private async Task PersistPreferencesAsync(
+        MacroMode mode,
+        MacroProfilePreferences preferences)
+    {
+        if (_profilePreferences is null || _profileId == Guid.Empty)
+        {
+            return;
+        }
+
+        try
+        {
+            await _profilePreferences
+                .SaveAsync(_profileId, mode, preferences)
+                .ConfigureAwait(false);
+        }
+        catch (Exception exception) when (
+            exception is IOException or UnauthorizedAccessException)
+        {
+            DiagnosticLog.Current.WriteFailure(
+                "macro.preferences_save",
+                "The macro profile preferences could not be saved.",
+                exception,
+                ("profileId", _profileId.ToString()),
+                ("mode", mode.ToString()));
+        }
+    }
+
+    private TimeSpan ScaleDelay(TimeSpan delay)
+    {
+        double speed = Math.Clamp(_speed, 0.25, 4.0);
+        double milliseconds = delay.TotalMilliseconds / speed;
+        return TimeSpan.FromMilliseconds(Math.Max(1, milliseconds));
     }
 
     private void SetupTimerOnTick(object? sender, EventArgs eventArgs)
@@ -209,7 +421,8 @@ internal sealed class MacroSessionController : ObservableObject, IMacroSession
             }
 
             _setup.ApplySurface(surface);
-            _frame = _setup.Region;
+            _surface = surface;
+            CaptureSetupState();
         }
         catch (Exception exception) when (
             exception is InvalidOperationException or IOException or System.ComponentModel.Win32Exception)
@@ -218,7 +431,17 @@ internal sealed class MacroSessionController : ObservableObject, IMacroSession
         }
     }
 
-    private void SetupOnRegionChanged(object? sender, SurfaceRegion region) => _frame = region;
+    private void SetupOnRegionChanged(object? sender, SurfaceRegion region)
+    {
+        _frame = region;
+        ScheduleSave();
+    }
+
+    private void SetupOnSettingsChanged(object? sender, EventArgs eventArgs)
+    {
+        CaptureSetupState();
+        ScheduleSave();
+    }
 
     private void SetupOnStopRequested(object? sender, EventArgs eventArgs) => Stop();
 
@@ -229,11 +452,13 @@ internal sealed class MacroSessionController : ObservableObject, IMacroSession
             return;
         }
 
-        _frame = _setup.Region;
+        CaptureSetupState();
         _clickSettings = _setup.GetClickSettings();
+        _saveTimer.Stop();
+        _ = PersistPreferencesAsync();
         if (!_frame.HasArea)
         {
-            SetError("A moldura selecionada não tem área válida.");
+            SetError("A área selecionada não tem tamanho válido.");
             return;
         }
 
@@ -272,12 +497,10 @@ internal sealed class MacroSessionController : ObservableObject, IMacroSession
     {
         if (!_frame.HasArea)
         {
-            throw new InvalidOperationException("A moldura do macro não está válida.");
+            throw new InvalidOperationException("A área do macro não está válida.");
         }
 
-        MacroPoint target = new(
-            _frame.X + _frame.Width / 2.0,
-            _frame.Y + _frame.Height / 2.0);
+        MacroPoint target = _target;
         int performed = 0;
         while (!cancellationToken.IsCancellationRequested && _session.IsRunning)
         {
@@ -331,7 +554,7 @@ internal sealed class MacroSessionController : ObservableObject, IMacroSession
             SetStatus(_clickSettings.IsInfinite
                 ? $"Cliques contínuos: {performed}"
                 : $"Cliques: {performed}/{_clickSettings.Count}");
-            await Task.Delay(_clickSettings.Interval, cancellationToken).ConfigureAwait(false);
+            await Task.Delay(ScaleDelay(_clickSettings.Interval), cancellationToken).ConfigureAwait(false);
         }
 
         if (!_clickSettings.IsInfinite)
@@ -381,7 +604,7 @@ internal sealed class MacroSessionController : ObservableObject, IMacroSession
 
                 if (!_frame.HasArea)
                 {
-                    throw new InvalidOperationException("A moldura do macro não está válida.");
+                    throw new InvalidOperationException("A área do macro não está válida.");
                 }
 
                 MacroScanResult localResult = await bridge.AnalyzeAsync(
@@ -418,7 +641,7 @@ internal sealed class MacroSessionController : ObservableObject, IMacroSession
                         }
 
                         awaitingSignature = result.Signature;
-                        nextActionAt = now + BoardChangeGrace;
+                        nextActionAt = now + ScaleDelay(BoardChangeGrace);
                         SetStatus("Troca enviada sem mover o mouse.");
                     }
                 }
@@ -430,11 +653,12 @@ internal sealed class MacroSessionController : ObservableObject, IMacroSession
                         throw new InvalidOperationException(input.Message);
                     }
 
-                    nextActionAt = now + action.Cooldown;
+                    nextActionAt = now + ScaleDelay(action.Cooldown);
                     SetStatus($"{action.Label} enviado sem mover o mouse.");
                 }
 
-                TimeSpan interval = _mode == MacroMode.Cosmo ? CosmoScanInterval : GemsScanInterval;
+                TimeSpan interval = ScaleDelay(
+                    _mode == MacroMode.Cosmo ? CosmoScanInterval : GemsScanInterval);
                 TimeSpan remaining = nextActionAt - DateTimeOffset.UtcNow;
                 if (remaining > interval)
                 {

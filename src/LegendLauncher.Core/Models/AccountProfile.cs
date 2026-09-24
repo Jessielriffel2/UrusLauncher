@@ -35,6 +35,11 @@ public sealed record AccountProfile(
         new Dictionary<string, IReadOnlyList<string>>(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
+    /// Relative file name of the locally copied profile avatar, when one is present.
+    /// </summary>
+    public string? AvatarFileName { get; init; }
+
+    /// <summary>
     /// Reads the provider identifier for one platform without leaking the legacy value
     /// to a different platform.
     /// </summary>

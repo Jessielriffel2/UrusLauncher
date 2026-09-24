@@ -121,6 +121,69 @@ public sealed class MacroAssistantContractTests
     }
 
     [Fact]
+    public void MacroAssistant_PersistsProfileModePreferencesAndUsesCompactTarget()
+    {
+        string controller = File.ReadAllText(FindRepositoryFile(
+            "src",
+            "LegendLauncher.App",
+            "MacroAssistant",
+            "MacroSessionController.cs"));
+        string setup = File.ReadAllText(FindRepositoryFile(
+            "src",
+            "LegendLauncher.App",
+            "MacroAssistant",
+            "MacroSetupWindow.cs"));
+        string preferences = File.ReadAllText(FindRepositoryFile(
+            "src",
+            "LegendLauncher.App",
+            "Services",
+            "ProfilePreferencesStore.cs"));
+
+        Assert.Contains("ProfilePreferencesStore", controller, StringComparison.Ordinal);
+        Assert.Contains("GetProfilePreferences", controller, StringComparison.Ordinal);
+        Assert.Contains("ScaleDelay", controller, StringComparison.Ordinal);
+        Assert.Contains("GetProfilePreferences", setup, StringComparison.Ordinal);
+        Assert.Contains("UseLargeFrame", setup, StringComparison.Ordinal);
+        Assert.Contains("SettingsChanged", setup, StringComparison.Ordinal);
+        Assert.Contains("MacroMode", preferences, StringComparison.Ordinal);
+        Assert.Contains("_openingSetup", controller, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void LauncherAndWorkspace_ExposeDragAvatarAndSelectedSessionRelogControls()
+    {
+        string main = File.ReadAllText(FindRepositoryFile(
+            "src",
+            "LegendLauncher.App",
+            "MainWindow.xaml"));
+        string mainCode = File.ReadAllText(FindRepositoryFile(
+            "src",
+            "LegendLauncher.App",
+            "MainWindow.xaml.cs"));
+        string workspace = File.ReadAllText(FindRepositoryFile(
+            "src",
+            "LegendLauncher.App",
+            "Views",
+            "Game",
+            "GameWorkspaceView.xaml"));
+        string workspaceCode = File.ReadAllText(FindRepositoryFile(
+            "src",
+            "LegendLauncher.App",
+            "Views",
+            "Game",
+            "GameWorkspaceView.xaml.cs"));
+
+        Assert.Contains("LauncherHeader_OnMouseLeftButtonDown", main, StringComparison.Ordinal);
+        Assert.Contains("SelectedProfileAvatarImage", main, StringComparison.Ordinal);
+        Assert.Contains("ChooseProfileImageButton_OnClick", main, StringComparison.Ordinal);
+        Assert.Contains("BorderlessWindowCommands.TryDrag", mainCode, StringComparison.Ordinal);
+        Assert.Contains("CompactGameToolbar_OnMouseLeftButtonDown", workspace, StringComparison.Ordinal);
+        Assert.Contains("Workspace.RelogSessionCommand", workspace, StringComparison.Ordinal);
+        Assert.Contains("Workspace.SelectedSession", workspace, StringComparison.Ordinal);
+        Assert.Contains("BorderlessWindowCommands.TryDrag", workspaceCode, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void SurfaceGeometry_RejectsEmptyOrNegativeSurfaces()
     {
         Assert.False(new SurfaceGeometry(0, 0, 0, 100).HasArea);

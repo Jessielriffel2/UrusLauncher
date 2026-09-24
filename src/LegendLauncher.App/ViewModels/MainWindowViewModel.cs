@@ -23,6 +23,8 @@ internal sealed partial class MainWindowViewModel : ObservableObject, IDisposabl
     private readonly ProfileStorageCoordinator _profileStorage;
     private readonly SessionLaunchCoordinator _sessionLauncher;
     private readonly LauncherSettingsService _settingsService;
+    private readonly ProfileAvatarStore? _avatarStore;
+    private readonly ProfilePreferencesStore? _profilePreferences;
     private readonly LegacyRuntimeProbeResult _runtimeProbe;
     private readonly Action<int> _terminateUnadoptedProcess;
     private readonly IDiagnosticLog _diagnosticLog;
@@ -40,6 +42,8 @@ internal sealed partial class MainWindowViewModel : ObservableObject, IDisposabl
     private string _profileLabel = string.Empty;
     private string _loginHint = string.Empty;
     private string _pendingPassword = string.Empty;
+    private string? _pendingAvatarSourcePath;
+    private bool _removePendingAvatar;
     private string? _pendingServerId;
     private string? _serverIdBeforeFilter;
     private bool _rememberPassword;
@@ -66,7 +70,9 @@ internal sealed partial class MainWindowViewModel : ObservableObject, IDisposabl
         LocalizationService? localization = null,
         ILauncherUpdateService? updateService = null,
         Version? currentVersion = null,
-        IDiagnosticLog? diagnosticLog = null)
+        IDiagnosticLog? diagnosticLog = null,
+        ProfilePreferencesStore? profilePreferences = null,
+        ProfileAvatarStore? avatarStore = null)
     {
         _serverDirectory = serverDirectory;
         _profileStorage = profileStorage;
@@ -74,6 +80,8 @@ internal sealed partial class MainWindowViewModel : ObservableObject, IDisposabl
         _runtimeProbe = runtimeProbe;
         _timeProvider = timeProvider ?? TimeProvider.System;
         _settingsService = settingsService ?? new LauncherSettingsService();
+        _profilePreferences = profilePreferences;
+        _avatarStore = avatarStore;
         _localization = localization ?? LocalizationService.Current;
         _terminateUnadoptedProcess = terminateUnadoptedProcess ??
             SessionLaunchCoordinator.TryTerminateProcess;
@@ -82,7 +90,8 @@ internal sealed partial class MainWindowViewModel : ObservableObject, IDisposabl
             new GameAudioService(static (_, _) => { }, TimeSpan.FromHours(1)),
             _settingsService,
             static (_, _) => null,
-            _localization);
+            _localization,
+            _avatarStore);
         Workspace.SessionRemoved += WorkspaceOnSessionRemoved;
         Workspace.RelogRequested += WorkspaceOnRelogRequested;
         InitializeLocalization();
@@ -134,6 +143,10 @@ internal sealed partial class MainWindowViewModel : ObservableObject, IDisposabl
     public ObservableCollection<ProfileItemViewModel> Profiles { get; }
 
     public GameWorkspaceViewModel Workspace { get; }
+
+    internal ProfilePreferencesStore? ProfilePreferences => _profilePreferences;
+
+    internal ProfileAvatarStore? AvatarStore => _avatarStore;
 
     public RelayCommand NewProfileCommand { get; }
 
@@ -208,6 +221,7 @@ internal sealed partial class MainWindowViewModel : ObservableObject, IDisposabl
             }
 
             _serverIdBeforeFilter = null;
+            ResetPendingAvatarSelection();
             ApplySelectedProfile();
             _ = PersistSelectedProfileAsync(value?.Model.Id);
             if (value is not null)
@@ -217,6 +231,10 @@ internal sealed partial class MainWindowViewModel : ObservableObject, IDisposabl
 
             OnPropertyChanged(nameof(SelectedProfileSummary));
             OnPropertyChanged(nameof(SelectedProfileLoginSummary));
+            OnPropertyChanged(nameof(SelectedProfileAvatarImage));
+            OnPropertyChanged(nameof(HasSelectedProfileAvatar));
+            OnPropertyChanged(nameof(SelectedProfileDisplayName));
+            OnPropertyChanged(nameof(SelectedProfileInitial));
             OnPropertyChanged(nameof(PrimaryActionLabel));
             OnPropertyChanged(nameof(CredentialStatusText));
             if (ReferenceEquals(previousPlatform, SelectedPlatform))

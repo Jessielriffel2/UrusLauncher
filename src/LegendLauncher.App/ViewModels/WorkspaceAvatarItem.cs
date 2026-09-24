@@ -1,3 +1,5 @@
+using System.Windows.Media;
+
 namespace LegendLauncher.App.ViewModels;
 
 internal sealed class WorkspaceAvatarItem(
@@ -11,6 +13,14 @@ internal sealed class WorkspaceAvatarItem(
     public GameSessionViewModel? Rear { get; } = rear;
 
     public bool IsPair => Rear is not null;
+
+    public ImageSource? FrontAvatarImage => Front.AvatarImage;
+
+    public ImageSource? RearAvatarImage => Rear?.AvatarImage;
+
+    public bool FrontHasAvatar => Front.HasAvatar;
+
+    public bool RearHasAvatar => Rear?.HasAvatar == true;
 
     public string FrontInitial => Front.Initial;
 

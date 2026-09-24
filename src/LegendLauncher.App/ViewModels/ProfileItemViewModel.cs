@@ -1,10 +1,15 @@
+using System.Windows.Media;
 using LegendLauncher.Core.Models;
 
 namespace LegendLauncher.App.ViewModels;
 
-internal sealed class ProfileItemViewModel(AccountProfile model)
+internal sealed class ProfileItemViewModel(AccountProfile model, ImageSource? avatarImage = null)
 {
     public AccountProfile Model { get; } = model;
+
+    public ImageSource? AvatarImage { get; } = avatarImage;
+
+    public bool HasAvatar => AvatarImage is not null;
 
     public string DisplayName => Model.DisplayName;
 

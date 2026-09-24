@@ -46,7 +46,9 @@ O módulo não lê nem migra dados do cliente antigo. Chaves do cofre devem come
 ## Entradas, saídas e armazenamento
 
 - `%LocalAppData%\LegendLauncherNext\cache\server-catalogs.json` armazena catálogos não sensíveis por plataforma.
-- `%LocalAppData%\LegendLauncherNext\data\profiles.json` armazena perfis sem senha: identidade, chave opaca e, por variante OAS, UID opcional e histórico recente de servidores. Os campos escalares legados espelham a plataforma selecionada para leitura compatível com versões anteriores.
+- `%LocalAppData%\LegendLauncherNext\data\profiles.json` armazena perfis sem senha: identidade, chave opaca, nome relativo do avatar local e, por variante OAS, UID opcional e histórico recente de servidores. Os campos escalares legados espelham a plataforma selecionada para leitura compatível com versões anteriores.
+- `%LocalAppData%\LegendLauncherNext\data\profile-preferences.json` armazena alvo, região de análise, velocidade e intervalo/quantidade de cliques do Macro Assistant por perfil e modo. O documento usa `AtomicJsonFileStore` e defaults seguros quando ausente/corrompido.
+- `%LocalAppData%\LegendLauncherNext\data\avatars` guarda somente cópias locais redimensionadas para no máximo 512×512; o perfil nunca persiste o caminho original escolhido no disco externo.
 - `%LocalAppData%\LegendLauncherNext\data\settings.json` armazena somente mudo global, layout 1/2/4, GUID do último perfil selecionado, `languageCode` normalizado para `pt-BR`, `en-US` ou `es-ES` e `lastDonationPromptUtc`. PID, HWND, login, senha, cookie, token e URI autenticada não são persistidos.
 - `%LocalAppData%\LegendLauncherNext\updates` recebe `.part` durante download e o instalador final somente após validação. Não contém perfil, senha, cookie ou token.
 - `Documentos/uruslauncher/logs` recebe arquivos diários de falha. Login aceito e jogo aberto não são gravados. Senha, token e cookie são redigidos.

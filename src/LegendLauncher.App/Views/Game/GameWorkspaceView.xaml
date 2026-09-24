@@ -96,7 +96,8 @@
 
         <Grid x:Name="CompactGameToolbar"
               Grid.Row="0"
-              VerticalAlignment="Center">
+              VerticalAlignment="Center"
+              MouseLeftButtonDown="CompactGameToolbar_OnMouseLeftButtonDown">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="8" />
@@ -391,12 +392,36 @@
                                                         Background="#B8133541"
                                                         BorderBrush="#47667C"
                                                         BorderThickness="1">
-                                                    <TextBlock Text="{Binding RearInitial}"
-                                                               Foreground="{StaticResource AccentBrush}"
-                                                               FontWeight="Bold"
-                                                               FontSize="13"
-                                                               HorizontalAlignment="Center"
-                                                               VerticalAlignment="Center" />
+                                                    <Grid>
+                                                        <Image Source="{Binding RearAvatarImage}" Stretch="UniformToFill">
+                                                            <Image.Style>
+                                                                <Style TargetType="Image">
+                                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding RearHasAvatar}" Value="True">
+                                                                            <Setter Property="Visibility" Value="Visible" />
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </Image.Style>
+                                                        </Image>
+                                                        <TextBlock Text="{Binding RearInitial}"
+                                                                   Foreground="{StaticResource AccentBrush}"
+                                                                   FontWeight="Bold"
+                                                                   FontSize="13"
+                                                                   HorizontalAlignment="Center"
+                                                                   VerticalAlignment="Center">
+                                                            <TextBlock.Style>
+                                                                <Style TargetType="TextBlock">
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding RearHasAvatar}" Value="True">
+                                                                            <Setter Property="Visibility" Value="Collapsed" />
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </TextBlock.Style>
+                                                        </TextBlock>
+                                                    </Grid>
                                                 </Border>
                                                 <Border Width="36"
                                                         Height="36"
@@ -418,12 +443,36 @@
                                                             </Style.Triggers>
                                                         </Style>
                                                     </Border.Style>
-                                                    <TextBlock Text="{Binding FrontInitial}"
-                                                               Foreground="{StaticResource AccentBrush}"
-                                                               FontWeight="Bold"
-                                                               FontSize="13"
-                                                               HorizontalAlignment="Center"
-                                                               VerticalAlignment="Center" />
+                                                    <Grid>
+                                                        <Image Source="{Binding FrontAvatarImage}" Stretch="UniformToFill">
+                                                            <Image.Style>
+                                                                <Style TargetType="Image">
+                                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding FrontHasAvatar}" Value="True">
+                                                                            <Setter Property="Visibility" Value="Visible" />
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </Image.Style>
+                                                        </Image>
+                                                        <TextBlock Text="{Binding FrontInitial}"
+                                                                   Foreground="{StaticResource AccentBrush}"
+                                                                   FontWeight="Bold"
+                                                                   FontSize="13"
+                                                                   HorizontalAlignment="Center"
+                                                                   VerticalAlignment="Center">
+                                                            <TextBlock.Style>
+                                                                <Style TargetType="TextBlock">
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding FrontHasAvatar}" Value="True">
+                                                                            <Setter Property="Visibility" Value="Collapsed" />
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </TextBlock.Style>
+                                                        </TextBlock>
+                                                    </Grid>
                                                 </Border>
                                                 <Ellipse Width="9" Height="9"
                                                          Fill="{StaticResource SuccessBrush}"
@@ -469,12 +518,36 @@
                                                             </Style.Triggers>
                                                         </Style>
                                                     </Border.Style>
-                                                    <TextBlock Text="{Binding FrontInitial}"
-                                                               Foreground="{StaticResource AccentBrush}"
-                                                               FontWeight="Bold"
-                                                               FontSize="15"
-                                                               HorizontalAlignment="Center"
-                                                               VerticalAlignment="Center" />
+                                                    <Grid>
+                                                        <Image Source="{Binding FrontAvatarImage}" Stretch="UniformToFill">
+                                                            <Image.Style>
+                                                                <Style TargetType="Image">
+                                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding FrontHasAvatar}" Value="True">
+                                                                            <Setter Property="Visibility" Value="Visible" />
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </Image.Style>
+                                                        </Image>
+                                                        <TextBlock Text="{Binding FrontInitial}"
+                                                                   Foreground="{StaticResource AccentBrush}"
+                                                                   FontWeight="Bold"
+                                                                   FontSize="15"
+                                                                   HorizontalAlignment="Center"
+                                                                   VerticalAlignment="Center">
+                                                            <TextBlock.Style>
+                                                                <Style TargetType="TextBlock">
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding FrontHasAvatar}" Value="True">
+                                                                            <Setter Property="Visibility" Value="Collapsed" />
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </TextBlock.Style>
+                                                        </TextBlock>
+                                                    </Grid>
                                                 </Border>
                                                 <Ellipse Width="10" Height="10"
                                                          Fill="{StaticResource SuccessBrush}"
@@ -636,6 +709,15 @@
                              AutomationProperties.Name="{Binding Workspace.MacroAssistant.ToggleLabel}"
                             BorderBrush="#7BCB55"
                             Foreground="#B8F58A" />
+                    <Button Content="{loc:Localize Session_Relog}"
+                            Command="{Binding Workspace.RelogSessionCommand}"
+                            CommandParameter="{Binding Workspace.SelectedSession}"
+                            Style="{StaticResource WorkspaceToolbarButtonStyle}"
+                            Height="26"
+                            Padding="10,0"
+                            Margin="6,0,0,0"
+                            ToolTip="{loc:Localize Session_RelogTooltip}"
+                            AutomationProperties.Name="{loc:Localize Session_Relog}" />
                 </StackPanel>
             </Grid>
         </Border>

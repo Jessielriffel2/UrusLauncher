@@ -7,6 +7,7 @@ using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
 using LegendLauncher.App.GameHosting;
+using LegendLauncher.App.Localization;
 
 namespace LegendLauncher.App.MacroAssistant;
 
@@ -14,18 +15,23 @@ internal sealed class MacroSetupWindow : Window
 {
     private readonly Canvas _canvas;
     private readonly Border _frame;
-    private readonly Thumb _moveThumb;
+    private readonly Thumb _targetThumb;
     private readonly Thumb _resizeThumb;
     private readonly TextBlock _targetMarker;
     private readonly TextBlock _status;
     private readonly StackPanel _clickSettingsPanel;
     private readonly TextBox _clickCountInput;
     private readonly TextBox _clickIntervalInput;
+    private readonly TextBox _speedInput;
+    private readonly CheckBox _largeFrameToggle;
     private readonly Button _playButton;
     private readonly Button _stopButton;
     private MacroMode _mode = MacroMode.Gems;
     private SurfaceGeometry _surface;
     private SurfaceRegion _region;
+    private MacroPoint _target;
+    private bool _useLargeFrame;
+    private double _speed = 1.0;
     private bool _updating;
 
     public MacroSetupWindow(string sessionTitle, Window owner)
@@ -51,15 +57,6 @@ internal sealed class MacroSetupWindow : Window
             BorderThickness = new Thickness(2),
             Background = new SolidColorBrush(Color.FromArgb(22, 35, 230, 255)),
         };
-        _moveThumb = new Thumb
-        {
-            Background = Brushes.Transparent,
-            BorderBrush = Brushes.Transparent,
-            Focusable = false,
-            Cursor = Cursors.SizeAll,
-        };
-        _moveThumb.DragDelta += MoveDragDelta;
-        _frame.Child = _moveThumb;
         _canvas.Children.Add(_frame);
 
         _resizeThumb = new Thumb
@@ -74,20 +71,35 @@ internal sealed class MacroSetupWindow : Window
         };
         _resizeThumb.DragDelta += ResizeDragDelta;
         _canvas.Children.Add(_resizeThumb);
+
+        _targetThumb = new Thumb
+        {
+            Width = 34,
+            Height = 34,
+            Background = Brushes.Transparent,
+            BorderBrush = Brushes.Transparent,
+            Focusable = false,
+            Cursor = Cursors.SizeAll,
+        };
+        _targetThumb.DragDelta += TargetDragDelta;
+        _canvas.Children.Add(_targetThumb);
+
         _targetMarker = new TextBlock
         {
             Text = "+",
-            Foreground = new SolidColorBrush(Color.FromRgb(255, 255, 255)),
+            Foreground = Brushes.White,
             FontSize = 24,
             FontWeight = FontWeights.Bold,
             IsHitTestVisible = false,
-            Opacity = 0.9,
+            Opacity = 0.95,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
         };
         _canvas.Children.Add(_targetMarker);
 
         var panel = new Border
         {
-            Width = 286,
+            Width = 300,
             Padding = new Thickness(12),
             Background = new SolidColorBrush(Color.FromArgb(242, 5, 16, 29)),
             BorderBrush = new SolidColorBrush(Color.FromRgb(44, 96, 124)),
@@ -100,14 +112,14 @@ internal sealed class MacroSetupWindow : Window
         var panelContent = new StackPanel();
         panelContent.Children.Add(new TextBlock
         {
-            Text = "Macro Assistant",
+            Text = Localize("Macro_SetupTitle", "Macro Assistant"),
             Foreground = Brushes.White,
             FontSize = 15,
             FontWeight = FontWeights.SemiBold,
         });
         panelContent.Children.Add(new TextBlock
         {
-            Text = "Arraste a moldura sobre a área alvo.",
+            Text = Localize("Macro_SetupHint", "Arraste a bolinha. A moldura grande é opcional."),
             Foreground = new SolidColorBrush(Color.FromRgb(173, 194, 211)),
             FontSize = 10.5,
             Margin = new Thickness(0, 4, 0, 9),
@@ -115,7 +127,7 @@ internal sealed class MacroSetupWindow : Window
         });
         _status = new TextBlock
         {
-            Text = "Ajuste a moldura e pressione Play.",
+            Text = Localize("Macro_SetupStatus", "Ajuste a bolinha e pressione Play."),
             Foreground = new SolidColorBrush(Color.FromRgb(255, 223, 107)),
             FontSize = 10.5,
             TextWrapping = TextWrapping.Wrap,
@@ -133,8 +145,8 @@ internal sealed class MacroSetupWindow : Window
         var countRow = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 5) };
         countRow.Children.Add(new TextBlock
         {
-            Text = "Quantidade (0 = infinito)",
-            Width = 174,
+            Text = Localize("Macro_CountLabel", "Quantidade (0 = infinito)"),
+            Width = 184,
             Foreground = Brushes.White,
             VerticalAlignment = VerticalAlignment.Center,
             FontSize = 10.5,
@@ -146,8 +158,8 @@ internal sealed class MacroSetupWindow : Window
         var intervalRow = new StackPanel { Orientation = Orientation.Horizontal };
         intervalRow.Children.Add(new TextBlock
         {
-            Text = "Intervalo entre cliques (s)",
-            Width = 174,
+            Text = Localize("Macro_IntervalLabel", "Intervalo entre cliques (s)"),
+            Width = 184,
             Foreground = Brushes.White,
             VerticalAlignment = VerticalAlignment.Center,
             FontSize = 10.5,
@@ -157,9 +169,37 @@ internal sealed class MacroSetupWindow : Window
         _clickSettingsPanel.Children.Add(intervalRow);
         panelContent.Children.Add(_clickSettingsPanel);
 
+        var speedRow = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 7) };
+        speedRow.Children.Add(new TextBlock
+        {
+            Text = Localize("Macro_SpeedLabel", "Velocidade (0,25x–4x)"),
+            Width = 184,
+            Foreground = Brushes.White,
+            VerticalAlignment = VerticalAlignment.Center,
+            FontSize = 10.5,
+        });
+        _speedInput = CreateInput("1.0");
+        _speedInput.TextChanged += SpeedInputOnTextChanged;
+        speedRow.Children.Add(_speedInput);
+        panelContent.Children.Add(speedRow);
+
+        _largeFrameToggle = new CheckBox
+        {
+            Content = Localize("Macro_LargeFrame", "Usar moldura grande"),
+            Foreground = Brushes.White,
+            VerticalContentAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(0, 0, 0, 9),
+        };
+        _largeFrameToggle.Checked += LargeFrameToggleOnChanged;
+        _largeFrameToggle.Unchecked += LargeFrameToggleOnChanged;
+        panelContent.Children.Add(_largeFrameToggle);
+
         var buttons = new StackPanel { Orientation = Orientation.Horizontal };
         _playButton = CreateButton("Play", new SolidColorBrush(Color.FromRgb(34, 120, 78)));
-        _stopButton = CreateButton("Parar", new SolidColorBrush(Color.FromRgb(100, 42, 52)));
+        _playButton.Content = Localize("Macro_Play", "Play");
+        _stopButton = CreateButton(
+            Localize("Macro_Stop", "Parar"),
+            new SolidColorBrush(Color.FromRgb(100, 42, 52)));
         _playButton.Click += PlayButtonOnClick;
         _stopButton.Click += StopButtonOnClick;
         buttons.Children.Add(_playButton);
@@ -172,14 +212,27 @@ internal sealed class MacroSetupWindow : Window
 
     public SurfaceRegion Region => _region;
 
+    public MacroPoint Target => _target;
+
+    public bool UseLargeFrame => _useLargeFrame;
+
+    public double Speed => Math.Clamp(_speed, 0.25, 4.0);
+
+    public event EventHandler? PlayRequested;
+
+    public event EventHandler? StopRequested;
+
+    public event EventHandler<SurfaceRegion>? RegionChanged;
+
+    public event EventHandler? SettingsChanged;
+
     public void SetMode(MacroMode mode)
     {
         _mode = mode;
-        _targetMarker.Visibility = mode == MacroMode.Clicks ? Visibility.Visible : Visibility.Collapsed;
         _clickSettingsPanel.Visibility = mode == MacroMode.Clicks ? Visibility.Visible : Visibility.Collapsed;
         SetStatus(mode == MacroMode.Clicks
-            ? "Posicione o alvo e configure os cliques."
-            : "Ajuste a moldura e pressione Play.");
+            ? Localize("Macro_SetupStatusClicks", "Posicione a bolinha e configure os cliques.")
+            : Localize("Macro_SetupStatus", "Ajuste a bolinha e pressione Play."));
     }
 
     public ClickMacroSettings GetClickSettings()
@@ -193,16 +246,40 @@ internal sealed class MacroSetupWindow : Window
         return new ClickMacroSettings(count, TimeSpan.FromSeconds(seconds));
     }
 
-    public event EventHandler? PlayRequested;
-
-    public event EventHandler? StopRequested;
-
-    public event EventHandler<SurfaceRegion>? RegionChanged;
-
     public void ShowSetup(SurfaceGeometry surface, SurfaceRegion region)
+    {
+        MacroPoint target = new(
+            region.HasArea ? region.X + region.Width / 2.0 : surface.Width / 2.0,
+            region.HasArea ? region.Y + region.Height / 2.0 : surface.Height / 2.0);
+        ShowSetup(surface, region, target, false, 1.0, new ClickMacroSettings(0, TimeSpan.FromSeconds(0.10)));
+    }
+
+    public void ShowSetup(
+        SurfaceGeometry surface,
+        SurfaceRegion region,
+        MacroPoint target,
+        bool useLargeFrame,
+        double speed,
+        ClickMacroSettings clickSettings)
     {
         _surface = surface;
         _region = ClampRegion(region.HasArea ? region : DefaultRegion(surface));
+        _target = ClampPointToSurface(target, _surface);
+        _useLargeFrame = useLargeFrame;
+        _speed = Math.Clamp(speed, 0.25, 4.0);
+        _updating = true;
+        try
+        {
+            _largeFrameToggle.IsChecked = _useLargeFrame;
+            _speedInput.Text = _speed.ToString("0.##", CultureInfo.CurrentCulture);
+            _clickCountInput.Text = clickSettings.Count.ToString(CultureInfo.CurrentCulture);
+            _clickIntervalInput.Text = clickSettings.Interval.TotalSeconds.ToString("0.###", CultureInfo.CurrentCulture);
+        }
+        finally
+        {
+            _updating = false;
+        }
+
         SetMode(_mode);
         if (!IsVisible)
         {
@@ -222,8 +299,23 @@ internal sealed class MacroSetupWindow : Window
 
     public void ApplySurface(SurfaceGeometry surface)
     {
+        SurfaceGeometry previous = _surface;
+        if (previous.HasArea && surface.HasArea &&
+            (previous.Width != surface.Width || previous.Height != surface.Height))
+        {
+            double scaleX = surface.Width / (double)previous.Width;
+            double scaleY = surface.Height / (double)previous.Height;
+            _target = new MacroPoint(_target.X * scaleX, _target.Y * scaleY);
+            _region = new SurfaceRegion(
+                (int)Math.Round(_region.X * scaleX),
+                (int)Math.Round(_region.Y * scaleY),
+                (int)Math.Round(_region.Width * scaleX),
+                (int)Math.Round(_region.Height * scaleY));
+        }
+
         _surface = surface;
         _region = ClampRegion(_region.HasArea ? _region : DefaultRegion(surface));
+        _target = ClampPointToSurface(_target, _surface);
         if (IsVisible && surface.HasArea)
         {
             NativeWindowMethods.SetOverlayBounds(
@@ -236,9 +328,31 @@ internal sealed class MacroSetupWindow : Window
         }
     }
 
+    public MacroProfilePreferences GetProfilePreferences(SurfaceGeometry surface)
+    {
+        double width = Math.Max(1, _region.Width);
+        double height = Math.Max(1, _region.Height);
+        return new MacroProfilePreferences(
+            _target.X / Math.Max(1, surface.Width),
+            _target.Y / Math.Max(1, surface.Height),
+            _region.X / Math.Max(1, surface.Width),
+            _region.Y / Math.Max(1, surface.Height),
+            width / Math.Max(1, surface.Width),
+            height / Math.Max(1, surface.Height),
+            _useLargeFrame,
+            Speed,
+            GetClickSettings().Count,
+            GetClickSettings().Interval.TotalSeconds).Normalized();
+    }
+
     public void SetStatus(string status) => _status.Text = status;
 
     public void HideSetup() => Hide();
+
+    private static string Localize(string key, string fallback) =>
+        LocalizationService.Current.Get(key) is string value && value != $"[{key}]"
+            ? value
+            : fallback;
 
     private static TextBox CreateInput(string text) =>
         new()
@@ -282,7 +396,7 @@ internal sealed class MacroSetupWindow : Window
         HideSetup();
     }
 
-    private void MoveDragDelta(object sender, DragDeltaEventArgs eventArgs)
+    private void TargetDragDelta(object sender, DragDeltaEventArgs eventArgs)
     {
         if (_updating || !_surface.HasArea)
         {
@@ -290,11 +404,10 @@ internal sealed class MacroSetupWindow : Window
         }
 
         (double scaleX, double scaleY) = GetSurfaceScale();
-        UpdateRegion(new SurfaceRegion(
-            _region.X + (int)Math.Round(eventArgs.HorizontalChange / scaleX),
-            _region.Y + (int)Math.Round(eventArgs.VerticalChange / scaleY),
-            _region.Width,
-            _region.Height));
+        MacroPoint candidate = new(
+            _target.X + eventArgs.HorizontalChange / scaleX,
+            _target.Y + eventArgs.VerticalChange / scaleY);
+        UpdateTarget(candidate);
     }
 
     private void ResizeDragDelta(object sender, DragDeltaEventArgs eventArgs)
@@ -312,6 +425,26 @@ internal sealed class MacroSetupWindow : Window
             _region.Height + (int)Math.Round(eventArgs.VerticalChange / scaleY)));
     }
 
+    private void UpdateTarget(MacroPoint candidate)
+    {
+        MacroPoint clamped = new(
+            Math.Clamp(candidate.X, 0, Math.Max(0, _surface.Width - 1)),
+            Math.Clamp(candidate.Y, 0, Math.Max(0, _surface.Height - 1)));
+        _target = clamped;
+        if (!_useLargeFrame)
+        {
+            _region = CenterRegionOnTarget(_region.Width, _region.Height);
+        }
+        else
+        {
+            _region = ClampRegion(_region);
+        }
+
+        ApplyRegionToCanvas();
+        RegionChanged?.Invoke(this, _region);
+        SettingsChanged?.Invoke(this, EventArgs.Empty);
+    }
+
     private void UpdateRegion(SurfaceRegion candidate)
     {
         SurfaceRegion clamped = ClampRegion(candidate);
@@ -321,8 +454,44 @@ internal sealed class MacroSetupWindow : Window
         }
 
         _region = clamped;
+        _target = ClampPointToSurface(_target, _surface);
         ApplyRegionToCanvas();
         RegionChanged?.Invoke(this, clamped);
+        SettingsChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void LargeFrameToggleOnChanged(object sender, RoutedEventArgs eventArgs)
+    {
+        if (_updating || !_surface.HasArea)
+        {
+            return;
+        }
+
+        _useLargeFrame = _largeFrameToggle.IsChecked == true;
+        if (!_useLargeFrame)
+        {
+            _region = CenterRegionOnTarget(_region.Width, _region.Height);
+        }
+
+        ApplyRegionToCanvas();
+        SettingsChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void SpeedInputOnTextChanged(object sender, TextChangedEventArgs eventArgs)
+    {
+        if (_updating)
+        {
+            return;
+        }
+
+        _speed = double.TryParse(
+                _speedInput.Text,
+                NumberStyles.Float,
+                CultureInfo.CurrentCulture,
+                out double parsed)
+            ? Math.Clamp(parsed, 0.25, 4.0)
+            : 1.0;
+        SettingsChanged?.Invoke(this, EventArgs.Empty);
     }
 
     private void ApplyRegionToCanvas()
@@ -336,14 +505,23 @@ internal sealed class MacroSetupWindow : Window
         _updating = true;
         try
         {
-            _frame.Width = Math.Max(1, _region.Width * scaleX);
-            _frame.Height = Math.Max(1, _region.Height * scaleY);
-            Canvas.SetLeft(_frame, _region.X * scaleX);
-            Canvas.SetTop(_frame, _region.Y * scaleY);
-            Canvas.SetLeft(_resizeThumb, (_region.X + _region.Width - 16) * scaleX);
-            Canvas.SetTop(_resizeThumb, (_region.Y + _region.Height - 16) * scaleY);
-            Canvas.SetLeft(_targetMarker, (_region.X + _region.Width / 2.0 - 8) * scaleX);
-            Canvas.SetTop(_targetMarker, (_region.Y + _region.Height / 2.0 - 16) * scaleY);
+            bool showFrame = _useLargeFrame;
+            _frame.Visibility = showFrame ? Visibility.Visible : Visibility.Collapsed;
+            _resizeThumb.Visibility = showFrame ? Visibility.Visible : Visibility.Collapsed;
+            if (showFrame)
+            {
+                _frame.Width = Math.Max(1, _region.Width * scaleX);
+                _frame.Height = Math.Max(1, _region.Height * scaleY);
+                Canvas.SetLeft(_frame, _region.X * scaleX);
+                Canvas.SetTop(_frame, _region.Y * scaleY);
+                Canvas.SetLeft(_resizeThumb, (_region.X + _region.Width) * scaleX - _resizeThumb.Width);
+                Canvas.SetTop(_resizeThumb, (_region.Y + _region.Height) * scaleY - _resizeThumb.Height);
+            }
+
+            Canvas.SetLeft(_targetThumb, (_target.X * scaleX) - _targetThumb.Width / 2.0);
+            Canvas.SetTop(_targetThumb, (_target.Y * scaleY) - _targetThumb.Height / 2.0);
+            Canvas.SetLeft(_targetMarker, (_target.X * scaleX) - 8);
+            Canvas.SetTop(_targetMarker, (_target.Y * scaleY) - 16);
         }
         finally
         {
@@ -375,12 +553,31 @@ internal sealed class MacroSetupWindow : Window
         return new SurfaceRegion(x, y, width, height);
     }
 
+    private SurfaceRegion CenterRegionOnTarget(int width, int height)
+    {
+        int clampedWidth = Math.Clamp(width, Math.Min(80, _surface.Width), _surface.Width);
+        int clampedHeight = Math.Clamp(height, Math.Min(80, _surface.Height), _surface.Height);
+        return ClampRegion(new SurfaceRegion(
+            (int)Math.Round(_target.X - clampedWidth / 2.0),
+            (int)Math.Round(_target.Y - clampedHeight / 2.0),
+            clampedWidth,
+            clampedHeight));
+    }
+
+    private static MacroPoint ClampPointToSurface(MacroPoint point, SurfaceGeometry surface) =>
+        new(
+            Math.Clamp(point.X, 0, Math.Max(0, surface.Width - 1)),
+            Math.Clamp(point.Y, 0, Math.Max(0, surface.Height - 1)));
+
     private static SurfaceRegion DefaultRegion(SurfaceGeometry surface)
     {
-        int width = Math.Max(80, (int)Math.Round(surface.Width * 0.68));
-        int height = Math.Max(80, (int)Math.Round(surface.Height * 0.52));
-        width = Math.Min(width, surface.Width);
-        height = Math.Min(height, surface.Height);
+        if (!surface.HasArea)
+        {
+            return new SurfaceRegion(0, 0, 0, 0);
+        }
+
+        int width = Math.Min(surface.Width, Math.Max(80, (int)Math.Round(surface.Width * 0.32)));
+        int height = Math.Min(surface.Height, Math.Max(80, (int)Math.Round(surface.Height * 0.30)));
         return new SurfaceRegion(
             Math.Max(0, (surface.Width - width) / 2),
             Math.Max(0, (surface.Height - height) / 2),

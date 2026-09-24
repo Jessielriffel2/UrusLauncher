@@ -10,13 +10,13 @@ A primeira versão contempla os módulos **Gemas/Cristais**, **Cosmo** e **Cliqu
 
 1. `MacroAssistantCoordinator` acompanha `GameWorkspaceViewModel.Sessions`.
 2. Cada `GameSessionViewModel` recebe um `MacroSessionController` independente.
-3. **INICIAR MACRO** abre `MacroSetupWindow`; a moldura é movida e redimensionada sobre a área alvo.
-4. No modo Gemas/Cristais ou Cosmo, **Play** fecha a moldura de configuração e inicia o reconhecimento.
-5. `GameSurfaceCapture` captura a HWND validada do GameHost com `PrintWindow`/GDI, sem `ImageGrab` global.
-6. `GemMacroBridgeClient` envia a imagem JPEG e o recorte selecionado para `gem_macro_assistant.worker` por stdin e recebe JSON com coordenadas locais.
-7. `DirectGameInput` localiza a janela filha da sessão e envia `WM_MOUSEMOVE`, `WM_LBUTTONDOWN`, `WM_LBUTTONUP` e, quando necessário, mensagens de tecla diretamente para a HWND.
-8. No modo **Cliques**, o controlador usa o centro da moldura como ponto alvo e repete `WM_*` conforme quantidade/intervalo; `0` significa infinito.
-9. `MacroOverlayWindow` desenha a mira no padrão WPF do launcher, segue a geometria do cliente e é clicar-através.
+3. **INICIAR MACRO** abre `MacroSetupWindow`; a bolinha compacta é o alvo visual e a moldura grande é opcional.
+4. Gemas/Cristais e Cosmo mantêm uma região de análise segura, independente da bolinha; a região e o alvo são normalizados para a geometria atual.
+5. No modo Gemas/Cristais ou Cosmo, **Play** fecha a configuração e inicia o reconhecimento.
+6. `GameSurfaceCapture` captura a HWND validada do GameHost com `PrintWindow`/GDI, sem `ImageGrab` global.
+7. `GemMacroBridgeClient` envia a imagem JPEG e o recorte selecionado para `gem_macro_assistant.worker` por stdin e recebe JSON com coordenadas locais.
+8. `DirectGameInput` localiza a janela filha da sessão e envia `WM_MOUSEMOVE`, `WM_LBUTTONDOWN`, `WM_LBUTTONUP` e, quando necessário, mensagens de tecla diretamente para a HWND.
+9. No modo **Cliques**, o controlador usa a bolinha como ponto alvo e repete `WM_*` conforme quantidade/intervalo; `0` significa infinito. Velocidade, intervalo, alvo e região são salvos por perfil e modo.
 
 O novo caminho não chama `SetCursorPos`, `mouse_event` ou `SendInput`. Não existe fallback automático para entrada global: se o Flash/ActiveX não aceitar a mensagem direta, a sessão exibe erro em vez de sequestrar o mouse do usuário.
 
@@ -49,8 +49,10 @@ O motor precisa de Python, Pillow, OpenCV e NumPy. O empacotamento congelado do 
 | Arquivo | Responsabilidade |
 | --- | --- |
 | `src/LegendLauncher.App/MacroAssistant/MacroAssistantCoordinator.cs` | Cria e remove controladores conforme as sessões são adicionadas/removidas. |
-| `MacroSetupWindow.cs` | Moldura de configuração, mira, Play, Parar e parâmetros do modo Cliques. |
-| `MacroSessionController.cs` | Loop de captura, análise, cooldown, cancelamento e overlay por sessão. |
+| `MacroSetupWindow.cs` | Bolinha compacta, moldura opcional, Play, Parar, velocidade e parâmetros do modo Cliques. |
+| `ProfileMacroPreferences.cs` | Modelo normalizado por perfil/modo para alvo, região, velocidade e cliques. |
+| `ProfilePreferencesStore.cs` | Persistência atômica das preferências do Macro Assistant. |
+| `MacroSessionController.cs` | Loop de captura, análise, cooldown, cancelamento, persistência e overlay por sessão. |
 | `GemMacroBridgeClient.cs` | Processo Python persistente e protocolo JSON por linha. |
 | `GameSurfaceCapture.cs` | Captura da HWND do jogo em JPEG. |
 | `DirectGameInput.cs` | Mensagens Win32 direcionadas e coordenadas locais. |
@@ -62,7 +64,7 @@ O motor precisa de Python, Pillow, OpenCV e NumPy. O empacotamento congelado do 
 
 O build e os testes de contrato não substituem o teste com o Flash real. Em uma sessão de teste, deve-se confirmar:
 
-1. o botão **INICIAR MACRO** abre a moldura, sem iniciar o worker;
+1. o botão **INICIAR MACRO** abre a bolinha compacta, sem iniciar o worker; ativar a moldura grande só quando desejado;
 2. o clique de Gemas/Cristais ocorre no tabuleiro;
 3. o clique de Cosmo ocorre no ponto visual;
 4. no modo Cliques, quantidade `0` continua até **PARAR MACRO**;

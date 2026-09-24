@@ -12,6 +12,13 @@ public partial class GameWorkspaceView : UserControl
         InitializeComponent();
     }
 
+    private void CompactGameToolbar_OnMouseLeftButtonDown(
+        object sender,
+        MouseButtonEventArgs eventArgs)
+    {
+        BorderlessWindowCommands.TryDrag(Window.GetWindow(this), eventArgs);
+    }
+
     private void ComboBoxSelector_OnPreviewMouseLeftButtonDown(
         object sender,
         MouseButtonEventArgs eventArgs)

@@ -14,6 +14,7 @@ internal sealed class GameWorkspaceViewModel : ObservableObject, IDisposable
 {
     private readonly GameAudioService _audioService;
     private readonly LauncherSettingsService _settingsService;
+    private readonly ProfileAvatarStore? _avatarStore;
     private readonly LocalizationService _localization;
     private readonly Func<nint, int, GameWindowAttachment?> _attachmentFactory;
     private IReadOnlyList<GameSessionViewModel> _visibleSessions = [];
@@ -28,10 +29,12 @@ internal sealed class GameWorkspaceViewModel : ObservableObject, IDisposable
         GameAudioService audioService,
         LauncherSettingsService settingsService,
         Func<nint, int, GameWindowAttachment?>? attachmentFactory = null,
-        LocalizationService? localization = null)
+        LocalizationService? localization = null,
+        ProfileAvatarStore? avatarStore = null)
     {
         _audioService = audioService ?? throw new ArgumentNullException(nameof(audioService));
         _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
+        _avatarStore = avatarStore;
         _localization = localization ?? LocalizationService.Current;
         _attachmentFactory = attachmentFactory ??
             ((windowHandle, processId) => new GameWindowAttachment(windowHandle, processId));
@@ -247,7 +250,8 @@ internal sealed class GameWorkspaceViewModel : ObservableObject, IDisposable
                 platform,
                 server,
                 session,
-                attachment);
+                attachment,
+                _avatarStore?.Load(profile.AvatarFileName));
         }
         catch
         {

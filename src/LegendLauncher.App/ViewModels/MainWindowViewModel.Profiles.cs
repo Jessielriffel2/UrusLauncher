@@ -1,4 +1,5 @@
 using System.IO;
+using System.Windows.Media;
 using LegendLauncher.App.Services;
 using LegendLauncher.Core.Models;
 
@@ -12,7 +13,9 @@ internal sealed partial class MainWindowViewModel
         Profiles.Clear();
         foreach (AccountProfile profile in stored.OrderByDescending(static profile => profile.UpdatedAtUtc))
         {
-            Profiles.Add(new ProfileItemViewModel(profile));
+            Profiles.Add(new ProfileItemViewModel(
+                profile,
+                _avatarStore?.Load(profile.AvatarFileName)));
         }
 
         Guid? desiredId = selectProfileId ?? SelectedProfile?.Model.Id;
@@ -68,6 +71,32 @@ internal sealed partial class MainWindowViewModel
         RefreshRecentServers();
     }
 
+    public bool HasPendingAvatarSelection =>
+        _pendingAvatarSourcePath is not null || _removePendingAvatar;
+
+    public void SetPendingAvatarSourcePath(string path)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(path);
+        _pendingAvatarSourcePath = path;
+        _removePendingAvatar = false;
+        OnPropertyChanged(nameof(HasPendingAvatarSelection));
+    }
+
+    public void RemovePendingAvatar()
+    {
+        _pendingAvatarSourcePath = null;
+        _removePendingAvatar = true;
+        OnPropertyChanged(nameof(HasPendingAvatarSelection));
+    }
+
+    public ImageSource? SelectedProfileAvatarImage => _selectedProfile?.AvatarImage;
+
+    public bool HasSelectedProfileAvatar => _selectedProfile?.HasAvatar == true;
+
+    public string SelectedProfileDisplayName => _selectedProfile?.DisplayName ?? string.Empty;
+
+    public string SelectedProfileInitial => _selectedProfile?.Initial ?? "?";
+
     private void ReplaceProfile(ProfileItemViewModel? original, AccountProfile updated)
     {
         if (original is null)
@@ -81,13 +110,19 @@ internal sealed partial class MainWindowViewModel
             return;
         }
 
-        var replacement = new ProfileItemViewModel(updated);
+        var replacement = new ProfileItemViewModel(
+            updated,
+            _avatarStore?.Load(updated.AvatarFileName));
         Profiles[index] = replacement;
         NotifyFilteredProfiles();
         if (ReferenceEquals(_selectedProfile, original))
         {
             _selectedProfile = replacement;
             OnPropertyChanged(nameof(SelectedProfile));
+            OnPropertyChanged(nameof(SelectedProfileAvatarImage));
+            OnPropertyChanged(nameof(HasSelectedProfileAvatar));
+            OnPropertyChanged(nameof(SelectedProfileDisplayName));
+            OnPropertyChanged(nameof(SelectedProfileInitial));
             RefreshRecentServers();
             DeleteProfileCommand.NotifyCanExecuteChanged();
         }
@@ -106,23 +141,46 @@ internal sealed partial class MainWindowViewModel
 
         try
         {
+            string? avatarFileName = null;
+            if (_pendingAvatarSourcePath is not null)
+            {
+                if (_avatarStore is null)
+                {
+                    SetStatusMessage("Profile_ImageUnavailable");
+                    return;
+                }
+
+                avatarFileName = await _avatarStore
+                    .ImportAsync(_pendingAvatarSourcePath)
+                    .ConfigureAwait(true);
+            }
+
             var input = new ProfileSaveInput(
                 SelectedProfile?.Model,
                 displayName,
                 SelectedPlatform.Id,
                 userName,
                 PendingPassword,
-                RememberPassword);
+                RememberPassword,
+                avatarFileName,
+                _removePendingAvatar);
             ProfileSaveOutcome outcome = await _profileStorage
                 .SaveAsync(input)
                 .ConfigureAwait(true);
             PendingPassword = string.Empty;
+            ResetPendingAvatarSelection();
             await LoadProfilesAsync(outcome.Profile.Id).ConfigureAwait(true);
             await LoadServersAsync(forceRefresh: false).ConfigureAwait(true);
             IsProfileEditorVisible = false;
             SetStatusMessage(outcome.WasCredentialPersisted
                 ? "Profile_SavedWithCredential"
                 : "Profile_SavedWithoutCredential");
+        }
+        catch (Exception exception) when (
+            exception is InvalidDataException or IOException or NotSupportedException)
+        {
+            SetStatusMessage("Profile_ImageUnavailable");
+            CatalogStatusBrush = WarningBrush;
         }
         catch (Exception exception)
         {
@@ -171,6 +229,13 @@ internal sealed partial class MainWindowViewModel
         }
     }
 
+    private void ResetPendingAvatarSelection()
+    {
+        _pendingAvatarSourcePath = null;
+        _removePendingAvatar = false;
+        OnPropertyChanged(nameof(HasPendingAvatarSelection));
+    }
+
     private void NewProfile()
     {
         IsWorkspaceVisible = false;
@@ -179,6 +244,7 @@ internal sealed partial class MainWindowViewModel
         LoginHint = string.Empty;
         PendingPassword = string.Empty;
         RememberPassword = false;
+        ResetPendingAvatarSelection();
         _pendingServerId = null;
         SelectedServer = null;
         IsProfileEditorVisible = true;
@@ -197,6 +263,7 @@ internal sealed partial class MainWindowViewModel
             return;
         }
 
+        ResetPendingAvatarSelection();
         IsProfileEditorVisible = true;
         SetStatusMessage("Profile_EditMessage");
     }
@@ -213,6 +280,7 @@ internal sealed partial class MainWindowViewModel
         }
 
         IsProfileEditorVisible = false;
+        ResetPendingAvatarSelection();
         SetStatusMessage("Profile_EditCancelled");
     }
 

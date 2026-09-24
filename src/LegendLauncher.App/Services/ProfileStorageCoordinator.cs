@@ -10,15 +10,21 @@ internal sealed class ProfileStorageCoordinator
     private readonly IProfileStore _profileStore;
     private readonly ICredentialVault _credentialVault;
     private readonly TimeProvider _timeProvider;
+    private readonly ProfileAvatarStore? _avatarStore;
+    private readonly ProfilePreferencesStore? _preferencesStore;
 
     public ProfileStorageCoordinator(
         IProfileStore profileStore,
         ICredentialVault credentialVault,
-        TimeProvider? timeProvider = null)
+        TimeProvider? timeProvider = null,
+        ProfileAvatarStore? avatarStore = null,
+        ProfilePreferencesStore? preferencesStore = null)
     {
         _profileStore = profileStore ?? throw new ArgumentNullException(nameof(profileStore));
         _credentialVault = credentialVault ?? throw new ArgumentNullException(nameof(credentialVault));
         _timeProvider = timeProvider ?? TimeProvider.System;
+        _avatarStore = avatarStore;
+        _preferencesStore = preferencesStore;
     }
 
     public Task<IReadOnlyList<AccountProfile>> GetAllAsync(
@@ -46,11 +52,15 @@ internal sealed class ProfileStorageCoordinator
         string credentialKey = changesProviderIdentity
             ? CreateRotatedCredentialKey(existingProfile!.CredentialKey)
             : existingProfile?.CredentialKey ?? CredentialKey.ForProfile(profileId);
+        string? avatarFileName = input.RemoveAvatar
+            ? null
+            : input.AvatarFileName ?? existingProfile?.AvatarFileName;
         AccountProfile profile = keepsProviderIdentity
             ? CreateCompatibleProfile(
                 existingProfile!,
                 input,
                 credentialKey,
+                avatarFileName,
                 now)
             : new AccountProfile(
                 profileId,
@@ -61,9 +71,42 @@ internal sealed class ProfileStorageCoordinator
                 null,
                 null,
                 existingProfile?.CreatedAtUtc ?? now,
-                now);
+                now) with
+            {
+                AvatarFileName = avatarFileName,
+            };
 
-        await _profileStore.SaveAsync(profile, cancellationToken).ConfigureAwait(false);
+        try
+        {
+            await _profileStore.SaveAsync(profile, cancellationToken).ConfigureAwait(false);
+        }
+        catch
+        {
+            if (_avatarStore is not null &&
+                !string.IsNullOrWhiteSpace(input.AvatarFileName) &&
+                !string.Equals(
+                    input.AvatarFileName,
+                    existingProfile?.AvatarFileName,
+                    StringComparison.Ordinal))
+            {
+                await _avatarStore
+                    .DeleteAsync(input.AvatarFileName, CancellationToken.None)
+                    .ConfigureAwait(false);
+            }
+
+            throw;
+        }
+        if (_avatarStore is not null &&
+            !string.IsNullOrWhiteSpace(existingProfile?.AvatarFileName) &&
+            !string.Equals(
+                existingProfile?.AvatarFileName,
+                profile.AvatarFileName,
+                StringComparison.Ordinal))
+        {
+            await _avatarStore
+                .DeleteAsync(existingProfile!.AvatarFileName, cancellationToken)
+                .ConfigureAwait(false);
+        }
 
         bool credentialPersisted = true;
         try
@@ -123,6 +166,7 @@ internal sealed class ProfileStorageCoordinator
         AccountProfile existingProfile,
         ProfileSaveInput input,
         string credentialKey,
+        string? avatarFileName,
         DateTimeOffset updatedAtUtc)
     {
         AccountProfile profileWithSelectedPlatform = existingProfile.WithPlatformLaunchState(
@@ -136,6 +180,7 @@ internal sealed class ProfileStorageCoordinator
             DisplayName = input.DisplayName,
             UserName = input.UserName,
             CredentialKey = credentialKey,
+            AvatarFileName = avatarFileName,
         };
     }
 
@@ -163,6 +208,19 @@ internal sealed class ProfileStorageCoordinator
             .DeleteAsync(profile.CredentialKey, cancellationToken)
             .ConfigureAwait(false);
         await _profileStore.DeleteAsync(profile.Id, cancellationToken).ConfigureAwait(false);
+        if (_preferencesStore is not null)
+        {
+            await _preferencesStore
+                .DeleteAsync(profile.Id, cancellationToken)
+                .ConfigureAwait(false);
+        }
+
+        if (_avatarStore is not null)
+        {
+            await _avatarStore
+                .DeleteAsync(profile.AvatarFileName, cancellationToken)
+                .ConfigureAwait(false);
+        }
     }
 
     public async Task<bool> HasSavedCredentialAsync(
@@ -186,7 +244,9 @@ internal sealed class ProfileSaveInput
         string platformId,
         string userName,
         string typedPassword,
-        bool rememberPassword)
+        bool rememberPassword,
+        string? avatarFileName = null,
+        bool removeAvatar = false)
     {
         ExistingProfile = existingProfile;
         DisplayName = displayName;
@@ -194,6 +254,8 @@ internal sealed class ProfileSaveInput
         UserName = userName;
         TypedPassword = typedPassword;
         RememberPassword = rememberPassword;
+        AvatarFileName = avatarFileName;
+        RemoveAvatar = removeAvatar;
     }
 
     public AccountProfile? ExistingProfile { get; }
@@ -208,8 +270,12 @@ internal sealed class ProfileSaveInput
 
     public bool RememberPassword { get; }
 
+    public string? AvatarFileName { get; }
+
+    public bool RemoveAvatar { get; }
+
     public override string ToString() =>
-        $"ProfileSaveInput {{ HasExistingProfile = {ExistingProfile is not null}, PlatformId = {PlatformId}, HasUserName = {UserName.Length > 0}, HasPassword = {TypedPassword.Length > 0}, RememberPassword = {RememberPassword} }}";
+        $"ProfileSaveInput {{ HasExistingProfile = {ExistingProfile is not null}, PlatformId = {PlatformId}, HasUserName = {UserName.Length > 0}, HasPassword = {TypedPassword.Length > 0}, RememberPassword = {RememberPassword}, HasAvatar = {AvatarFileName is not null}, RemoveAvatar = {RemoveAvatar} }}";
 }
 
 internal sealed record ProfileSaveOutcome(

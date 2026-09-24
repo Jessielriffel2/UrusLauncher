@@ -5,6 +5,8 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
+using Microsoft.Win32;
+using LegendLauncher.App.Localization;
 using LegendLauncher.App.ViewModels;
 using LegendLauncher.App.Views.Game;
 using LegendLauncher.App.MacroAssistant;
@@ -28,7 +30,10 @@ public partial class MainWindow : Window
 
         _httpClient = LauncherComposition.CreateHttpClient();
         _viewModel = LauncherComposition.CreateMainWindowViewModel(_httpClient);
-        _macroAssistant = new MacroAssistantCoordinator(_viewModel.Workspace, this);
+        _macroAssistant = new MacroAssistantCoordinator(
+            _viewModel.Workspace,
+            this,
+            _viewModel.ProfilePreferences);
         _viewModel.PropertyChanged += ViewModelOnPropertyChanged;
         _viewModel.UpdateInstallerStarted += ViewModelOnUpdateInstallerStarted;
         _viewModel.Workspace.DetachRequested += WorkspaceOnDetachRequested;
@@ -50,6 +55,33 @@ public partial class MainWindow : Window
 
         _initialized = true;
         await _viewModel.InitializeAsync();
+    }
+
+    private void ChooseProfileImageButton_OnClick(object sender, RoutedEventArgs eventArgs)
+    {
+        var dialog = new OpenFileDialog
+        {
+            Title = LocalizationService.Current.Get("Profiles_ChooseImage"),
+            Filter = "Imagens (*.png;*.jpg;*.jpeg;*.webp)|*.png;*.jpg;*.jpeg;*.webp",
+            CheckFileExists = true,
+            Multiselect = false,
+        };
+        if (dialog.ShowDialog(this) == true)
+        {
+            _viewModel.SetPendingAvatarSourcePath(dialog.FileName);
+        }
+    }
+
+    private void RemoveProfileImageButton_OnClick(object sender, RoutedEventArgs eventArgs)
+    {
+        _viewModel.RemovePendingAvatar();
+    }
+
+    private void LauncherHeader_OnMouseLeftButtonDown(
+        object sender,
+        MouseButtonEventArgs eventArgs)
+    {
+        BorderlessWindowCommands.TryDrag(this, eventArgs);
     }
 
     private void PasswordInput_OnPasswordChanged(object sender, RoutedEventArgs eventArgs)

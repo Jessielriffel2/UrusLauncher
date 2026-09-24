@@ -16,7 +16,7 @@ Launcher Windows para Legend Online, escrito do zero em C#/.NET 10 e distribuíd
 | Busca, disponibilidade e selos do catálogo | Implementado; último servidor do perfil fica no topo como recomendado, lançamento mais recente recebe selo próprio e os demais formam uma seção separada |
 | Múltiplos perfis/contas | Implementado; o mesmo login OAS pode alternar entre Brasil, Classic, Reborn e demais variantes sem perder a senha, mantendo UID/histórico separados por versão |
 | Workspace multissessão com abas | Implementado; barra única de 44 px, controles/abas de 34 px, abas roláveis e `+ CONTA` sempre visível; um GameHost isolado por perfil + versão + servidor |
-| Macro Assistant | Implementado para Gemas/Cristais, Cosmo e Cliques; o mesmo botão inicia ou interrompe todas as macros ativas |
+| Macro Assistant | Implementado para Gemas/Cristais, Cosmo e Cliques; alvo compacto com moldura opcional, regiões seguras, velocidade e preferências por perfil/modo |
 | Catálogo de recursos | Implementado; popup no cabeçalho com instruções do Macro Assistant e histórico localizado das releases |
 | Layouts simultâneos 1, 2 e 4 | Implementados; grade adaptativa 1×1, 1×2 ou 2×2, sem limitar o número de abas |
 | Desacoplar/acoplar sessão | Implementado sem reiniciar o jogo, com rollback e shutdown idempotente |
@@ -29,7 +29,7 @@ Launcher Windows para Legend Online, escrito do zero em C#/.NET 10 e distribuíd
 | Autenticação Passport OAS | Implementada nas oito variantes; QA abriu o Reborn turco S115 até a interface jogável e validou Passport + sessão do Classic Português S100 |
 | GameHost Flash x64 separado | Implementado, isolado por sessão e encerrado quando o processo pai desaparece; jogabilidade real confirmada no S115 |
 | Execução direta sem `H2Proxy.exe` | Implementada |
-| Distribuição Windows | Pipeline self-contained `win-x64`, runtime registration-free fornecido pelo mantenedor, instalador Inno Setup por usuário, ZIP portátil, manifesto e SHA-256 implementados; a [v1.1.11](https://github.com/Jessielriffel2/UrusLauncher/releases/tag/v1.1.11) é a release pública atual |
+| Distribuição Windows | Pipeline self-contained `win-x64`, runtime registration-free fornecido pelo mantenedor, instalador Inno Setup por usuário, ZIP portátil, manifesto e SHA-256 implementados; a [v1.1.12](https://github.com/Jessielriffel2/UrusLauncher/releases/tag/v1.1.12) está preparada para publicação |
 | Atualizações públicas | Consulta antecipada por GitHub Releases ao abrir, download/validação automática por usuário, cache verificado e instalação somente após clique explícito |
 | Ruffle | Avaliação futura |
 | Favoritos/múltiplos servidores fixados por conta | Melhoria futura |
@@ -53,7 +53,8 @@ Launcher Windows para Legend Online, escrito do zero em C#/.NET 10 e distribuíd
 - A barra do workspace ocupa uma única linha de 44 px. Abas e controles têm 34 px; as abas rolam horizontalmente, `+ CONTA` permanece fora da rolagem e 150 px ficam reservados para os três botões compartilhados da janela principal.
 - Abas rastreiam todas as sessões; layouts 1/2/4 controlam apenas quantas superfícies ficam visíveis. Na grade, 1/2/3–4 sessões ocupam 1×1/1×2/2×2. Uma sessão pode ser desacoplada e reanexada sem novo login.
 - A janela principal abre em 1420×820, aceita até 1180×700, recolhe o cabeçalho de 96 px no workspace e compartilha os botões de minimizar/maximizar/fechar entre launcher e jogo. Na coluna de sessão, somente o setup rola; status de compatibilidade, ação principal e legenda permanecem fixos.
-- `BorderlessWindowWorkArea` maximiza pela área útil do monitor atual e limita, considerando o DPI, o tamanho normal/restaurado à work area. Alterações de settings, display ou DPI disparam uma atualização coalescida mesmo com a janela parada. `BorderlessWindowCommands` centraliza minimizar, maximizar/restaurar e o glifo correspondente para a janela principal e as janelas desacopladas.
+- `BorderlessWindowWorkArea` maximiza pela área útil do monitor atual e limita, considerando o DPI, o tamanho normal/restaurado à work area. Alterações de settings, display ou DPI disparam uma atualização coalescida mesmo com a janela parada. `BorderlessWindowCommands` centraliza minimizar, maximizar/restaurar, o glifo correspondente e o arraste seguro pelas áreas livres do cabeçalho/workspace para a janela principal e as janelas desacopladas.
+- O Macro Assistant separa o alvo visual compacto da região de análise; preferências são gravadas atomicamente por perfil e modo em `data\profile-preferences.json`. Fotos de perfil são copiadas e redimensionadas para `data\avatars\`, mantendo o caminho local e a inicial como fallback.
 - A janela desacoplada mantém respiro entre título, ações de 32 px e caption buttons de 48 px; detach possui rollback, reattach único e fechamento coordenado no shutdown.
 - Core Audio aplica um único estado de mudo somente aos PIDs GameHost registrados, captura falhas recuperáveis e aguarda callbacks pendentes no descarte.
 - O resultado de abertura carrega o perfil efetivamente persistido; um GameHost iniciado mas não adotado pelo workspace é encerrado, assim como um GameHost cujo processo pai desapareça.
@@ -68,7 +69,9 @@ O GameHost separado reduz o impacto de uma falha do ActiveX, mas **não é uma s
 Os arquivos mutáveis do projeto ficam em `%LocalAppData%\LegendLauncherNext`:
 
 - `cache\server-catalogs.json`: último catálogo não sensível por plataforma;
-- `data\profiles.json`: nome do perfil, plataforma mais recente, usuário, chave opaca do cofre e UID/histórico recente separados por plataforma;
+- `data\profiles.json`: nome do perfil, plataforma mais recente, usuário, chave opaca do cofre, referência do avatar local e UID/histórico recente separados por plataforma;
+- `data\profile-preferences.json`: alvo, região de análise, velocidade e configuração de cliques do Macro Assistant por perfil e modo;
+- `data\avatars\`: cópias PNG resizeadas das fotos de perfil, com no máximo 512×512;
 - `data\settings.json`: mudo global, layout 1/2/4, GUID do último perfil selecionado, código de idioma e horário UTC da última exibição do pedido de apoio; todos são não sensíveis;
 - `updates\`: downloads `.part` e instaladores de atualização validados; artefatos oficiais com mais de 24 horas podem ser limpos na abertura;
 - Windows Credential Manager: usuário e senha, em alvos exclusivos com prefixo `LegendLauncherNext/`.
@@ -118,7 +121,7 @@ Os patch notes de cada versão nascem de `docs/releases/vX.Y.Z.json` em `pt-BR`,
 
 A versão 1.0.1 não possui atualizador e precisa receber manualmente o instalador público mais recente. A 1.1.0 foi o primeiro bootstrap, mas sua consulta pode esbarrar na cota da API em redes de IP compartilhado; nesse caso, a passagem também é manual. As versões 1.1.1 e 1.1.2 detectam a 1.1.3 pelo fluxo anterior: nessa passagem única, a pessoa ainda clica em **Atualizar** para baixar e instalar. Depois de instalada a 1.1.3, versões futuras são baixadas e validadas automaticamente e ficam aguardando o clique em **Instalar**. Perfis, settings e senhas permanecem preservados.
 
-A [v1.1.11](https://github.com/Jessielriffel2/UrusLauncher/releases/tag/v1.1.11) é a release pública atual e segue esse fluxo de atualização preparada pela 1.1.3.
+A [v1.1.12](https://github.com/Jessielriffel2/UrusLauncher/releases/tag/v1.1.12) está preparada para publicação e segue esse fluxo de atualização preparado pela 1.1.3.
 
 ## Desenvolvimento
 

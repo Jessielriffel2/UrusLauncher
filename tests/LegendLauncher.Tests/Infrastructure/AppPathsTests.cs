@@ -18,6 +18,8 @@ public sealed class AppPathsTests
         Assert.Equal(Path.Combine(expectedRoot, "updates"), paths.UpdatesDirectory);
         Assert.Equal(Path.Combine(expectedRoot, "cache", "server-catalogs.json"), paths.CatalogCacheFile);
         Assert.Equal(Path.Combine(expectedRoot, "data", "profiles.json"), paths.ProfilesFile);
+        Assert.Equal(Path.Combine(expectedRoot, "data", "profile-preferences.json"), paths.ProfilePreferencesFile);
+        Assert.Equal(Path.Combine(expectedRoot, "data", "avatars"), paths.ProfileAvatarsDirectory);
         Assert.Equal(Path.Combine(expectedRoot, "data", "settings.json"), paths.SettingsFile);
         Assert.False(Directory.Exists(expectedRoot));
     }
@@ -32,6 +34,7 @@ public sealed class AppPathsTests
 
         Assert.True(Directory.Exists(paths.CacheDirectory));
         Assert.True(Directory.Exists(paths.DataDirectory));
+        Assert.True(Directory.Exists(paths.ProfileAvatarsDirectory));
         Assert.True(Directory.Exists(paths.UpdatesDirectory));
     }
 }

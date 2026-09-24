@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Windows;
+using System.Windows.Media;
 using LegendLauncher.App.GameHosting;
 using LegendLauncher.Core.Models;
 
@@ -9,6 +10,7 @@ internal sealed class GameSessionViewModel : ObservableObject, IDisposable
 {
     private readonly Process? _process;
     private readonly AccountProfile _profile;
+    private readonly ImageSource? _avatarImage;
     private readonly PlatformDefinition _platform;
     private readonly GameServer _server;
     private bool _isDetached;
@@ -21,7 +23,8 @@ internal sealed class GameSessionViewModel : ObservableObject, IDisposable
         PlatformDefinition platform,
         GameServer server,
         GameSession session,
-        GameWindowAttachment? attachment)
+        GameWindowAttachment? attachment,
+        ImageSource? avatarImage = null)
     {
         ArgumentNullException.ThrowIfNull(profile);
         ArgumentNullException.ThrowIfNull(platform);
@@ -29,6 +32,7 @@ internal sealed class GameSessionViewModel : ObservableObject, IDisposable
         ArgumentNullException.ThrowIfNull(session);
 
         _profile = profile;
+        _avatarImage = avatarImage;
         _platform = platform;
         _server = server;
         Id = Guid.NewGuid();
@@ -76,6 +80,10 @@ internal sealed class GameSessionViewModel : ObservableObject, IDisposable
     public string ServerId { get; }
 
     public AccountProfile Profile => _profile;
+
+    public ImageSource? AvatarImage => _avatarImage;
+
+    public bool HasAvatar => _avatarImage is not null;
 
     public PlatformDefinition Platform => _platform;
 

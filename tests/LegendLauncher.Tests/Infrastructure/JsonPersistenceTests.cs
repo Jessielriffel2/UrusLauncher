@@ -77,6 +77,7 @@ public sealed class JsonPersistenceTests
                 ["oas"] = ["7", "6"],
                 ["oas-lorpt"] = ["100", "99"],
             },
+            AvatarFileName = "profile-avatar.png",
         };
 
         await store.SaveAsync(profile);
@@ -86,6 +87,7 @@ public sealed class JsonPersistenceTests
         Assert.Equal(profile.DisplayName, loaded.DisplayName);
         Assert.Equal(profile.PlatformId, loaded.PlatformId);
         Assert.Equal(profile.UserName, loaded.UserName);
+        Assert.Equal(profile.AvatarFileName, loaded.AvatarFileName);
         Assert.Equal(profile.CredentialKey, loaded.CredentialKey);
         Assert.Equal(profile.ProviderUserId, loaded.ProviderUserId);
         Assert.Equal(profile.LastServerId, loaded.LastServerId);
@@ -129,6 +131,7 @@ public sealed class JsonPersistenceTests
 
         Assert.Equal(profileId, loaded.Id);
         Assert.Equal("7", loaded.LastServerId);
+        Assert.Null(loaded.AvatarFileName);
         Assert.NotNull(loaded.RecentServerIds);
         Assert.Empty(loaded.RecentServerIds);
         Assert.NotNull(loaded.ProviderUserIdsByPlatform);

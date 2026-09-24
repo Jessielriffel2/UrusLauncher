@@ -1,5 +1,6 @@
 using System.Collections.Specialized;
 using System.Windows;
+using LegendLauncher.App.Services;
 using LegendLauncher.App.ViewModels;
 using LegendLauncher.Infrastructure.Logging;
 
@@ -9,13 +10,18 @@ internal sealed class MacroAssistantCoordinator : IDisposable
 {
     private readonly GameWorkspaceViewModel _workspace;
     private readonly Window _owner;
+    private readonly ProfilePreferencesStore? _profilePreferences;
     private readonly Dictionary<Guid, MacroSessionController> _controllers = [];
     private bool _disposed;
 
-    public MacroAssistantCoordinator(GameWorkspaceViewModel workspace, Window owner)
+    public MacroAssistantCoordinator(
+        GameWorkspaceViewModel workspace,
+        Window owner,
+        ProfilePreferencesStore? profilePreferences = null)
     {
         _workspace = workspace ?? throw new ArgumentNullException(nameof(workspace));
         _owner = owner ?? throw new ArgumentNullException(nameof(owner));
+        _profilePreferences = profilePreferences;
         _workspace.Sessions.CollectionChanged += SessionsOnCollectionChanged;
         foreach (GameSessionViewModel session in _workspace.Sessions)
         {
@@ -107,7 +113,10 @@ internal sealed class MacroAssistantCoordinator : IDisposable
         MacroSessionController? controller = null;
         try
         {
-            controller = new MacroSessionController(session, _owner);
+            controller = new MacroSessionController(
+                session,
+                _owner,
+                _profilePreferences);
             _controllers.Add(session.Id, controller);
             _workspace.MacroAssistant.AddController(controller);
             controller = null;

@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "version": "1.1.12",
+  "title": {
+    "pt-BR": "Macro Assistant, avatares e janela mais fluida",
+    "en-US": "Macro Assistant, avatars, and smoother window controls",
+    "es-ES": "Macro Assistant, avatares y controles de ventana más fluidos"
+  },
+  "notes": {
+    "pt-BR": [
+      "Novo: o Macro Assistant usa uma bolinha compacta como alvo padrão; a moldura grande continua disponível como opção.",
+      "Gemas/Cosmo mantêm uma área de análise segura e separada da bolinha, evitando que uma região de 1 pixel quebre a detecção.",
+      "As posições, regiões, velocidades e configurações de cliques agora são salvas por perfil e por modo (Gemas, Cosmo e Cliques).",
+      "Novo: cada perfil pode usar uma imagem local PNG, JPEG ou WebP, redimensionada para no máximo 512×512, com iniciais como fallback.",
+      "A janela pode ser arrastada pelas áreas livres do cabeçalho e do workspace, incluindo o avatar, sem interferir nos botões e campos.",
+      "O rodapé do workspace inclui Relogar para a sessão selecionada.",
+      "As preferências locais usam arquivos atômicos separados; senhas continuam exclusivamente no Windows Credential Manager."
+    ],
+    "en-US": [
+      "New: Macro Assistant now uses a compact dot as the default target; the large frame remains available as an option.",
+      "Gems/Cosmo keep a safe analysis area separate from the dot, so a one-pixel region cannot break detection.",
+      "Target positions, regions, speeds, and click settings are now saved per profile and per mode (Gems, Cosmo, and Clicks).",
+      "New: each profile can use a local PNG, JPEG, or WebP image, resized to at most 512×512, with initials as the fallback.",
+      "The window can be dragged from free header and workspace areas, including the avatar, without interfering with buttons and fields.",
+      "The workspace footer now includes Relog for the selected session.",
+      "Local preferences use separate atomic files; passwords remain exclusively in Windows Credential Manager."
+    ],
+    "es-ES": [
+      "Nuevo: Macro Assistant usa un punto compacto como objetivo predeterminado; el marco grande sigue disponible como opción.",
+      "Gemas/Cosmo mantienen un área de análisis segura y separada del punto, evitando que una región de un píxel rompa la detección.",
+      "Las posiciones, regiones, velocidades y ajustes de clics ahora se guardan por perfil y por modo (Gemas, Cosmo y Clics).",
+      "Nuevo: cada perfil puede usar una imagen local PNG, JPEG o WebP, redimensionada a un máximo de 512×512, con iniciales como alternativa.",
+      "La ventana puede arrastrarse desde áreas libres del encabezado y del workspace, incluido el avatar, sin interferir con botones y campos.",
+      "El pie del workspace ahora incluye Reiniciar para la sesión seleccionada.",
+      "Las preferencias locales usan archivos atómicos separados; las contraseñas siguen exclusivamente en Windows Credential Manager."
+    ]
+  }
+}
