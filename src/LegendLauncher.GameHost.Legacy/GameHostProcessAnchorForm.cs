@@ -46,6 +46,24 @@ internal sealed class GameHostProcessAnchorForm : Form
         }
     }
 
+    protected override void OnHandleCreated(EventArgs e)
+    {
+        base.OnHandleCreated(e);
+        HideFromUser();
+    }
+
+    // The anchor exists only to keep the GameHost process discoverable. It must never
+    // become a visible second launcher window, even if a framework or external tool
+    // attempts to show the form.
+    protected override void SetVisibleCore(bool value)
+    {
+        base.SetVisibleCore(false);
+        if (value)
+        {
+            HideFromUser();
+        }
+    }
+
     protected override void OnShown(EventArgs e)
     {
         base.OnShown(e);
@@ -94,7 +112,7 @@ internal sealed class GameHostProcessAnchorForm : Form
     internal static GameHostProcessAnchorForm Start()
     {
         var form = new GameHostProcessAnchorForm();
-        form.Show();
+        _ = form.Handle;
         form.HideFromUser();
         return form;
     }
@@ -113,6 +131,7 @@ internal sealed class GameHostProcessAnchorForm : Form
             WindowState = FormWindowState.Minimized;
             Location = new Point(OffScreenCoordinate, OffScreenCoordinate);
             ClientSize = new Size(1, 1);
+            Hide();
         }
         finally
         {

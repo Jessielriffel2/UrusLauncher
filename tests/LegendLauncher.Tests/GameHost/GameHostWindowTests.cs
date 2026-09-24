@@ -1,4 +1,5 @@
 using System.Runtime.ExceptionServices;
+using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using LegendLauncher.Core.Models;
 using LegendLauncher.GameHost.Legacy;
@@ -85,6 +86,28 @@ public sealed class GameHostWindowTests
         Assert.Equal(0, result.Count);
         Assert.Equal(1, result.Width);
         Assert.Equal(1, result.Height);
+    }
+
+    [Fact]
+    public void ProcessAnchor_ShowCannotExposeAWindow()
+    {
+        var result = RunInSta(() =>
+        {
+            using GameHostProcessAnchorForm form = GameHostProcessAnchorForm.Start();
+            Application.DoEvents();
+            form.Show();
+            Application.DoEvents();
+            return (
+                form.Visible,
+                NativeVisible: IsWindowVisible(form.Handle),
+                form.IsHandleCreated,
+                form.IsEnumeratedByExternalWindowTools);
+        });
+
+        Assert.False(result.Visible);
+        Assert.False(result.NativeVisible);
+        Assert.True(result.IsHandleCreated);
+        Assert.True(result.IsEnumeratedByExternalWindowTools);
     }
 
     [Theory]
@@ -193,6 +216,10 @@ public sealed class GameHostWindowTests
             Thread.Sleep(5);
         }
     }
+
+    [DllImport("user32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool IsWindowVisible(nint window);
 
     private sealed class TestNativeWindow : NativeWindow, IDisposable
     {

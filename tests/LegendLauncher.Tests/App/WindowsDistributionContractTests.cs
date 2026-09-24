@@ -115,6 +115,14 @@ public sealed class WindowsDistributionContractTests
         Assert.Contains("<CETCompat>false</CETCompat>", appProject, StringComparison.Ordinal);
         Assert.Contains("<CETCompat>false</CETCompat>", gameHostProject, StringComparison.Ordinal);
         Assert.Contains("GameHostProcessAnchorForm.Start()", program, StringComparison.Ordinal);
+        string anchor = File.ReadAllText(Path.Combine(
+            root,
+            "src",
+            "LegendLauncher.GameHost.Legacy",
+            "GameHostProcessAnchorForm.cs"));
+        Assert.Contains("SetVisibleCore", anchor, StringComparison.Ordinal);
+        Assert.Contains("form.Handle", anchor, StringComparison.Ordinal);
+        Assert.DoesNotContain("form.Show()", anchor, StringComparison.Ordinal);
     }
 
     [Fact]

@@ -44,7 +44,8 @@ LegendLauncherNext/
 │   │   ├── v1.1.7.json
 │   │   ├── v1.1.8.json
 │   │   ├── v1.1.9.json
-│   │   └── v1.1.10.json
+│   │   ├── v1.1.10.json
+│   │   └── v1.1.11.json
 │   └── modulos/
 │       ├── atualizacao.md
 │       ├── branding.md
