@@ -15,15 +15,18 @@ internal sealed class MacroSetupWindow : Window
 {
     private readonly Canvas _canvas;
     private readonly Border _frame;
+    private readonly Thumb _frameMoveThumb;
     private readonly Thumb _targetThumb;
     private readonly Thumb _resizeThumb;
     private readonly TextBlock _targetMarker;
+    private readonly TextBlock _hint;
     private readonly TextBlock _status;
     private readonly StackPanel _clickSettingsPanel;
     private readonly TextBox _clickCountInput;
     private readonly TextBox _clickIntervalInput;
     private readonly TextBox _speedInput;
-    private readonly CheckBox _largeFrameToggle;
+    private readonly ToggleButton _largeFrameToggle;
+    private readonly StackPanel _largeFrameToggleRow;
     private readonly Button _playButton;
     private readonly Button _stopButton;
     private MacroMode _mode = MacroMode.Gems;
@@ -58,6 +61,17 @@ internal sealed class MacroSetupWindow : Window
             Background = new SolidColorBrush(Color.FromArgb(22, 35, 230, 255)),
         };
         _canvas.Children.Add(_frame);
+
+        _frameMoveThumb = new Thumb
+        {
+            Background = Brushes.Transparent,
+            BorderBrush = Brushes.Transparent,
+            BorderThickness = new Thickness(0),
+            Focusable = false,
+            Cursor = Cursors.SizeAll,
+        };
+        _frameMoveThumb.DragDelta += FrameDragDelta;
+        _canvas.Children.Add(_frameMoveThumb);
 
         _resizeThumb = new Thumb
         {
@@ -117,14 +131,15 @@ internal sealed class MacroSetupWindow : Window
             FontSize = 15,
             FontWeight = FontWeights.SemiBold,
         });
-        panelContent.Children.Add(new TextBlock
+        _hint = new TextBlock
         {
-            Text = Localize("Macro_SetupHint", "Arraste a bolinha. A moldura grande é opcional."),
+            Text = Localize("Macro_SetupHintVision", "Arraste a moldura para cobrir a área de análise."),
             Foreground = new SolidColorBrush(Color.FromRgb(173, 194, 211)),
             FontSize = 10.5,
             Margin = new Thickness(0, 4, 0, 9),
             TextWrapping = TextWrapping.Wrap,
-        });
+        };
+        panelContent.Children.Add(_hint);
         _status = new TextBlock
         {
             Text = Localize("Macro_SetupStatus", "Ajuste a bolinha e pressione Play."),
@@ -183,16 +198,32 @@ internal sealed class MacroSetupWindow : Window
         speedRow.Children.Add(_speedInput);
         panelContent.Children.Add(speedRow);
 
-        _largeFrameToggle = new CheckBox
+        _largeFrameToggle = new ToggleButton
         {
-            Content = Localize("Macro_LargeFrame", "Usar moldura grande"),
-            Foreground = Brushes.White,
-            VerticalContentAlignment = VerticalAlignment.Center,
-            Margin = new Thickness(0, 0, 0, 9),
+            Width = 40,
+            Height = 22,
+            Cursor = Cursors.Hand,
+            Focusable = true,
+            Template = CreateLargeFrameToggleTemplate(),
         };
         _largeFrameToggle.Checked += LargeFrameToggleOnChanged;
         _largeFrameToggle.Unchecked += LargeFrameToggleOnChanged;
-        panelContent.Children.Add(_largeFrameToggle);
+        _largeFrameToggleRow = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Margin = new Thickness(0, 0, 0, 9),
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+        _largeFrameToggleRow.Children.Add(_largeFrameToggle);
+        _largeFrameToggleRow.Children.Add(new TextBlock
+        {
+            Text = Localize("Macro_LargeFrame", "Usar moldura grande"),
+            Foreground = Brushes.White,
+            FontSize = 10.5,
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(9, 0, 0, 0),
+        });
+        panelContent.Children.Add(_largeFrameToggleRow);
 
         var buttons = new StackPanel { Orientation = Orientation.Horizontal };
         _playButton = CreateButton("Play", new SolidColorBrush(Color.FromRgb(34, 120, 78)));
@@ -229,10 +260,35 @@ internal sealed class MacroSetupWindow : Window
     public void SetMode(MacroMode mode)
     {
         _mode = mode;
-        _clickSettingsPanel.Visibility = mode == MacroMode.Clicks ? Visibility.Visible : Visibility.Collapsed;
-        SetStatus(mode == MacroMode.Clicks
-            ? Localize("Macro_SetupStatusClicks", "Posicione a bolinha e configure os cliques.")
-            : Localize("Macro_SetupStatus", "Ajuste a bolinha e pressione Play."));
+        bool isClicks = mode == MacroMode.Clicks;
+        _clickSettingsPanel.Visibility = isClicks ? Visibility.Visible : Visibility.Collapsed;
+
+        // Cosmo and Gems always run with the analysis frame and without the aim marker.
+        _largeFrameToggleRow.Visibility = isClicks ? Visibility.Visible : Visibility.Collapsed;
+        _updating = true;
+        try
+        {
+            if (!isClicks)
+            {
+                _useLargeFrame = true;
+            }
+
+            _largeFrameToggle.IsChecked = _useLargeFrame;
+        }
+        finally
+        {
+            _updating = false;
+        }
+
+        _hint.Text = isClicks
+            ? Localize(
+                "Macro_SetupHint",
+                "Arraste a moldura para posicionar a mira centralizada. Desligue o toggle para usar apenas a mira compacta.")
+            : Localize("Macro_SetupHintVision", "Arraste a moldura para cobrir a área de análise. Neste modo a mira fica oculta.");
+        SetStatus(isClicks
+            ? Localize("Macro_SetupStatusClicks", "Posicione a moldura e configure os cliques.")
+            : Localize("Macro_SetupStatusVision", "Ajuste a moldura sobre a área e pressione Play."));
+        ApplyRegionToCanvas();
     }
 
     public ClickMacroSettings GetClickSettings()
@@ -281,6 +337,12 @@ internal sealed class MacroSetupWindow : Window
         }
 
         SetMode(_mode);
+        if (_useLargeFrame)
+        {
+            // The aim always sits at the center of the frame.
+            _target = RegionCenter(_region);
+        }
+
         if (!IsVisible)
         {
             Show();
@@ -315,7 +377,9 @@ internal sealed class MacroSetupWindow : Window
 
         _surface = surface;
         _region = ClampRegion(_region.HasArea ? _region : DefaultRegion(surface));
-        _target = ClampPointToSurface(_target, _surface);
+        _target = _useLargeFrame
+            ? RegionCenter(_region)
+            : ClampPointToSurface(_target, _surface);
         if (IsVisible && surface.HasArea)
         {
             NativeWindowMethods.SetOverlayBounds(
@@ -404,10 +468,51 @@ internal sealed class MacroSetupWindow : Window
         }
 
         (double scaleX, double scaleY) = GetSurfaceScale();
+        if (_useLargeFrame)
+        {
+            // The aim is glued to the frame center: dragging it moves the frame.
+            MoveRegionBy(
+                eventArgs.HorizontalChange / scaleX,
+                eventArgs.VerticalChange / scaleY);
+            return;
+        }
+
         MacroPoint candidate = new(
             _target.X + eventArgs.HorizontalChange / scaleX,
             _target.Y + eventArgs.VerticalChange / scaleY);
         UpdateTarget(candidate);
+    }
+
+    private void FrameDragDelta(object sender, DragDeltaEventArgs eventArgs)
+    {
+        if (_updating || !_surface.HasArea || !_useLargeFrame)
+        {
+            return;
+        }
+
+        (double scaleX, double scaleY) = GetSurfaceScale();
+        MoveRegionBy(
+            eventArgs.HorizontalChange / scaleX,
+            eventArgs.VerticalChange / scaleY);
+    }
+
+    private void MoveRegionBy(double deltaX, double deltaY)
+    {
+        SurfaceRegion moved = ClampRegion(new SurfaceRegion(
+            _region.X + (int)Math.Round(deltaX),
+            _region.Y + (int)Math.Round(deltaY),
+            _region.Width,
+            _region.Height));
+        if (moved == _region)
+        {
+            return;
+        }
+
+        _region = moved;
+        _target = RegionCenter(_region);
+        ApplyRegionToCanvas();
+        RegionChanged?.Invoke(this, moved);
+        SettingsChanged?.Invoke(this, EventArgs.Empty);
     }
 
     private void ResizeDragDelta(object sender, DragDeltaEventArgs eventArgs)
@@ -431,14 +536,7 @@ internal sealed class MacroSetupWindow : Window
             Math.Clamp(candidate.X, 0, Math.Max(0, _surface.Width - 1)),
             Math.Clamp(candidate.Y, 0, Math.Max(0, _surface.Height - 1)));
         _target = clamped;
-        if (!_useLargeFrame)
-        {
-            _region = CenterRegionOnTarget(_region.Width, _region.Height);
-        }
-        else
-        {
-            _region = ClampRegion(_region);
-        }
+        _region = CenterRegionOnTarget(_region.Width, _region.Height);
 
         ApplyRegionToCanvas();
         RegionChanged?.Invoke(this, _region);
@@ -454,7 +552,9 @@ internal sealed class MacroSetupWindow : Window
         }
 
         _region = clamped;
-        _target = ClampPointToSurface(_target, _surface);
+        _target = _useLargeFrame
+            ? RegionCenter(_region)
+            : ClampPointToSurface(_target, _surface);
         ApplyRegionToCanvas();
         RegionChanged?.Invoke(this, clamped);
         SettingsChanged?.Invoke(this, EventArgs.Empty);
@@ -468,7 +568,12 @@ internal sealed class MacroSetupWindow : Window
         }
 
         _useLargeFrame = _largeFrameToggle.IsChecked == true;
-        if (!_useLargeFrame)
+        if (_useLargeFrame)
+        {
+            // Keep the aim centered inside the frame when it is turned on.
+            _target = RegionCenter(_region);
+        }
+        else
         {
             _region = CenterRegionOnTarget(_region.Width, _region.Height);
         }
@@ -506,22 +611,37 @@ internal sealed class MacroSetupWindow : Window
         try
         {
             bool showFrame = _useLargeFrame;
+            bool showAim = _mode == MacroMode.Clicks;
             _frame.Visibility = showFrame ? Visibility.Visible : Visibility.Collapsed;
             _resizeThumb.Visibility = showFrame ? Visibility.Visible : Visibility.Collapsed;
+            _frameMoveThumb.Visibility = showFrame ? Visibility.Visible : Visibility.Collapsed;
             if (showFrame)
             {
-                _frame.Width = Math.Max(1, _region.Width * scaleX);
-                _frame.Height = Math.Max(1, _region.Height * scaleY);
-                Canvas.SetLeft(_frame, _region.X * scaleX);
-                Canvas.SetTop(_frame, _region.Y * scaleY);
-                Canvas.SetLeft(_resizeThumb, (_region.X + _region.Width) * scaleX - _resizeThumb.Width);
-                Canvas.SetTop(_resizeThumb, (_region.Y + _region.Height) * scaleY - _resizeThumb.Height);
+                double frameLeft = _region.X * scaleX;
+                double frameTop = _region.Y * scaleY;
+                double frameWidth = Math.Max(1, _region.Width * scaleX);
+                double frameHeight = Math.Max(1, _region.Height * scaleY);
+                _frame.Width = frameWidth;
+                _frame.Height = frameHeight;
+                Canvas.SetLeft(_frame, frameLeft);
+                Canvas.SetTop(_frame, frameTop);
+                _frameMoveThumb.Width = frameWidth;
+                _frameMoveThumb.Height = frameHeight;
+                Canvas.SetLeft(_frameMoveThumb, frameLeft);
+                Canvas.SetTop(_frameMoveThumb, frameTop);
+                Canvas.SetLeft(_resizeThumb, frameLeft + frameWidth - _resizeThumb.Width);
+                Canvas.SetTop(_resizeThumb, frameTop + frameHeight - _resizeThumb.Height);
             }
 
-            Canvas.SetLeft(_targetThumb, (_target.X * scaleX) - _targetThumb.Width / 2.0);
-            Canvas.SetTop(_targetThumb, (_target.Y * scaleY) - _targetThumb.Height / 2.0);
-            Canvas.SetLeft(_targetMarker, (_target.X * scaleX) - 8);
-            Canvas.SetTop(_targetMarker, (_target.Y * scaleY) - 16);
+            _targetThumb.Visibility = showAim ? Visibility.Visible : Visibility.Collapsed;
+            _targetMarker.Visibility = showAim ? Visibility.Visible : Visibility.Collapsed;
+            if (showAim)
+            {
+                Canvas.SetLeft(_targetThumb, (_target.X * scaleX) - _targetThumb.Width / 2.0);
+                Canvas.SetTop(_targetThumb, (_target.Y * scaleY) - _targetThumb.Height / 2.0);
+                Canvas.SetLeft(_targetMarker, (_target.X * scaleX) - 8);
+                Canvas.SetTop(_targetMarker, (_target.Y * scaleY) - 16);
+            }
         }
         finally
         {
@@ -568,6 +688,67 @@ internal sealed class MacroSetupWindow : Window
         new(
             Math.Clamp(point.X, 0, Math.Max(0, surface.Width - 1)),
             Math.Clamp(point.Y, 0, Math.Max(0, surface.Height - 1)));
+
+    private static MacroPoint RegionCenter(SurfaceRegion region) =>
+        new(region.X + region.Width / 2.0, region.Y + region.Height / 2.0);
+
+    private static ControlTemplate CreateLargeFrameToggleTemplate()
+    {
+        var template = new ControlTemplate(typeof(ToggleButton));
+
+        var track = new FrameworkElementFactory(typeof(Border), "Track");
+        track.SetValue(Border.CornerRadiusProperty, new CornerRadius(11));
+        track.SetValue(Border.BackgroundProperty, new SolidColorBrush(Color.FromRgb(12, 34, 52)));
+        track.SetValue(Border.BorderBrushProperty, new SolidColorBrush(Color.FromRgb(71, 119, 142)));
+        track.SetValue(Border.BorderThicknessProperty, new Thickness(1));
+
+        var knob = new FrameworkElementFactory(typeof(Border), "Knob");
+        knob.SetValue(FrameworkElement.WidthProperty, 16d);
+        knob.SetValue(FrameworkElement.HeightProperty, 16d);
+        knob.SetValue(Border.CornerRadiusProperty, new CornerRadius(8));
+        knob.SetValue(Border.BackgroundProperty, new SolidColorBrush(Color.FromRgb(173, 194, 211)));
+        knob.SetValue(FrameworkElement.HorizontalAlignmentProperty, HorizontalAlignment.Left);
+        knob.SetValue(FrameworkElement.VerticalAlignmentProperty, VerticalAlignment.Center);
+        knob.SetValue(FrameworkElement.MarginProperty, new Thickness(2, 0, 0, 0));
+        track.AppendChild(knob);
+        template.VisualTree = track;
+
+        var checkedTrigger = new Trigger
+        {
+            Property = ToggleButton.IsCheckedProperty,
+            Value = true,
+        };
+        checkedTrigger.Setters.Add(new Setter(
+            Border.BackgroundProperty,
+            new SolidColorBrush(Color.FromRgb(35, 230, 255)),
+            "Track"));
+        checkedTrigger.Setters.Add(new Setter(
+            FrameworkElement.HorizontalAlignmentProperty,
+            HorizontalAlignment.Right,
+            "Knob"));
+        checkedTrigger.Setters.Add(new Setter(
+            FrameworkElement.MarginProperty,
+            new Thickness(0, 0, 2, 0),
+            "Knob"));
+        checkedTrigger.Setters.Add(new Setter(
+            Border.BackgroundProperty,
+            new SolidColorBrush(Color.FromRgb(5, 16, 29)),
+            "Knob"));
+        template.Triggers.Add(checkedTrigger);
+
+        var hoverTrigger = new Trigger
+        {
+            Property = UIElement.IsMouseOverProperty,
+            Value = true,
+        };
+        hoverTrigger.Setters.Add(new Setter(
+            Border.BorderBrushProperty,
+            new SolidColorBrush(Color.FromRgb(35, 230, 255)),
+            "Track"));
+        template.Triggers.Add(hoverTrigger);
+
+        return template;
+    }
 
     private static SurfaceRegion DefaultRegion(SurfaceGeometry surface)
     {

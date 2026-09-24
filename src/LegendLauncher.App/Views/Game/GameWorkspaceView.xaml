@@ -85,6 +85,42 @@
                 </DataTrigger>
             </Style.Triggers>
         </Style>
+        <Style x:Key="SidebarAccountActionButtonStyle" TargetType="Button">
+            <Setter Property="Width" Value="22" />
+            <Setter Property="Height" Value="22" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="FontFamily" Value="Segoe Fluent Icons" />
+            <Setter Property="FontSize" Value="10" />
+            <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="shell:WindowChrome.IsHitTestVisibleInChrome" Value="True" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Border"
+                                Background="#D50C1B2B"
+                                BorderBrush="#47667C"
+                                BorderThickness="1"
+                                CornerRadius="11">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource AccentStrongBrush}" />
+                                <Setter TargetName="Border" Property="Background" Value="#E0122838" />
+                                <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Border" Property="Opacity" Value="0.72" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Border" Property="Opacity" Value="0.4" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </UserControl.Resources>
 
     <Grid Margin="16,0,16,12">
@@ -142,11 +178,6 @@
                                     Height="34"
                                     Margin="0,0,5,0">
                                 <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="30" />
-                                        <ColumnDefinition Width="30" />
-                                    </Grid.ColumnDefinitions>
                                     <Button Background="Transparent"
                                             BorderThickness="0"
                                             Foreground="{StaticResource TextPrimaryBrush}"
@@ -170,34 +201,6 @@
                                                        TextTrimming="CharacterEllipsis" />
                                         </Grid>
                                     </Button>
-                                    <Button Grid.Column="1"
-                                            Background="Transparent"
-                                            BorderThickness="0"
-                                            Foreground="{StaticResource TextMutedBrush}"
-                                            FontFamily="Segoe Fluent Icons"
-                                            FontSize="11"
-                                            Content="&#xE72C;"
-                                            Cursor="Hand"
-                                            Command="{Binding DataContext.Workspace.RelogSessionCommand, ElementName=WorkspaceRoot}"
-                                            CommandParameter="{Binding}"
-                                            ToolTip="{loc:Localize Session_RelogTooltip}"
-                                            AutomationProperties.Name="{loc:Localize Session_Relog}" />
-                                    <Button Grid.Column="2"
-                                            Background="Transparent"
-                                            BorderThickness="0"
-                                            Foreground="{StaticResource TextMutedBrush}"
-                                            FontFamily="Segoe Fluent Icons"
-
-                                            Content="&#xE711;"
-                                            Cursor="Hand"
-                                            Command="{Binding DataContext.Workspace.CloseSessionCommand, ElementName=WorkspaceRoot}"
-                                            CommandParameter="{Binding}"
-                                            AutomationProperties.Name="{loc:Localize Session_End}"
-                                             Width="30" FontSize="12"
-                                             Height="34"
-
-
-                                             ToolTip="{loc:Localize Session_End}" />
                                 </Grid>
                             </Border>
                         </DataTemplate>
@@ -363,7 +366,8 @@
                             <ItemsControl x:Name="SessionAvatarList" ItemsSource="{Binding Workspace.SidebarAvatars}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Button Margin="0,0,0,10"
+                                    <Grid Margin="0,0,0,10">
+                                    <Button Margin="0"
                                             Padding="0"
                                             Background="Transparent"
                                             BorderThickness="0"
@@ -559,6 +563,54 @@
                                             </Grid>
                                         </Grid>
                                     </Button>
+                                    <StackPanel Orientation="Vertical"
+                                                HorizontalAlignment="Center"
+                                                VerticalAlignment="Top"
+                                                Margin="0,56,0,0">
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                            <Button Style="{StaticResource SidebarAccountActionButtonStyle}"
+                                                    Content="&#xE72C;"
+                                                    Command="{Binding DataContext.Workspace.RelogSessionCommand, ElementName=WorkspaceRoot}"
+                                                    CommandParameter="{Binding Front}"
+                                                    ToolTip="{loc:Localize Session_RelogTooltip}"
+                                                    AutomationProperties.Name="{loc:Localize Session_Relog}" />
+                                            <Button Style="{StaticResource SidebarAccountActionButtonStyle}"
+                                                    Content="&#xE711;"
+                                                    Margin="3,0,0,0"
+                                                    Command="{Binding DataContext.Workspace.CloseSessionCommand, ElementName=WorkspaceRoot}"
+                                                    CommandParameter="{Binding Front}"
+                                                    ToolTip="{loc:Localize Session_End}"
+                                                    AutomationProperties.Name="{loc:Localize Session_End}" />
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal"
+                                                    HorizontalAlignment="Center"
+                                                    Margin="0,3,0,0">
+                                            <StackPanel.Style>
+                                                <Style TargetType="StackPanel">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsPair}" Value="True">
+                                                            <Setter Property="Visibility" Value="Visible" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </StackPanel.Style>
+                                            <Button Style="{StaticResource SidebarAccountActionButtonStyle}"
+                                                    Content="&#xE72C;"
+                                                    Command="{Binding DataContext.Workspace.RelogSessionCommand, ElementName=WorkspaceRoot}"
+                                                    CommandParameter="{Binding Rear}"
+                                                    ToolTip="{loc:Localize Session_RelogTooltip}"
+                                                    AutomationProperties.Name="{loc:Localize Session_Relog}" />
+                                            <Button Style="{StaticResource SidebarAccountActionButtonStyle}"
+                                                    Content="&#xE711;"
+                                                    Margin="3,0,0,0"
+                                                    Command="{Binding DataContext.Workspace.CloseSessionCommand, ElementName=WorkspaceRoot}"
+                                                    CommandParameter="{Binding Rear}"
+                                                    ToolTip="{loc:Localize Session_End}"
+                                                    AutomationProperties.Name="{loc:Localize Session_End}" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                    </Grid>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>

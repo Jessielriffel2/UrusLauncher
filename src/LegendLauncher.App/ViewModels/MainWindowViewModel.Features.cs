@@ -40,6 +40,9 @@ internal sealed partial class MainWindowViewModel
     public string FeatureCatalogMacroGuideText =>
         _localization.Get("FeatureCatalog_MacroGuide");
 
+    public IReadOnlyList<ReleaseCatalogHistoryItem> FeatureCatalogReleases =>
+        ReleaseCatalog.FormatHistoryItems(_releaseCatalog, _localization.LanguageCode);
+
     public string FeatureCatalogHistoryText =>
         ReleaseCatalog.FormatHistory(_releaseCatalog, _localization.LanguageCode);
 
@@ -121,6 +124,7 @@ internal sealed partial class MainWindowViewModel
         OnPropertyChanged(nameof(FeatureCatalogUnreadBadgeText));
         OnPropertyChanged(nameof(IsFeatureCatalogUnread));
         OnPropertyChanged(nameof(FeatureCatalogMacroGuideText));
+        OnPropertyChanged(nameof(FeatureCatalogReleases));
         OnPropertyChanged(nameof(FeatureCatalogHistoryText));
     }
 }

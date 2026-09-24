@@ -22,6 +22,8 @@ internal sealed class MacroAssistantCoordinator : IDisposable
         _workspace = workspace ?? throw new ArgumentNullException(nameof(workspace));
         _owner = owner ?? throw new ArgumentNullException(nameof(owner));
         _profilePreferences = profilePreferences;
+        _owner.StateChanged += OwnerOnStateChanged;
+        _owner.IsVisibleChanged += OwnerOnIsVisibleChanged;
         _workspace.Sessions.CollectionChanged += SessionsOnCollectionChanged;
         foreach (GameSessionViewModel session in _workspace.Sessions)
         {
@@ -37,6 +39,8 @@ internal sealed class MacroAssistantCoordinator : IDisposable
         }
 
         _disposed = true;
+        _owner.StateChanged -= OwnerOnStateChanged;
+        _owner.IsVisibleChanged -= OwnerOnIsVisibleChanged;
         _workspace.Sessions.CollectionChanged -= SessionsOnCollectionChanged;
         foreach (MacroSessionController controller in _controllers.Values.ToArray())
         {
@@ -44,6 +48,24 @@ internal sealed class MacroAssistantCoordinator : IDisposable
         }
 
         _controllers.Clear();
+    }
+
+    private void OwnerOnStateChanged(object? sender, EventArgs eventArgs) => StopIfOwnerUnavailable();
+
+    private void OwnerOnIsVisibleChanged(object? sender, DependencyPropertyChangedEventArgs eventArgs) =>
+        StopIfOwnerUnavailable();
+
+    private void StopIfOwnerUnavailable()
+    {
+        if (_disposed || _owner.IsVisible && _owner.WindowState != WindowState.Minimized)
+        {
+            return;
+        }
+
+        foreach (MacroSessionController controller in _controllers.Values.ToArray())
+        {
+            controller.Stop();
+        }
     }
 
     private void SessionsOnCollectionChanged(object? sender, NotifyCollectionChangedEventArgs eventArgs)

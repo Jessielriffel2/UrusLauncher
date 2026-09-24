@@ -33,6 +33,11 @@ internal sealed record ReleaseCatalogEntry(
     }
 }
 
+internal sealed record ReleaseCatalogHistoryItem(
+    string VersionText,
+    string Title,
+    IReadOnlyList<string> Notes);
+
 internal static class ReleaseCatalog
 {
     private const string ResourcePrefix = "UrusLauncher.App.Releases.";
@@ -50,6 +55,16 @@ internal static class ReleaseCatalog
             .OrderByDescending(entry => entry.Version)
             .ToArray();
     }
+
+    public static IReadOnlyList<ReleaseCatalogHistoryItem> FormatHistoryItems(
+        IEnumerable<ReleaseCatalogEntry> entries,
+        string languageCode) =>
+        entries
+            .Select(entry => new ReleaseCatalogHistoryItem(
+                $"v{entry.Version.ToString(3)}",
+                entry.GetTitle(languageCode),
+                entry.GetNotes(languageCode)))
+            .ToArray();
 
     public static string FormatHistory(
         IEnumerable<ReleaseCatalogEntry> entries,

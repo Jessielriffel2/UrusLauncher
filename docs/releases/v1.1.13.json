@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "version": "1.1.13",
+  "title": {
+    "pt-BR": "Macro Assistant preso ao launcher, perfil em modal e controles no avatar",
+    "en-US": "Macro Assistant locked to the launcher, profile modal, and avatar controls",
+    "es-ES": "Macro Assistant anclado al launcher, perfil en modal y controles en el avatar"
+  },
+  "notes": {
+    "pt-BR": [
+      "Correção: ao minimizar ou ocultar o launcher, o Macro Assistant para imediatamente, esconde a mira e não clica mais fora da interface.",
+      "Correção: o Macro Assistant também para quando a janela do jogo é minimizada ou deixa de ficar visível.",
+      "Gemas e Cosmo agora sempre usam a moldura de análise e não exibem a mira; a moldura pode ser arrastada e redimensionada.",
+      "No modo Cliques, a mira fica centralizada dentro da moldura e acompanha o movimento e o tamanho salvos para cada perfil.",
+      "Novo: a opção de moldura grande virou um toggle no tema do launcher, visível apenas no modo Cliques.",
+      "Novo: a edição de perfil virou um modal flutuante, com escurecimento ao fundo e fechamento por X, Esc ou Cancelar.",
+      "Os botões de relogar e fechar saíram das abas superiores e agora ficam junto do avatar da conta na barra lateral, inclusive em sessões duplas.",
+      "O histórico de versões usa títulos de versão em negrito com separadores entre cada atualização.",
+      "O modal de doação voltou a exibir a marca original do PayPal.",
+      "O bloco de identidade do perfil foi removido do cabeçalho principal para manter apenas uma identidade visual no launcher."
+    ],
+    "en-US": [
+      "Fix: minimizing or hiding the launcher now stops Macro Assistant immediately, hides the aim, and prevents clicks outside the interface.",
+      "Fix: Macro Assistant also stops whenever the game window is minimized or no longer visible.",
+      "Gems and Cosmo now always use the analysis frame and do not show the aim; the frame can be dragged and resized.",
+      "In Clicks mode, the aim stays centered inside the frame and follows the size saved for each profile.",
+      "New: the large-frame option is now a launcher-themed toggle, shown only in Clicks mode.",
+      "New: profile editing is now a floating modal with a dimmed backdrop and X, Esc, or Cancel dismissal.",
+      "Relog and close moved from the top session tabs to the account avatar in the sidebar, including split sessions.",
+      "The release history now shows bold version rows with separators between updates.",
+      "The donation modal again displays the original PayPal brand.",
+      "The profile identity block was removed from the main header to keep a single visual identity in the launcher."
+    ],
+    "es-ES": [
+      "Corrección: al minimizar u ocultar el launcher, Macro Assistant se detiene de inmediato, oculta la mira y deja de hacer clic fuera de la interfaz.",
+      "Corrección: Macro Assistant también se detiene cuando la ventana del juego se minimiza o deja de estar visible.",
+      "Gemas y Cosmo ahora siempre usan el marco de análisis y no muestran la mira; el marco se puede arrastrar y redimensionar.",
+      "En el modo Clics, la mira queda centrada dentro del marco y sigue el tamaño guardado para cada perfil.",
+      "Nuevo: la opción de marco grande ahora es un interruptor con el tema del launcher, visible solo en el modo Clics.",
+      "Nuevo: la edición de perfil ahora es un modal flotante con fondo oscurecido y cierre por X, Esc o Cancelar.",
+      "Reiniciar y cerrar salieron de las pestañas superiores y ahora están junto al avatar de la cuenta en la barra lateral, incluidas las sesiones dobles.",
+      "El historial de versiones muestra las versiones en negrita con separadores entre cada actualización.",
+      "El modal de donación volvió a mostrar la marca original de PayPal.",
+      "El bloque de identidad del perfil se eliminó del encabezado principal para mantener una sola identidad visual en el launcher."
+    ]
+  }
+}

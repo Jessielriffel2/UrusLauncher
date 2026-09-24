@@ -128,6 +128,28 @@ public sealed class GameWorkspaceXamlTests
         Assert.Contains("RearInitial", markup, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void AccountControls_LiveOnTheSidebarAvatarInsteadOfTheSessionTabs()
+    {
+        XDocument document = XDocument.Load(FindRepositoryFile(
+            "src",
+            "LegendLauncher.App",
+            "Views",
+            "Game",
+            "GameWorkspaceView.xaml"));
+
+        string tabs = FindNamedElement(document, "ScrollViewer", "SessionTabsScrollViewer").ToString();
+        Assert.DoesNotContain("RelogSessionCommand", tabs, StringComparison.Ordinal);
+        Assert.DoesNotContain("CloseSessionCommand", tabs, StringComparison.Ordinal);
+
+        string avatars = FindNamedElement(document, "ItemsControl", "SessionAvatarList").ToString();
+        Assert.Contains("RelogSessionCommand", avatars, StringComparison.Ordinal);
+        Assert.Contains("CloseSessionCommand", avatars, StringComparison.Ordinal);
+        Assert.Contains("CommandParameter=\"{Binding Front}\"", avatars, StringComparison.Ordinal);
+        Assert.Contains("CommandParameter=\"{Binding Rear}\"", avatars, StringComparison.Ordinal);
+        Assert.Contains("SidebarAccountActionButtonStyle", avatars, StringComparison.Ordinal);
+    }
+
     private static XElement FindNamedElement(
         XDocument document,
         string localName,

@@ -96,33 +96,12 @@
                         </Grid.RowDefinitions>
 
                         <StackPanel Orientation="Horizontal">
-                            <Border Width="34"
-                                    Height="34"
-                                    Background="#102C45"
-                                    BorderBrush="#247CB4"
-                                    BorderThickness="1"
-                                    CornerRadius="10">
-                                <Grid>
-                                    <TextBlock Margin="-3,-1,0,0"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center"
-                                               FontFamily="Segoe UI Variable Display, Segoe UI"
-                                               FontSize="19"
-                                               FontWeight="Bold"
-                                               FontStyle="Italic"
-                                               Foreground="#003087"
-                                               Text="P" />
-                                    <TextBlock Margin="2,3,0,0"
-                                               HorizontalAlignment="Center"
-                                               VerticalAlignment="Center"
-                                               FontFamily="Segoe UI Variable Display, Segoe UI"
-                                               FontSize="19"
-                                               FontWeight="Bold"
-                                               FontStyle="Italic"
-                                               Foreground="#009CDE"
-                                               Text="P" />
-                                </Grid>
-                            </Border>
+                            <Image Width="106"
+                                   Height="27"
+                                   Source="Assets/paypal-logo.png"
+                                   Stretch="Uniform"
+                                   SnapsToDevicePixels="True"
+                                   VerticalAlignment="Center" />
                             <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
                                 <TextBlock FontSize="10"
                                            FontWeight="Bold"

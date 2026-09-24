@@ -17,6 +17,7 @@ internal sealed class MacroSessionController : ObservableObject, IMacroSession
     private static readonly TimeSpan SetupRefreshInterval = TimeSpan.FromMilliseconds(120);
 
     private readonly GameSessionViewModel _session;
+    private readonly Window _uiOwner;
     private readonly Dispatcher _dispatcher;
     private readonly GameSurfaceCapture _capture = new();
     private readonly DirectGameInput _input = new();
@@ -50,6 +51,7 @@ internal sealed class MacroSessionController : ObservableObject, IMacroSession
     {
         _session = session ?? throw new ArgumentNullException(nameof(session));
         ArgumentNullException.ThrowIfNull(uiOwner);
+        _uiOwner = uiOwner;
         _profileId = session.ProfileId;
         _profilePreferences = profilePreferences;
         _dispatcher = uiOwner.Dispatcher;
@@ -139,7 +141,8 @@ internal sealed class MacroSessionController : ObservableObject, IMacroSession
     public void Start()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        if (_runTask is not null || _openingSetup || !_session.IsRunning)
+        if (_runTask is not null || _openingSetup || !_session.IsRunning ||
+            !IsOwnerAvailable())
         {
             return;
         }
@@ -210,6 +213,12 @@ internal sealed class MacroSessionController : ObservableObject, IMacroSession
                 return;
             }
 
+            if (!IsExecutionSurfaceAvailable(attachment))
+            {
+                SetError("A superfície da sessão não está visível.");
+                return;
+            }
+
             SurfaceGeometry surface = _capture.GetGeometry(attachment.GameWindow);
             if (!surface.HasArea)
             {
@@ -236,13 +245,15 @@ internal sealed class MacroSessionController : ObservableObject, IMacroSession
                 clickSettings);
             CaptureSetupState();
             SetState(MacroSessionState.Configuring);
-            SetStatus("Ajuste a bolinha e pressione Play.");
+            SetStatus(_mode == MacroMode.Clicks
+                ? "Ajuste a bolinha e pressione Play."
+                : "Ajuste a moldura e pressione Play.");
             _setupTimer.Start();
         }
         catch (Exception exception) when (
             exception is InvalidOperationException or IOException or System.ComponentModel.Win32Exception)
         {
-            SetError($"Não foi possível abrir a bolinha: {exception.Message}");
+            SetError($"Não foi possível abrir a configuração do macro: {exception.Message}");
         }
         finally
         {
@@ -411,6 +422,12 @@ internal sealed class MacroSessionController : ObservableObject, IMacroSession
             return;
         }
 
+        if (!IsExecutionSurfaceAvailable(attachment))
+        {
+            Stop();
+            return;
+        }
+
         try
         {
             SurfaceGeometry surface = _capture.GetGeometry(attachment.GameWindow);
@@ -449,6 +466,13 @@ internal sealed class MacroSessionController : ObservableObject, IMacroSession
     {
         if (_state != MacroSessionState.Configuring)
         {
+            return;
+        }
+
+        GameWindowAttachment? attachment = _session.Attachment;
+        if (!IsExecutionSurfaceAvailable(attachment))
+        {
+            SetError("A sessão não está visível para executar o macro.");
             return;
         }
 
@@ -495,12 +519,6 @@ internal sealed class MacroSessionController : ObservableObject, IMacroSession
 
     private async Task RunClickLoopAsync(CancellationToken cancellationToken)
     {
-        if (!_frame.HasArea)
-        {
-            throw new InvalidOperationException("A área do macro não está válida.");
-        }
-
-        MacroPoint target = _target;
         int performed = 0;
         while (!cancellationToken.IsCancellationRequested && _session.IsRunning)
         {
@@ -515,7 +533,28 @@ internal sealed class MacroSessionController : ObservableObject, IMacroSession
                 throw new InvalidOperationException("A sessão não possui uma superfície anexada.");
             }
 
+            if (!IsExecutionSurfaceAvailable(attachment))
+            {
+                RequestStopFromWorker();
+                return;
+            }
+
             SurfaceGeometry geometry = _capture.GetGeometry(attachment.GameWindow);
+            if (!geometry.HasArea)
+            {
+                RequestStopFromWorker();
+                return;
+            }
+
+            SurfaceRegion frame = ToRegion(_preferences, geometry);
+            if (!frame.HasArea)
+            {
+                throw new InvalidOperationException("A área do macro não é válida.");
+            }
+
+            MacroPoint target = new(
+                frame.X + frame.Width / 2.0,
+                frame.Y + frame.Height / 2.0);
             var visualResult = new MacroScanResult(
                 Ok: true,
                 Found: true,
@@ -538,6 +577,12 @@ internal sealed class MacroSessionController : ObservableObject, IMacroSession
                 Error: null,
                 Confidence: 1);
             Publish(geometry, visualResult);
+
+            if (!IsExecutionSurfaceAvailable(attachment))
+            {
+                RequestStopFromWorker();
+                return;
+            }
 
             DirectInputResult input = _input.Click(_session, target, cancellationToken);
             if (!input.Succeeded)
@@ -587,6 +632,12 @@ internal sealed class MacroSessionController : ObservableObject, IMacroSession
                     throw new InvalidOperationException("A sessão não possui uma superfície anexada.");
                 }
 
+                if (!IsExecutionSurfaceAvailable(attachment))
+                {
+                    RequestStopFromWorker();
+                    return;
+                }
+
                 CapturedSurface surface;
                 try
                 {
@@ -602,7 +653,14 @@ internal sealed class MacroSessionController : ObservableObject, IMacroSession
                     continue;
                 }
 
-                if (!_frame.HasArea)
+                if (!IsExecutionSurfaceAvailable(attachment))
+                {
+                    RequestStopFromWorker();
+                    return;
+                }
+
+                SurfaceRegion frame = ToRegion(_preferences, surface.Geometry);
+                if (!frame.HasArea)
                 {
                     throw new InvalidOperationException("A área do macro não está válida.");
                 }
@@ -610,9 +668,15 @@ internal sealed class MacroSessionController : ObservableObject, IMacroSession
                 MacroScanResult localResult = await bridge.AnalyzeAsync(
                     surface.JpegBytes,
                     _mode,
-                    _frame,
+                    frame,
                     cancellationToken).ConfigureAwait(false);
-                MacroScanResult result = localResult.Offset(_frame.X, _frame.Y);
+                if (!IsExecutionSurfaceAvailable(attachment))
+                {
+                    RequestStopFromWorker();
+                    return;
+                }
+
+                MacroScanResult result = localResult.Offset(frame.X, frame.Y);
                 Publish(surface.Geometry, result);
 
                 if (!result.Ok)
@@ -634,6 +698,12 @@ internal sealed class MacroSessionController : ObservableObject, IMacroSession
                         awaitingSignature is null &&
                         now >= nextActionAt)
                     {
+                        if (!IsExecutionSurfaceAvailable(attachment))
+                        {
+                            RequestStopFromWorker();
+                            return;
+                        }
+
                         DirectInputResult input = _input.ExecuteMove(_session, move, cancellationToken);
                         if (!input.Succeeded)
                         {
@@ -647,6 +717,12 @@ internal sealed class MacroSessionController : ObservableObject, IMacroSession
                 }
                 else if (result.Action is { } action && now >= nextActionAt)
                 {
+                    if (!IsExecutionSurfaceAvailable(attachment))
+                    {
+                        RequestStopFromWorker();
+                        return;
+                    }
+
                     DirectInputResult input = _input.ExecuteAction(_session, action, cancellationToken);
                     if (!input.Succeeded)
                     {
@@ -719,6 +795,12 @@ internal sealed class MacroSessionController : ObservableObject, IMacroSession
                 return;
             }
 
+            if (!IsOwnerAvailable())
+            {
+                _overlay.HideOverlay();
+                return;
+            }
+
             SetState(MacroSessionState.Running);
             SetStatus(result.Status);
             try
@@ -776,6 +858,43 @@ internal sealed class MacroSessionController : ObservableObject, IMacroSession
 
         _ = _dispatcher.InvokeAsync(() => StatusText = status);
     }
+
+    private bool IsExecutionSurfaceAvailable(GameWindowAttachment? attachment)
+    {
+        if (_disposed || attachment is null || !IsOwnerAvailable())
+        {
+            return false;
+        }
+
+        nint gameWindow = attachment.GameWindow;
+        return NativeWindowMethods.IsWindowHandle(gameWindow) &&
+               NativeWindowMethods.IsWindowVisible(gameWindow) &&
+               !NativeWindowMethods.IsWindowMinimized(gameWindow);
+    }
+
+    private bool IsOwnerAvailable()
+    {
+        if (_dispatcher.CheckAccess())
+        {
+            return _uiOwner.IsVisible && _uiOwner.WindowState != WindowState.Minimized;
+        }
+
+        try
+        {
+            return _dispatcher.Invoke(
+                () => _uiOwner.IsVisible && _uiOwner.WindowState != WindowState.Minimized);
+        }
+        catch (InvalidOperationException)
+        {
+            return false;
+        }
+        catch (TaskCanceledException)
+        {
+            return false;
+        }
+    }
+
+    private void RequestStopFromWorker() => CancelSafely(_cancellation);
 
     private static void CancelSafely(CancellationTokenSource? cancellation)
     {

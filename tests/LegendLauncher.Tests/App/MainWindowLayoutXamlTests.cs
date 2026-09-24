@@ -239,6 +239,39 @@ public sealed class MainWindowLayoutXamlTests
             StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void ProfileEditor_FloatsAsAModalAboveTheLauncherWithEscapeAndCancelDismissal()
+    {
+        XDocument document = LoadMainWindow();
+        Assert.Equal(
+            1,
+            document
+                .Descendants(Presentation + "TextBox")
+                .Count(element => element.Attribute(Xaml + "Name")?.Value == "ProfileNameInput"));
+
+        XElement profileNameInput = FindNamedElement(document, "TextBox", "ProfileNameInput");
+        XElement modal = profileNameInput
+            .Ancestors(Presentation + "Grid")
+            .First(ancestor => ancestor.Attribute("Panel.ZIndex")?.Value == "400");
+
+        Assert.Equal(
+            "{Binding IsProfileEditorVisible, Converter={StaticResource BooleanToVisibilityConverter}}",
+            modal.Attribute("Visibility")?.Value);
+        Assert.Contains(
+            modal.Descendants(Presentation + "KeyBinding"),
+            binding =>
+                binding.Attribute("Key")?.Value == "Escape" &&
+                binding.Attribute("Command")?.Value == "{Binding CancelProfileEditCommand}");
+        Assert.Contains(
+            modal.Descendants(Presentation + "Button"),
+            button => button.Attribute("Command")?.Value == "{Binding SaveProfileCommand}");
+        Assert.Contains(
+            modal.Descendants(Presentation + "Button"),
+            button => button.Attribute("Command")?.Value == "{Binding CancelProfileEditCommand}");
+        Assert.NotEmpty(modal.Descendants(Presentation + "PasswordBox"));
+        Assert.NotEmpty(modal.Descendants(Presentation + "CheckBox"));
+    }
+
     private static void AssertPinnedOutsideScroll(
         XDocument document,
         XElement scrollViewer,

@@ -150,6 +150,67 @@ public sealed class MacroAssistantContractTests
     }
 
     [Fact]
+    public void MacroAssistant_UsesLauncherThemedToggleAndKeepsTheAimCenteredInTheFrame()
+    {
+        string setup = File.ReadAllText(FindRepositoryFile(
+            "src",
+            "LegendLauncher.App",
+            "MacroAssistant",
+            "MacroSetupWindow.cs"));
+        string preferences = File.ReadAllText(FindRepositoryFile(
+            "src",
+            "LegendLauncher.App",
+            "MacroAssistant",
+            "ProfileMacroPreferences.cs"));
+
+        // The frame checkbox was replaced by a launcher-themed toggle.
+        Assert.DoesNotContain("new CheckBox", setup, StringComparison.Ordinal);
+        Assert.Contains("ToggleButton", setup, StringComparison.Ordinal);
+        Assert.Contains("CreateLargeFrameToggleTemplate", setup, StringComparison.Ordinal);
+
+        // Gems and Cosmo always show the frame; only Clicks shows the aim marker.
+        Assert.Contains("bool showAim = _mode == MacroMode.Clicks", setup, StringComparison.Ordinal);
+        Assert.Contains("if (!isClicks)", setup, StringComparison.Ordinal);
+        Assert.Contains("_largeFrameToggleRow.Visibility", setup, StringComparison.Ordinal);
+
+        // The aim follows the frame when it is dragged or resized.
+        Assert.Contains("RegionCenter", setup, StringComparison.Ordinal);
+        Assert.Contains("MoveRegionBy", setup, StringComparison.Ordinal);
+        Assert.Contains("_frameMoveThumb", setup, StringComparison.Ordinal);
+        Assert.Matches(@"0\.35,\s+true,", preferences);
+    }
+
+    [Fact]
+    public void MacroAssistant_StopsWhenTheLauncherOrTheGameSurfaceIsUnavailable()
+    {
+        string controller = File.ReadAllText(FindRepositoryFile(
+            "src",
+            "LegendLauncher.App",
+            "MacroAssistant",
+            "MacroSessionController.cs"));
+        string coordinator = File.ReadAllText(FindRepositoryFile(
+            "src",
+            "LegendLauncher.App",
+            "MacroAssistant",
+            "MacroAssistantCoordinator.cs"));
+        string nativeMethods = File.ReadAllText(FindRepositoryFile(
+            "src",
+            "LegendLauncher.App",
+            "GameHosting",
+            "NativeWindowMethods.cs"));
+
+        Assert.Contains("IsExecutionSurfaceAvailable", controller, StringComparison.Ordinal);
+        Assert.Contains("IsOwnerAvailable", controller, StringComparison.Ordinal);
+        Assert.Contains("NativeWindowMethods.IsWindowVisible", controller, StringComparison.Ordinal);
+        Assert.Contains("NativeWindowMethods.IsWindowMinimized", controller, StringComparison.Ordinal);
+        Assert.Contains("StopIfOwnerUnavailable", coordinator, StringComparison.Ordinal);
+        Assert.Contains("OwnerOnStateChanged", coordinator, StringComparison.Ordinal);
+        Assert.Contains("OwnerOnIsVisibleChanged", coordinator, StringComparison.Ordinal);
+        Assert.Contains("IsWindowVisible", nativeMethods, StringComparison.Ordinal);
+        Assert.Contains("IsWindowMinimized", nativeMethods, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void LauncherAndWorkspace_ExposeDragAvatarAndSelectedSessionRelogControls()
     {
         string main = File.ReadAllText(FindRepositoryFile(

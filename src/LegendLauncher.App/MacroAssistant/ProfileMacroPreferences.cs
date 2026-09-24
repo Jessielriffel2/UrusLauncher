@@ -20,7 +20,7 @@ internal sealed record MacroProfilePreferences(
             0.325,
             0.5,
             0.35,
-            false,
+            true,
             1.0,
             0,
             0.10);

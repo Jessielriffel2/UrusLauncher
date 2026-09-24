@@ -135,49 +135,6 @@
                                            VerticalAlignment="Center" />
                             </Grid>
                         </Button>
-                        <Grid Width="176" Height="52" Margin="16,0,0,0" VerticalAlignment="Center">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="42" />
-                                <ColumnDefinition Width="10" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <Border Width="40" Height="40" CornerRadius="20"
-                                    Background="#173C48" BorderBrush="{StaticResource AccentStrongBrush}" BorderThickness="1">
-                                <Grid>
-                                    <Image Source="{Binding SelectedProfileAvatarImage}" Stretch="UniformToFill">
-                                        <Image.Style>
-                                            <Style TargetType="Image">
-                                                <Setter Property="Visibility" Value="Collapsed" />
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding HasSelectedProfileAvatar}" Value="True">
-                                                        <Setter Property="Visibility" Value="Visible" />
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </Image.Style>
-                                    </Image>
-                                    <TextBlock Text="{Binding SelectedProfileInitial}" FontSize="16" FontWeight="Bold"
-                                               Foreground="{StaticResource AccentBrush}"
-                                               HorizontalAlignment="Center" VerticalAlignment="Center">
-                                        <TextBlock.Style>
-                                            <Style TargetType="TextBlock">
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding HasSelectedProfileAvatar}" Value="True">
-                                                        <Setter Property="Visibility" Value="Collapsed" />
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </TextBlock.Style>
-                                    </TextBlock>
-                                </Grid>
-                            </Border>
-                            <StackPanel Grid.Column="2" VerticalAlignment="Center">
-                                <TextBlock Text="{Binding SelectedProfileDisplayName}" FontSize="11" FontWeight="SemiBold"
-                                           TextTrimming="CharacterEllipsis" />
-                                <TextBlock Text="{loc:Localize Profiles_IdentityLabel}" FontSize="8.5" Foreground="{StaticResource TextMutedBrush}"
-                                           Margin="0,3,0,0" />
-                            </StackPanel>
-                        </Grid>
                         <Popup x:Name="FeatureCatalogPopup"
                                PlacementTarget="{Binding ElementName=FeatureCatalogButton}"
                                Placement="Bottom"
@@ -281,6 +238,7 @@
                                                                LineHeight="18"
                                                                Foreground="{StaticResource TextSecondaryBrush}"
                                                                TextWrapping="Wrap" />
+                                                               
                                                 </StackPanel>
                                             </Border>
                                             <TextBlock Margin="0,16,0,8"
@@ -288,11 +246,34 @@
                                                        FontSize="12"
                                                        FontWeight="SemiBold"
                                                        Foreground="{StaticResource AccentBrush}" />
-                                            <TextBlock Text="{Binding FeatureCatalogHistoryText}"
-                                                       FontSize="10.5"
-                                                       LineHeight="17"
-                                                       Foreground="{StaticResource TextSecondaryBrush}"
-                                                       TextWrapping="Wrap" />
+                                            <ItemsControl ItemsSource="{Binding FeatureCatalogReleases}">
+    <ItemsControl.ItemTemplate>
+        <DataTemplate>
+            <Border Padding="0,0,0,12" Margin="0,0,0,12" BorderBrush="#31566B" BorderThickness="0,0,0,1">
+                <StackPanel>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="54" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="{Binding VersionText}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" />
+                        <TextBlock Grid.Column="1" Text="{Binding Title}" FontSize="10.5" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap" />
+                    </Grid>
+                    <ItemsControl ItemsSource="{Binding Notes}" Margin="0,7,0,0">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding}" FontSize="10.5" LineHeight="17" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,1,0,0" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+        </DataTemplate>
+    </ItemsControl.ItemTemplate>
+</ItemsControl>
+                                                       
+
+                                                       
                                         </StackPanel>
                                     </ScrollViewer>
                                     <Button Grid.Row="4"
@@ -681,11 +662,7 @@
                                         <RowDefinition Height="14" />
                                         <RowDefinition Height="74" />
                                         <RowDefinition Height="17" />
-                                        <RowDefinition Height="Auto" />
-                                        <RowDefinition Height="15" />
-                                        <RowDefinition Height="18" />
-                                        <RowDefinition Height="17" />
-                                        <RowDefinition Height="38" />
+                                        <RowDefinition Height="*" />
                                     </Grid.RowDefinitions>
 
                                     <StackPanel>
@@ -733,7 +710,7 @@
                                 </Grid>
                             </Border>
 
-                            <Border Grid.Row="4" Grid.RowSpan="5"
+                            <Border Grid.Row="4"
                                     Background="#A4081728"
                                     BorderBrush="{StaticResource BorderBrush}"
                                     BorderThickness="1"
@@ -802,108 +779,7 @@
                                             Height="36" Margin="0,12,0,0" />
                                 </StackPanel>
                             </Border>
-
-                            <StackPanel Grid.Row="4"
-                                        Visibility="{Binding IsProfileEditorVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                <TextBlock Text="{loc:Localize Profiles_NameLabel}" Style="{StaticResource FieldLabelStyle}" />
-                                <Grid>
-                                    <TextBox x:Name="ProfileNameInput" Style="{StaticResource InputStyle}"
-                                             Text="{Binding ProfileLabel, UpdateSourceTrigger=PropertyChanged}"
-                                             AutomationProperties.Name="{loc:Localize Profiles_NameLabel}" />
-                                    <TextBlock Text="{loc:Localize Profiles_NamePlaceholder}" Foreground="{StaticResource TextMutedBrush}"
-                                               FontSize="12" Margin="14,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False">
-                                        <TextBlock.Style>
-                                            <Style TargetType="TextBlock">
-                                                <Setter Property="Visibility" Value="Collapsed" />
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding Text.Length, ElementName=ProfileNameInput}" Value="0">
-                                                        <Setter Property="Visibility" Value="Visible" />
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </TextBlock.Style>
-                                    </TextBlock>
-                                </Grid>
-
-                                <TextBlock Text="{loc:Localize Profiles_LoginLabel}" Style="{StaticResource FieldLabelStyle}" Margin="0,14,0,7" />
-                                <Grid>
-                                    <TextBox x:Name="LoginInput" Style="{StaticResource InputStyle}"
-                                             Text="{Binding LoginHint, UpdateSourceTrigger=PropertyChanged}"
-                                             AutomationProperties.Name="{loc:Localize Profiles_LoginLabel}" />
-                                    <TextBlock Text="{loc:Localize Profiles_LoginPlaceholder}" Foreground="{StaticResource TextMutedBrush}"
-                                               FontSize="12" Margin="14,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False">
-                                        <TextBlock.Style>
-                                            <Style TargetType="TextBlock">
-                                                <Setter Property="Visibility" Value="Collapsed" />
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding Text.Length, ElementName=LoginInput}" Value="0">
-                                                        <Setter Property="Visibility" Value="Visible" />
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </TextBlock.Style>
-                                    </TextBlock>
-                                </Grid>
-
-                                <TextBlock Text="{loc:Localize Profiles_PasswordLabel}" Style="{StaticResource FieldLabelStyle}" Margin="0,14,0,7" />
-                                <Grid>
-                                    <PasswordBox x:Name="PasswordInput" Style="{StaticResource PasswordInputStyle}"
-                                                 Padding="13,0,42,0" PasswordChanged="PasswordInput_OnPasswordChanged"
-                                                 AutomationProperties.Name="{loc:Localize Profiles_PasswordLabel}" />
-                                    <TextBlock x:Name="PasswordPlaceholder" Text="{Binding PasswordPlaceholderText}"
-                                               FontSize="12" Margin="14,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False">
-                                        <TextBlock.Style>
-                                            <Style TargetType="TextBlock">
-                                                <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding HasSavedCredential}" Value="True">
-                                                        <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </TextBlock.Style>
-                                    </TextBlock>
-                                    <TextBlock Text="&#xE890;" FontFamily="Segoe Fluent Icons" FontSize="15"
-                                               Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,14,0"
-                                               HorizontalAlignment="Right" VerticalAlignment="Center" IsHitTestVisible="False" />
-                                </Grid>
-                                <Grid Margin="0,14,0,0">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="8" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-                                    <Button Content="{loc:Localize Profiles_ChooseImage}"
-                                            Style="{StaticResource SecondaryButtonStyle}"
-                                            Click="ChooseProfileImageButton_OnClick"
-                                            ToolTip="{loc:Localize Profiles_ChooseImageTooltip}" />
-                                    <Button Grid.Column="2"
-                                            Content="{loc:Localize Profiles_RemoveImage}"
-                                            Style="{StaticResource SecondaryButtonStyle}"
-                                            Click="RemoveProfileImageButton_OnClick"
-                                            ToolTip="{loc:Localize Profiles_RemoveImageTooltip}" />
-                                </Grid>
-                            </StackPanel>
-
-                            <CheckBox Grid.Row="6" Content="{loc:Localize Credentials_RememberPassword}"
-                                      IsChecked="{Binding RememberPassword}" Style="{StaticResource ModernCheckBoxStyle}"
-                                      VerticalAlignment="Center"
-                                      Visibility="{Binding IsProfileEditorVisible, Converter={StaticResource BooleanToVisibilityConverter}}" />
-
-                            <Grid Grid.Row="8"
-                                  Visibility="{Binding IsProfileEditorVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="12" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <Button Content="{loc:Localize Profiles_Save}" Style="{StaticResource SecondaryButtonStyle}"
-                                        Command="{Binding SaveProfileCommand}" />
-                                <Button Grid.Column="2" Content="{loc:Localize Common_Cancel}" Style="{StaticResource SecondaryButtonStyle}"
-                                        Command="{Binding CancelProfileEditCommand}" />
-                            </Grid>
-
-                                </Grid>
+                        </Grid>
                             </ScrollViewer>
 
                             <Border Grid.Row="1"
@@ -979,6 +855,158 @@
                             Click="CloseButton_OnClick"
                             AutomationProperties.Name="{loc:Localize Window_Close}" />
                 </StackPanel>
+            </Grid>
+
+            <Grid Panel.ZIndex="400"
+                  Background="#E8020A14"
+                  KeyboardNavigation.TabNavigation="Cycle"
+                  AutomationProperties.Name="{loc:Localize Profiles_EditTitle}"
+                  Visibility="{Binding IsProfileEditorVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <Grid.InputBindings>
+                    <KeyBinding Key="Escape" Command="{Binding CancelProfileEditCommand}" />
+                </Grid.InputBindings>
+                <Border MaxWidth="520"
+                        Margin="36"
+                        Padding="30"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Background="#0A1928"
+                        BorderBrush="#3D6682"
+                        BorderThickness="1"
+                        CornerRadius="24"
+                        Focusable="True">
+                    <Border.Effect>
+                        <DropShadowEffect Color="#35E5D8"
+                                          BlurRadius="34"
+                                          ShadowDepth="0"
+                                          Opacity="0.20" />
+                    </Border.Effect>
+                    <StackPanel>
+                        <Grid Margin="0,0,0,6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{loc:Localize Profiles_EditTitle}"
+                                       FontFamily="Segoe UI Variable Display, Segoe UI"
+                                       FontSize="24"
+                                       FontWeight="SemiBold"
+                                       VerticalAlignment="Center" />
+                            <Button Grid.Column="1"
+                                    Width="34"
+                                    Height="34"
+                                    Padding="0"
+                                    Command="{Binding CancelProfileEditCommand}"
+                                    Content="&#xE8BB;"
+                                    FontFamily="Segoe Fluent Icons"
+                                    FontSize="13"
+                                    Style="{StaticResource SecondaryButtonStyle}"
+                                    ToolTip="{loc:Localize Window_Close}"
+                                    AutomationProperties.Name="{loc:Localize Window_Close}" />
+                        </Grid>
+
+                        <TextBlock Text="{loc:Localize Profiles_NameLabel}" Style="{StaticResource FieldLabelStyle}" Margin="0,14,0,7" />
+                        <Grid>
+                            <TextBox x:Name="ProfileNameInput" Style="{StaticResource InputStyle}"
+                                     Text="{Binding ProfileLabel, UpdateSourceTrigger=PropertyChanged}"
+                                     AutomationProperties.Name="{loc:Localize Profiles_NameLabel}" />
+                            <TextBlock Text="{loc:Localize Profiles_NamePlaceholder}" Foreground="{StaticResource TextMutedBrush}"
+                                       FontSize="12" Margin="14,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Text.Length, ElementName=ProfileNameInput}" Value="0">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Grid>
+
+                        <TextBlock Text="{loc:Localize Profiles_LoginLabel}" Style="{StaticResource FieldLabelStyle}" Margin="0,14,0,7" />
+                        <Grid>
+                            <TextBox x:Name="LoginInput" Style="{StaticResource InputStyle}"
+                                     Text="{Binding LoginHint, UpdateSourceTrigger=PropertyChanged}"
+                                     AutomationProperties.Name="{loc:Localize Profiles_LoginLabel}" />
+                            <TextBlock Text="{loc:Localize Profiles_LoginPlaceholder}" Foreground="{StaticResource TextMutedBrush}"
+                                       FontSize="12" Margin="14,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Text.Length, ElementName=LoginInput}" Value="0">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Grid>
+
+                        <TextBlock Text="{loc:Localize Profiles_PasswordLabel}" Style="{StaticResource FieldLabelStyle}" Margin="0,14,0,7" />
+                        <Grid>
+                            <PasswordBox x:Name="PasswordInput" Style="{StaticResource PasswordInputStyle}"
+                                         Padding="13,0,42,0" PasswordChanged="PasswordInput_OnPasswordChanged"
+                                         AutomationProperties.Name="{loc:Localize Profiles_PasswordLabel}" />
+                            <TextBlock x:Name="PasswordPlaceholder" Text="{Binding PasswordPlaceholderText}"
+                                       FontSize="12" Margin="14,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding HasSavedCredential}" Value="True">
+                                                <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            <TextBlock Text="&#xE890;" FontFamily="Segoe Fluent Icons" FontSize="15"
+                                       Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,14,0"
+                                       HorizontalAlignment="Right" VerticalAlignment="Center" IsHitTestVisible="False" />
+                        </Grid>
+
+                        <Grid Margin="0,14,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="8" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Button Content="{loc:Localize Profiles_ChooseImage}"
+                                    Style="{StaticResource SecondaryButtonStyle}"
+                                    Click="ChooseProfileImageButton_OnClick"
+                                    ToolTip="{loc:Localize Profiles_ChooseImageTooltip}" />
+                            <Button Grid.Column="2"
+                                    Content="{loc:Localize Profiles_RemoveImage}"
+                                    Style="{StaticResource SecondaryButtonStyle}"
+                                    Click="RemoveProfileImageButton_OnClick"
+                                    ToolTip="{loc:Localize Profiles_RemoveImageTooltip}" />
+                        </Grid>
+
+                        <CheckBox Content="{loc:Localize Credentials_RememberPassword}"
+                                  IsChecked="{Binding RememberPassword}"
+                                  Style="{StaticResource ModernCheckBoxStyle}"
+                                  Margin="0,16,0,0"
+                                  VerticalAlignment="Center" />
+
+                        <Grid Margin="0,20,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="12" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Button Content="{loc:Localize Profiles_Save}"
+                                    Style="{StaticResource PrimaryButtonStyle}"
+                                    Command="{Binding SaveProfileCommand}" />
+                            <Button Grid.Column="2"
+                                    Content="{loc:Localize Common_Cancel}"
+                                    Style="{StaticResource SecondaryButtonStyle}"
+                                    Command="{Binding CancelProfileEditCommand}" />
+                        </Grid>
+                    </StackPanel>
+                </Border>
             </Grid>
 
             <donation:DonationPromptView x:Name="DonationPromptOverlay"

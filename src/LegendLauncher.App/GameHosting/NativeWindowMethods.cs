@@ -120,6 +120,12 @@ internal static class NativeWindowMethods
     internal static bool IsWindowHandle(nint windowHandle) =>
         windowHandle != nint.Zero && IsWindow(windowHandle);
 
+    internal static bool IsWindowVisible(nint windowHandle) =>
+        windowHandle != nint.Zero && IsWindowVisibleNative(windowHandle);
+
+    internal static bool IsWindowMinimized(nint windowHandle) =>
+        windowHandle != nint.Zero && IsIconic(windowHandle);
+
     internal static uint GetWindowProcessId(nint windowHandle)
     {
         uint threadId = GetWindowThreadProcessId(windowHandle, out uint processId);
@@ -394,6 +400,14 @@ internal static class NativeWindowMethods
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool IsWindow(nint windowHandle);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool IsWindowVisibleNative(nint windowHandle);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool IsIconic(nint windowHandle);
 
     [DllImport("user32.dll", SetLastError = true)]
     private static extern uint GetWindowThreadProcessId(nint windowHandle, out uint processId);
