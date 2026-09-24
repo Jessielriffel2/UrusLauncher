@@ -10,16 +10,19 @@
     "pt-BR": [
       "Corrigido: a âncora de compatibilidade do GameHost agora é realmente invisível, sem título, borda, barra de tarefas ou janela extra sobre o Urus Launcher.",
       "O processo do GameHost continua separado para manter a compatibilidade com ferramentas de memória, mas não pode mais ser exibido como uma segunda janela do launcher.",
+      "Novo: o botão Novidades pulsa suavemente enquanto a release atual ainda não foi vista; abrir o modal marca o conteúdo como visto e remove o pulso.",
       "O launcher permanece como a única janela visível e continua responsável por encerrar as sessões filhas ao ser fechado."
     ],
     "en-US": [
       "Fixed: the GameHost compatibility anchor is now truly invisible, with no title bar, border, taskbar entry, or extra window over Urus Launcher.",
       "The GameHost process remains isolated for memory-tool compatibility, but it can no longer be shown as a second launcher window.",
+      "New: the What's New button pulses gently until the current release has been viewed; opening the modal marks it as seen and stops the pulse.",
       "The launcher remains the only visible window and continues to own and close child sessions when it exits."
     ],
     "es-ES": [
       "Corregido: el ancla de compatibilidad del GameHost ahora es realmente invisible, sin título, borde, barra de tareas ni ventana adicional sobre Urus Launcher.",
       "El proceso de GameHost sigue separado para mantener la compatibilidad con herramientas de memoria, pero ya no puede mostrarse como una segunda ventana del launcher.",
+      "Nuevo: el botón Novedades pulsa suavemente hasta que se vea la release actual; al abrir el modal, el contenido se marca como visto y el pulso desaparece.",
       "El launcher sigue siendo la única ventana visible y continúa cerrando las sesiones hijas cuando se sale."
     ]
   }

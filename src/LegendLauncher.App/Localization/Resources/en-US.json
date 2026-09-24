@@ -220,6 +220,7 @@
   "Macro_ToggleTooltip": "Start or stop the virtual mouse for all sessions",
   "FeatureCatalog_Button": "WHAT'S NEW",
   "FeatureCatalog_Title": "Features and releases",
+  "FeatureCatalog_UnreadBadge": "WHAT'S NEW",
   "FeatureCatalog_CloseTooltip": "Close catalog",
   "FeatureCatalog_CloseAutomation": "Close feature catalog",
   "FeatureCatalog_MacroTitle": "Macro Assistant",

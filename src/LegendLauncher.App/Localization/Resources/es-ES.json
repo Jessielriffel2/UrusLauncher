@@ -220,6 +220,7 @@
   "Macro_ToggleTooltip": "Iniciar o detener el ratón virtual de todas las sesiones",
   "FeatureCatalog_Button": "NOVEDADES",
   "FeatureCatalog_Title": "Recursos y releases",
+  "FeatureCatalog_UnreadBadge": "NOVEDADES",
   "FeatureCatalog_CloseTooltip": "Cerrar catálogo",
   "FeatureCatalog_CloseAutomation": "Cerrar catálogo de novedades",
   "FeatureCatalog_MacroTitle": "Macro Assistant",

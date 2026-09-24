@@ -9,7 +9,8 @@ internal sealed record LauncherSettingsSnapshot(
     GameLayoutMode LayoutMode,
     Guid? LastSelectedProfileId,
     string LanguageCode,
-    DateTimeOffset? LastDonationPromptUtc)
+    DateTimeOffset? LastDonationPromptUtc,
+    string? LastSeenFeatureCatalogVersion)
 {
     public static LauncherSettingsSnapshot Default { get; } =
         new(
@@ -17,6 +18,7 @@ internal sealed record LauncherSettingsSnapshot(
             GameLayoutMode.GridFour,
             null,
             LocalizationService.DefaultLanguageCode,
+            null,
             null);
 }
 
@@ -61,7 +63,8 @@ internal sealed class LauncherSettingsService
             layout,
             document.LastSelectedProfileId,
             LocalizationService.NormalizeLanguageCode(document.LanguageCode),
-            document.LastDonationPromptUtc);
+            document.LastDonationPromptUtc,
+            document.LastSeenFeatureCatalogVersion);
     }
 
     public Task SaveLastSelectedProfileAsync(
@@ -103,6 +106,16 @@ internal sealed class LauncherSettingsService
             },
             cancellationToken);
 
+    public Task SaveFeatureCatalogSeenVersionAsync(
+        string version,
+        CancellationToken cancellationToken = default) =>
+        UpdateAsync(
+            current => current with
+            {
+                LastSeenFeatureCatalogVersion = version,
+            },
+            cancellationToken);
+
     private async Task UpdateAsync(
         Func<LauncherSettingsDocument, LauncherSettingsDocument> updater,
         CancellationToken cancellationToken)
@@ -134,7 +147,8 @@ internal sealed class LauncherSettingsService
         int LayoutMode,
         Guid? LastSelectedProfileId,
         string? LanguageCode,
-        DateTimeOffset? LastDonationPromptUtc)
+        DateTimeOffset? LastDonationPromptUtc,
+        string? LastSeenFeatureCatalogVersion)
     {
         public static LauncherSettingsDocument Default { get; } =
             new(
@@ -142,6 +156,7 @@ internal sealed class LauncherSettingsService
                 (int)GameLayoutMode.GridFour,
                 null,
                 LocalizationService.DefaultLanguageCode,
+                null,
                 null);
     }
 }

@@ -282,12 +282,17 @@ internal sealed partial class MainWindowViewModel
     private void SetUpdateState(LauncherUpdateState state)
     {
         _updateState = state;
-        if (state != LauncherUpdateState.ReadyToInstall)
+        if (state == LauncherUpdateState.ReadyToInstall)
+        {
+            _featureCatalogUpdateAcknowledged = false;
+        }
+        else
         {
             IsUpdateNotesOpen = false;
         }
 
         RefreshUpdateProperties();
+        OnPropertyChanged(nameof(IsFeatureCatalogUnread));
     }
 
     private void RefreshUpdateProperties()

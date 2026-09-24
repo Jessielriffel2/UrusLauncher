@@ -8,6 +8,7 @@ As mudanças relevantes do Urus Launcher são registradas aqui. As versões púb
 
 - A âncora de compatibilidade do GameHost agora é realmente invisível: não cria mais uma janela “Urus GameHost”, título, borda ou entrada na barra de tarefas.
 - O processo separado continua disponível para ferramentas de memória, mas o launcher permanece como a única janela visível e controla o encerramento das sessões filhas.
+- O botão **Novidades** pulsa suavemente enquanto a release atual não foi vista; ao abrir o modal, o conteúdo é marcado como visto e o pulso desaparece.
 
 ## 1.1.10 — 24/09/2026
 

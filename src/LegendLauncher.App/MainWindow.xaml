@@ -93,12 +93,47 @@
                                 Height="38"
                                 Margin="10,0,0,0"
                                 Padding="10,0"
-                                Content="{loc:Localize FeatureCatalog_Button}"
                                 Command="{Binding OpenFeatureCatalogCommand}"
-                                Style="{StaticResource SecondaryButtonStyle}"
                                 ToolTip="{loc:Localize FeatureCatalog_Title}"
                                 AutomationProperties.Name="{loc:Localize FeatureCatalog_Title}"
-                                shell:WindowChrome.IsHitTestVisibleInChrome="True" />
+                                shell:WindowChrome.IsHitTestVisibleInChrome="True">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource SecondaryButtonStyle}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsFeatureCatalogUnread}" Value="True">
+                                            <DataTrigger.EnterActions>
+                                                <BeginStoryboard x:Name="FeatureCatalogPulse">
+                                                    <Storyboard AutoReverse="True" RepeatBehavior="Forever">
+                                                        <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                                         From="0.62"
+                                                                         To="1"
+                                                                         Duration="0:0:1.1" />
+                                                    </Storyboard>
+                                                </BeginStoryboard>
+                                            </DataTrigger.EnterActions>
+                                            <DataTrigger.ExitActions>
+                                                <StopStoryboard BeginStoryboardName="FeatureCatalogPulse" />
+                                            </DataTrigger.ExitActions>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <Ellipse Width="7"
+                                         Height="7"
+                                         Margin="0,0,7,0"
+                                         Fill="#8DE8D9"
+                                         VerticalAlignment="Center"
+                                         Visibility="{Binding IsFeatureCatalogUnread, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                <TextBlock Grid.Column="1"
+                                           Text="{loc:Localize FeatureCatalog_Button}"
+                                           VerticalAlignment="Center" />
+                            </Grid>
+                        </Button>
                         <Popup x:Name="FeatureCatalogPopup"
                                PlacementTarget="{Binding ElementName=FeatureCatalogButton}"
                                Placement="Bottom"
@@ -140,10 +175,30 @@
                                             <ColumnDefinition Width="Auto" />
                                         </Grid.ColumnDefinitions>
                                         <StackPanel>
-                                            <TextBlock Text="{loc:Localize FeatureCatalog_Title}"
-                                                       FontSize="17"
-                                                       FontWeight="SemiBold"
-                                                       Foreground="{StaticResource TextPrimaryBrush}" />
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="{loc:Localize FeatureCatalog_Title}"
+                                                           FontSize="17"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="{StaticResource TextPrimaryBrush}" />
+                                                <Border Margin="9,1,0,0"
+                                                        Padding="7,2"
+                                                        Background="#1B4A4A"
+                                                        BorderBrush="#5BC8BC"
+                                                        BorderThickness="1"
+                                                        CornerRadius="7"
+                                                        Visibility="{Binding IsFeatureCatalogUnread, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                    <Border.Effect>
+                                                        <DropShadowEffect Color="#8DE8D9"
+                                                                          BlurRadius="10"
+                                                                          ShadowDepth="0"
+                                                                          Opacity="0.85" />
+                                                    </Border.Effect>
+                                                    <TextBlock Text="{Binding FeatureCatalogUnreadBadgeText}"
+                                                               FontSize="8"
+                                                               FontWeight="Bold"
+                                                               Foreground="#B9FFF3" />
+                                                </Border>
+                                            </StackPanel>
                                             <TextBlock Margin="0,4,0,0"
                                                        Text="{Binding FeatureCatalogCurrentVersionText}"
                                                        FontSize="10"

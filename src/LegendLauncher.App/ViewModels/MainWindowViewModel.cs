@@ -553,6 +553,7 @@ internal sealed partial class MainWindowViewModel : ObservableObject, IDisposabl
             SetStatusMessage("Settings_LoadFailed");
         }
 
+        ApplyFeatureCatalogSeenVersion(settings.LastSeenFeatureCatalogVersion);
         BeginUpdateCheck();
         await EvaluateDonationPromptOnOpeningAsync(settings).ConfigureAwait(true);
 

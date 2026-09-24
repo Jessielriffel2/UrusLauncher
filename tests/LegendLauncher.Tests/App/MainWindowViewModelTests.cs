@@ -2,11 +2,51 @@ using LegendLauncher.App.Services;
 using LegendLauncher.App.ViewModels;
 using LegendLauncher.Core.Models;
 using LegendLauncher.Providers.Oas;
+using LegendLauncher.Tests.Infrastructure;
 
 namespace LegendLauncher.Tests.App;
 
 public sealed class MainWindowViewModelTests
 {
+    [Fact]
+    public async Task FeatureCatalogPulseStopsAfterOpeningAndPersistsSeenVersion()
+    {
+        using var directory = new TemporaryDirectory();
+        string settingsPath = directory.Combine("settings.json");
+        var settings = new LauncherSettingsService(settingsPath);
+        var directoryStub = new StubServerDirectory((_, _, _) =>
+            Task.FromResult(AppTestData.Catalog([])));
+        using MainWindowViewModel viewModel = CreateViewModel(
+            directoryStub,
+            new InMemoryProfileStore(),
+            new InMemoryCredentialVault(),
+            settingsService: settings,
+            currentVersion: new Version(1, 1, 11, 0));
+
+        await viewModel.InitializeAsync();
+        Assert.True(viewModel.IsFeatureCatalogUnread);
+
+        viewModel.OpenFeatureCatalogCommand.Execute(null);
+
+        Assert.True(viewModel.IsFeatureCatalogOpen);
+        Assert.False(viewModel.IsFeatureCatalogUnread);
+        await WaitUntilAsync(() =>
+            new LauncherSettingsService(settingsPath)
+                .LoadAsync()
+                .GetAwaiter()
+                .GetResult()
+                .LastSeenFeatureCatalogVersion == "1.1.11");
+
+        using MainWindowViewModel reopened = CreateViewModel(
+            directoryStub,
+            new InMemoryProfileStore(),
+            new InMemoryCredentialVault(),
+            settingsService: settings,
+            currentVersion: new Version(1, 1, 11, 0));
+        await reopened.InitializeAsync();
+        Assert.False(reopened.IsFeatureCatalogUnread);
+    }
+
     [Fact]
     public async Task SelectingAnotherProfileOnSamePlatformReloadsItsProviderUserId()
     {
@@ -589,7 +629,9 @@ public sealed class MainWindowViewModelTests
         InMemoryProfileStore profiles,
         InMemoryCredentialVault vault,
         StubAuthenticationService? authentication = null,
-        Action<int>? terminateUnadoptedProcess = null)
+        Action<int>? terminateUnadoptedProcess = null,
+        LauncherSettingsService? settingsService = null,
+        Version? currentVersion = null)
     {
         var profileStorage = new ProfileStorageCoordinator(profiles, vault);
         authentication ??= new StubAuthenticationService((_, _) =>
@@ -608,7 +650,9 @@ public sealed class MainWindowViewModelTests
             AppTestData.UsableRuntime(),
             OasPlatformCatalog.All,
             new FixedTimeProvider(AppTestData.Now),
-            terminateUnadoptedProcess: terminateUnadoptedProcess);
+            settingsService: settingsService,
+            terminateUnadoptedProcess: terminateUnadoptedProcess,
+            currentVersion: currentVersion);
     }
 
     private static StubAuthenticationService SuccessfulAuthentication() =>

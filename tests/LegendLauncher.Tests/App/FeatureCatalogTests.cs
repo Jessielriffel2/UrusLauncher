@@ -47,6 +47,9 @@ public sealed class FeatureCatalogTests
 
         Assert.Equal("{Binding OpenFeatureCatalogCommand}", button.Attribute("Command")?.Value);
         Assert.Equal("{Binding IsFeatureCatalogOpen, Mode=TwoWay}", popup.Attribute("IsOpen")?.Value);
+        Assert.Contains("IsFeatureCatalogUnread", button.ToString(), StringComparison.Ordinal);
+        Assert.Contains("FeatureCatalogPulse", button.ToString(), StringComparison.Ordinal);
+        Assert.Contains("FeatureCatalogUnreadBadgeText", document.ToString(), StringComparison.Ordinal);
         Assert.Contains(popup.Descendants(presentation + "KeyBinding"), element =>
             element.Attribute("Key")?.Value == "Escape" &&
             element.Attribute("Command")?.Value == "{Binding CloseFeatureCatalogCommand}");

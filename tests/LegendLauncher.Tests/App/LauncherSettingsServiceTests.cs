@@ -19,6 +19,7 @@ public sealed class LauncherSettingsServiceTests
         Assert.Null(settings.LastSelectedProfileId);
         Assert.Equal(LocalizationService.DefaultLanguageCode, settings.LanguageCode);
         Assert.Null(settings.LastDonationPromptUtc);
+        Assert.Null(settings.LastSeenFeatureCatalogVersion);
     }
 
     [Fact]
@@ -41,6 +42,7 @@ public sealed class LauncherSettingsServiceTests
         await service.SaveGamePreferencesAsync(false, GameLayoutMode.SplitTwo);
         await service.SaveLanguageAsync("es-MX");
         await service.SaveDonationPromptShownAsync(donationShownAt);
+        await service.SaveFeatureCatalogSeenVersionAsync("1.1.11");
 
         var reloaded = new LauncherSettingsService(path);
         LauncherSettingsSnapshot settings = await reloaded.LoadAsync();
@@ -49,6 +51,7 @@ public sealed class LauncherSettingsServiceTests
         Assert.Equal(profileId, settings.LastSelectedProfileId);
         Assert.Equal(LocalizationService.SpanishLanguageCode, settings.LanguageCode);
         Assert.Equal(donationShownAt.ToUniversalTime(), settings.LastDonationPromptUtc);
+        Assert.Equal("1.1.11", settings.LastSeenFeatureCatalogVersion);
     }
 
     [Fact]
@@ -93,6 +96,7 @@ public sealed class LauncherSettingsServiceTests
         Assert.Equal(profileId, settings.LastSelectedProfileId);
         Assert.Equal(LocalizationService.DefaultLanguageCode, settings.LanguageCode);
         Assert.Null(settings.LastDonationPromptUtc);
+        Assert.Null(settings.LastSeenFeatureCatalogVersion);
     }
 
     [Theory]
