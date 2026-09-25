@@ -40,6 +40,7 @@
   "Profiles_LoginLabel": "E-mail ou login",
   "Profiles_LoginPlaceholder": "Digite seu e-mail ou login",
   "Profiles_PasswordLabel": "Senha",
+  "Profiles_RevealPassword": "Mostrar ou ocultar a senha",
   "Credentials_RememberPassword": "Manter/salvar senha no Cofre do Windows",
   "Profiles_Save": "Salvar perfil",
   "Common_Cancel": "Cancelar",

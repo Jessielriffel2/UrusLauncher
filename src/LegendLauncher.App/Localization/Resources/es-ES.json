@@ -40,6 +40,7 @@
   "Profiles_LoginLabel": "Correo electrónico o usuario",
   "Profiles_LoginPlaceholder": "Escribe tu correo electrónico o usuario",
   "Profiles_PasswordLabel": "Contraseña",
+  "Profiles_RevealPassword": "Mostrar u ocultar la contraseña",
   "Credentials_RememberPassword": "Mantener/guardar la contraseña en el Administrador de credenciales de Windows",
   "Profiles_Save": "Guardar perfil",
   "Common_Cancel": "Cancelar",

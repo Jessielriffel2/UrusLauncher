@@ -211,6 +211,21 @@ public sealed class MacroAssistantContractTests
     }
 
     [Fact]
+    public void NativeWindowMethods_DeclareTheRealUser32EntryPoints()
+    {
+        string nativeMethods = File.ReadAllText(FindRepositoryFile(
+            "src",
+            "LegendLauncher.App",
+            "GameHosting",
+            "NativeWindowMethods.cs"));
+
+        // The managed names are suffixed to avoid clashing with the wrappers, so the
+        // native entry points must be declared explicitly or user32.dll cannot resolve them.
+        Assert.Contains("EntryPoint = \"IsWindowVisible\"", nativeMethods, StringComparison.Ordinal);
+        Assert.Contains("EntryPoint = \"IsIconic\"", nativeMethods, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void LauncherAndWorkspace_ExposeDragAvatarAndSelectedSessionRelogControls()
     {
         string main = File.ReadAllText(FindRepositoryFile(

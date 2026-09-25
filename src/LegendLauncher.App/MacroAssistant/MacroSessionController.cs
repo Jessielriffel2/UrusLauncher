@@ -141,9 +141,26 @@ internal sealed class MacroSessionController : ObservableObject, IMacroSession
     public void Start()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        if (_runTask is not null || _openingSetup || !_session.IsRunning ||
-            !IsOwnerAvailable())
+        if (_runTask is not null)
         {
+            SetError("O macro já está em execução.");
+            return;
+        }
+
+        if (_openingSetup)
+        {
+            return;
+        }
+
+        if (!_session.IsRunning)
+        {
+            SetError("A sessão do jogo não está mais em execução.");
+            return;
+        }
+
+        if (!IsOwnerAvailable())
+        {
+            SetError("O launcher está minimizado ou oculto; o macro não pode iniciar.");
             return;
         }
 
@@ -254,6 +271,12 @@ internal sealed class MacroSessionController : ObservableObject, IMacroSession
             exception is InvalidOperationException or IOException or System.ComponentModel.Win32Exception)
         {
             SetError($"Não foi possível abrir a configuração do macro: {exception.Message}");
+        }
+        catch (Exception exception)
+        {
+            // Unexpected failures must be visible in the workspace instead of leaving the
+            // macro button without any response.
+            SetError($"Falha inesperada ao abrir o macro: {exception.Message}");
         }
         finally
         {

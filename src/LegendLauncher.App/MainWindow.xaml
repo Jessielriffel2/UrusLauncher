@@ -390,6 +390,7 @@
                                 </Grid>
 
                                 <ListBox x:Name="ProfileList" Grid.Row="2" ItemsSource="{Binding FilteredProfiles}" SelectedItem="{Binding SelectedProfile}"
+                                         SelectionChanged="ProfileList_OnSelectionChanged"
                                          ItemContainerStyle="{StaticResource ProfileListItemStyle}"
                                          Background="Transparent" BorderThickness="0"
                                          ScrollViewer.HorizontalScrollBarVisibility="Disabled"
@@ -948,8 +949,14 @@
                         <TextBlock Text="{loc:Localize Profiles_PasswordLabel}" Style="{StaticResource FieldLabelStyle}" Margin="0,14,0,7" />
                         <Grid>
                             <PasswordBox x:Name="PasswordInput" Style="{StaticResource PasswordInputStyle}"
-                                         Padding="13,0,42,0" PasswordChanged="PasswordInput_OnPasswordChanged"
+                                         Padding="13,0,46,0" PasswordChanged="PasswordInput_OnPasswordChanged"
                                          AutomationProperties.Name="{loc:Localize Profiles_PasswordLabel}" />
+                            <TextBox x:Name="PasswordRevealInput"
+                                     Style="{StaticResource InputStyle}"
+                                     Padding="13,0,46,0"
+                                     IsReadOnly="True"
+                                     Visibility="Collapsed"
+                                     AutomationProperties.Name="{loc:Localize Profiles_RevealPassword}" />
                             <TextBlock x:Name="PasswordPlaceholder" Text="{Binding PasswordPlaceholderText}"
                                        FontSize="12" Margin="14,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False">
                                 <TextBlock.Style>
@@ -963,9 +970,35 @@
                                     </Style>
                                 </TextBlock.Style>
                             </TextBlock>
-                            <TextBlock Text="&#xE890;" FontFamily="Segoe Fluent Icons" FontSize="15"
-                                       Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,14,0"
-                                       HorizontalAlignment="Right" VerticalAlignment="Center" IsHitTestVisible="False" />
+                            <ToggleButton x:Name="PasswordRevealToggle"
+                                          Width="34"
+                                          Height="34"
+                                          Margin="0,0,6,0"
+                                          Padding="0"
+                                          HorizontalAlignment="Right"
+                                          VerticalAlignment="Center"
+                                          Background="Transparent"
+                                          BorderThickness="0"
+                                          Foreground="{StaticResource TextSecondaryBrush}"
+                                          Content="&#xE890;"
+                                          FontFamily="Segoe Fluent Icons"
+                                          FontSize="15"
+                                          Cursor="Hand"
+                                          Checked="PasswordRevealToggle_OnChecked"
+                                          Unchecked="PasswordRevealToggle_OnUnchecked"
+                                          ToolTip="{loc:Localize Profiles_RevealPassword}"
+                                          AutomationProperties.Name="{loc:Localize Profiles_RevealPassword}">
+                                <ToggleButton.Style>
+                                    <Style TargetType="ToggleButton">
+                                        <Setter Property="Cursor" Value="Hand" />
+                                        <Style.Triggers>
+                                            <Trigger Property="IsChecked" Value="True">
+                                                <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </ToggleButton.Style>
+                            </ToggleButton>
                         </Grid>
 
                         <Grid Margin="0,14,0,0">

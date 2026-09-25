@@ -97,6 +97,21 @@ public partial class MainWindow : Window
         _viewModel.PendingPassword = PasswordInput.Password;
     }
 
+    private void ProfileList_OnSelectionChanged(object sender, SelectionChangedEventArgs eventArgs)
+    {
+        if (eventArgs.AddedItems.Count > 0 ||
+            _viewModel.SelectedProfile is not { } current ||
+            ReferenceEquals(ProfileList.SelectedItem, current))
+        {
+            return;
+        }
+
+        // Rebuilding the profile list (catalog reload, avatar change, session close) can
+        // clear the visual selection. Keeping the account selected avoids leaving the
+        // launcher without a profile and with the play action disabled.
+        ProfileList.SelectedItem = current;
+    }
+
     private void ComboBoxSelector_OnPreviewMouseLeftButtonDown(
         object sender,
         MouseButtonEventArgs eventArgs)
@@ -305,10 +320,30 @@ public partial class MainWindow : Window
     {
         if ((eventArgs.PropertyName is nameof(MainWindowViewModel.SelectedProfile) or nameof(MainWindowViewModel.PendingPassword)) &&
             string.IsNullOrEmpty(_viewModel.PendingPassword) &&
-            PasswordInput.Password.Length > 0)
+            (PasswordInput.Password.Length > 0 || PasswordRevealInput.Text.Length > 0))
         {
             PasswordInput.Clear();
+            PasswordRevealInput.Clear();
         }
+    }
+
+    private void PasswordRevealToggle_OnChecked(object sender, RoutedEventArgs eventArgs)
+    {
+        PasswordRevealInput.Text = PasswordInput.Password;
+        PasswordRevealInput.Visibility = Visibility.Visible;
+        PasswordInput.Visibility = Visibility.Collapsed;
+        PasswordPlaceholder.Visibility = Visibility.Collapsed;
+        PasswordRevealInput.Focus();
+    }
+
+    private void PasswordRevealToggle_OnUnchecked(object sender, RoutedEventArgs eventArgs)
+    {
+        PasswordRevealInput.Visibility = Visibility.Collapsed;
+        PasswordInput.Visibility = Visibility.Visible;
+        PasswordPlaceholder.Visibility = PasswordInput.Password.Length == 0
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+        PasswordInput.Focus();
     }
 
     private void OnClosing(object? sender, CancelEventArgs eventArgs)

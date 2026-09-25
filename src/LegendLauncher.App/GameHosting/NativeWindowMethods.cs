@@ -401,11 +401,11 @@ internal static class NativeWindowMethods
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool IsWindow(nint windowHandle);
 
-    [DllImport("user32.dll")]
+    [DllImport("user32.dll", EntryPoint = "IsWindowVisible")]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool IsWindowVisibleNative(nint windowHandle);
 
-    [DllImport("user32.dll")]
+    [DllImport("user32.dll", EntryPoint = "IsIconic")]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool IsIconic(nint windowHandle);
 

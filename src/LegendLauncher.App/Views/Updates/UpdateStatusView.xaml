@@ -10,7 +10,7 @@
                BasedOn="{StaticResource SecondaryButtonStyle}">
             <Setter Property="Height" Value="22" />
             <Setter Property="MinWidth" Value="0" />
-            <Setter Property="Padding" Value="7,1" />
+            <Setter Property="Padding" Value="11,1" />
             <Setter Property="FontSize" Value="8" />
             <Setter Property="FontWeight" Value="SemiBold" />
         </Style>
@@ -74,7 +74,8 @@
                                 Command="{Binding InstallUpdateCommand}"
                                 ToolTip="{loc:Localize Update_ActionTooltip}"
                                 Visibility="{Binding IsUpdateReadyToInstall, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                        <Button Style="{StaticResource UpdateCompactButtonStyle}"
+                        <Button Margin="8,0,0,0"
+                                Style="{StaticResource UpdateCompactButtonStyle}"
                                 Content="{Binding UpdateCheckActionText}"
                                 Command="{Binding CheckForUpdatesCommand}"
                                 Visibility="{Binding IsUpdateCheckActionVisible, Converter={StaticResource BooleanToVisibilityConverter}}" />

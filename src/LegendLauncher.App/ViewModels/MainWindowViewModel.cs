@@ -650,9 +650,22 @@ internal sealed partial class MainWindowViewModel : ObservableObject, IDisposabl
         if (!Workspace.HasSessions)
         {
             IsWorkspaceVisible = false;
+            RestoreProfileSelection(session);
         }
 
         NotifyGameReadiness();
+    }
+
+    private void RestoreProfileSelection(GameSessionViewModel session)
+    {
+        if (SelectedProfile is not null)
+        {
+            return;
+        }
+
+        ProfileItemViewModel? removedProfile = Profiles
+            .FirstOrDefault(profile => profile.Model.Id == session.ProfileId);
+        SelectedProfile = removedProfile ?? Profiles.FirstOrDefault();
     }
 
     private static Brush CreateBrush(byte red, byte green, byte blue)
