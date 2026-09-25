@@ -575,9 +575,18 @@ internal sealed class MacroSessionController : ObservableObject, IMacroSession
                 throw new InvalidOperationException("A área do macro não é válida.");
             }
 
+            // The placed aim is the reference: the macro always clicks exactly where the
+            // crosshair was left, even when the analysis area is centered on it.
             MacroPoint target = new(
-                frame.X + frame.Width / 2.0,
-                frame.Y + frame.Height / 2.0);
+                Math.Clamp(
+                    _preferences.TargetX * geometry.Width,
+                    0,
+                    Math.Max(0, geometry.Width - 1)),
+                Math.Clamp(
+                    _preferences.TargetY * geometry.Height,
+                    0,
+                    Math.Max(0, geometry.Height - 1)));
+
             var visualResult = new MacroScanResult(
                 Ok: true,
                 Found: true,
@@ -818,6 +827,9 @@ internal sealed class MacroSessionController : ObservableObject, IMacroSession
                 return;
             }
 
+            // Focus changes must NOT stop the macro or hide the crosshair: the user is
+            // expected to leave the launcher working in the background. Only a hidden or
+            // minimized launcher invalidates the click coordinates.
             if (!IsOwnerAvailable())
             {
                 _overlay.HideOverlay();

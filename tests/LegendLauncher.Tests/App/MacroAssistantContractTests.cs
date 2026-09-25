@@ -298,6 +298,8 @@ public sealed class MacroAssistantContractTests
 
         public string StatusText => _isActive ? "Running" : "Stopped";
 
+        public string SessionTitle => "Fake session";
+
         public bool OverlayVisible { get; set; }
 
         public int StartCount { get; private set; }

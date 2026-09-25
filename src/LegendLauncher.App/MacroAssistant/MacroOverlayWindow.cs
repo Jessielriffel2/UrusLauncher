@@ -74,8 +74,8 @@ internal sealed class MacroOverlayWindow : Window
             return;
         }
 
-        double scaleX = ActualWidth / _geometry.Width;
-        double scaleY = ActualHeight / _geometry.Height;
+        double scaleX = ActualWidth * VisualTreeHelper.GetDpi(this).DpiScaleX / _geometry.Width;
+        double scaleY = ActualHeight * VisualTreeHelper.GetDpi(this).DpiScaleY / _geometry.Height;
         if (_result?.Move is { } move)
         {
             Point start = ToClient(move.Start, scaleX, scaleY);
@@ -91,12 +91,13 @@ internal sealed class MacroOverlayWindow : Window
 
             if (action.Click is { } click)
             {
+                // The launcher theme accent: the same aim the user placed in the setup.
                 Point target = ToClient(click, scaleX, scaleY);
-                DrawCrosshair(drawingContext, target, Color.FromRgb(35, 230, 255));
+                DrawCrosshair(drawingContext, target, Color.FromRgb(53, 229, 216));
                 if (action.InputClick is { } inputPoint)
                 {
                     drawingContext.DrawLine(
-                        new Pen(new SolidColorBrush(Color.FromArgb(180, 35, 230, 255)), 2),
+                        new Pen(new SolidColorBrush(Color.FromArgb(180, 53, 229, 216)), 2),
                         ToClient(inputPoint, scaleX, scaleY),
                         target);
                 }
@@ -170,10 +171,11 @@ internal sealed class MacroOverlayWindow : Window
 
     private static void DrawCrosshair(DrawingContext drawingContext, Point point, Color color)
     {
+        // Slightly larger aim so it stays readable over the game.
         var brush = new SolidColorBrush(color);
-        drawingContext.DrawEllipse(new SolidColorBrush(Color.FromArgb(70, color.R, color.G, color.B)), new Pen(brush, 2), point, 7, 7);
-        drawingContext.DrawLine(new Pen(brush, 2), point + new Vector(-13, 0), point + new Vector(13, 0));
-        drawingContext.DrawLine(new Pen(brush, 2), point + new Vector(0, -13), point + new Vector(0, 13));
+        drawingContext.DrawEllipse(new SolidColorBrush(Color.FromArgb(70, color.R, color.G, color.B)), new Pen(brush, 2), point, 9, 9);
+        drawingContext.DrawLine(new Pen(brush, 2), point + new Vector(-17, 0), point + new Vector(17, 0));
+        drawingContext.DrawLine(new Pen(brush, 2), point + new Vector(0, -17), point + new Vector(0, 17));
     }
 
     private void DrawStatus(DrawingContext drawingContext)

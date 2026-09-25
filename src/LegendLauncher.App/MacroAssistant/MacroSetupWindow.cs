@@ -15,6 +15,7 @@ internal sealed class MacroSetupWindow : Window
 {
     private readonly Canvas _canvas;
     private readonly Border _frame;
+    private readonly Border _panel;
     private readonly Thumb _frameMoveThumb;
     private readonly Thumb _targetThumb;
     private readonly Thumb _resizeThumb;
@@ -101,17 +102,29 @@ internal sealed class MacroSetupWindow : Window
         _targetMarker = new TextBlock
         {
             Text = "+",
-            Foreground = Brushes.White,
-            FontSize = 24,
+            Foreground = new SolidColorBrush(Color.FromRgb(53, 229, 216)),
+            FontSize = 34,
             FontWeight = FontWeights.Bold,
             IsHitTestVisible = false,
-            Opacity = 0.95,
+            Opacity = 0.98,
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center,
+            Effect = new System.Windows.Media.Effects.DropShadowEffect
+            {
+                Color = Colors.Black,
+                ShadowDepth = 1,
+                BlurRadius = 3,
+                Opacity = 0.85,
+            },
         };
+        // The aim must stay visible even when it is dragged under the settings panel.
+        Panel.SetZIndex(_targetMarker, 40);
+        Panel.SetZIndex(_targetThumb, 39);
         _canvas.Children.Add(_targetMarker);
 
-        var panel = new Border
+        // The panel floats over the surface and can be dragged anywhere, so the user can
+        // move it out of the way to see the whole game area.
+        _panel = new Border
         {
             Width = 300,
             Padding = new Thickness(12),
@@ -166,8 +179,8 @@ internal sealed class MacroSetupWindow : Window
             VerticalAlignment = VerticalAlignment.Center,
             FontSize = 10.5,
         });
-        _clickCountInput = CreateInput("0");
-        countRow.Children.Add(_clickCountInput);
+        _clickCountInput = CreateNumericInput("0", 1, 0, 9999, out Grid countHost);
+        countRow.Children.Add(countHost);
         _clickSettingsPanel.Children.Add(countRow);
 
         var intervalRow = new StackPanel { Orientation = Orientation.Horizontal };
@@ -179,8 +192,8 @@ internal sealed class MacroSetupWindow : Window
             VerticalAlignment = VerticalAlignment.Center,
             FontSize = 10.5,
         });
-        _clickIntervalInput = CreateInput("0.10");
-        intervalRow.Children.Add(_clickIntervalInput);
+        _clickIntervalInput = CreateNumericInput("0.10", 0.10, 0.01, 3600, out Grid intervalHost);
+        intervalRow.Children.Add(intervalHost);
         _clickSettingsPanel.Children.Add(intervalRow);
         panelContent.Children.Add(_clickSettingsPanel);
 
@@ -193,9 +206,9 @@ internal sealed class MacroSetupWindow : Window
             VerticalAlignment = VerticalAlignment.Center,
             FontSize = 10.5,
         });
-        _speedInput = CreateInput("1.0");
+        _speedInput = CreateNumericInput("1.0", 0.10, 0.25, 4.0, out Grid speedHost);
         _speedInput.TextChanged += SpeedInputOnTextChanged;
-        speedRow.Children.Add(_speedInput);
+        speedRow.Children.Add(speedHost);
         panelContent.Children.Add(speedRow);
 
         _largeFrameToggle = new ToggleButton
@@ -236,9 +249,50 @@ internal sealed class MacroSetupWindow : Window
         buttons.Children.Add(_playButton);
         buttons.Children.Add(_stopButton);
         panelContent.Children.Add(buttons);
-        panel.Child = panelContent;
-        root.Children.Add(panel);
+
+        // Title area used to drag the whole settings panel anywhere over the surface.
+        var panelDragThumb = new Thumb
+        {
+            Background = Brushes.Transparent,
+            BorderThickness = new Thickness(0),
+            Cursor = Cursors.SizeAll,
+            Focusable = false,
+            Height = 34,
+            VerticalAlignment = VerticalAlignment.Top,
+        };
+        panelDragThumb.DragDelta += PanelDragDelta;
+        _panel.Child = new Grid
+        {
+            Children =
+            {
+                panelContent,
+                panelDragThumb,
+            },
+        };
+        // Placed on the canvas so it can be freely moved with Canvas coordinates.
+        Canvas.SetLeft(_panel, 12);
+        Canvas.SetTop(_panel, 12);
+        _canvas.Children.Add(_panel);
         Content = root;
+    }
+
+    private void PanelDragDelta(object sender, DragDeltaEventArgs eventArgs)
+    {
+        if (ActualWidth <= 0 || ActualHeight <= 0)
+        {
+            return;
+        }
+
+        double currentLeft = double.IsNaN(Canvas.GetLeft(_panel)) ? 12 : Canvas.GetLeft(_panel);
+        double currentTop = double.IsNaN(Canvas.GetTop(_panel)) ? 12 : Canvas.GetTop(_panel);
+        double maxLeft = Math.Max(0, ActualWidth - _panel.ActualWidth);
+        double maxTop = Math.Max(0, ActualHeight - _panel.ActualHeight);
+        Canvas.SetLeft(
+            _panel,
+            Math.Clamp(currentLeft + eventArgs.HorizontalChange, 0, maxLeft));
+        Canvas.SetTop(
+            _panel,
+            Math.Clamp(currentTop + eventArgs.VerticalChange, 0, maxTop));
     }
 
     public SurfaceRegion Region => _region;
@@ -293,13 +347,27 @@ internal sealed class MacroSetupWindow : Window
 
     public ClickMacroSettings GetClickSettings()
     {
-        int count = int.TryParse(_clickCountInput.Text, NumberStyles.Integer, CultureInfo.CurrentCulture, out int parsedCount)
-            ? Math.Max(0, parsedCount)
+        int count = TryParseNumber(_clickCountInput.Text, out double parsedCount)
+            ? Math.Max(0, (int)Math.Round(parsedCount))
             : 0;
-        double seconds = double.TryParse(_clickIntervalInput.Text, NumberStyles.Float, CultureInfo.CurrentCulture, out double parsedSeconds)
+        double seconds = TryParseNumber(_clickIntervalInput.Text, out double parsedSeconds)
             ? Math.Clamp(parsedSeconds, 0.01, 3600)
             : 0.10;
         return new ClickMacroSettings(count, TimeSpan.FromSeconds(seconds));
+    }
+
+    /// <summary>
+    /// Accepts both "0.7" and "0,7" so the value is always accepted regardless of the
+    /// keyboard layout, while the fields keep the dot as the single standard separator.
+    /// </summary>
+    private static bool TryParseNumber(string? text, out double value)
+    {
+        string normalized = (text ?? string.Empty).Trim().Replace(',', '.');
+        return double.TryParse(
+            normalized,
+            NumberStyles.Float,
+            CultureInfo.InvariantCulture,
+            out value);
     }
 
     public void ShowSetup(SurfaceGeometry surface, SurfaceRegion region)
@@ -327,9 +395,9 @@ internal sealed class MacroSetupWindow : Window
         try
         {
             _largeFrameToggle.IsChecked = _useLargeFrame;
-            _speedInput.Text = _speed.ToString("0.##", CultureInfo.CurrentCulture);
-            _clickCountInput.Text = clickSettings.Count.ToString(CultureInfo.CurrentCulture);
-            _clickIntervalInput.Text = clickSettings.Interval.TotalSeconds.ToString("0.###", CultureInfo.CurrentCulture);
+            _speedInput.Text = _speed.ToString("0.##", CultureInfo.InvariantCulture);
+            _clickCountInput.Text = clickSettings.Count.ToString(CultureInfo.InvariantCulture);
+            _clickIntervalInput.Text = clickSettings.Interval.TotalSeconds.ToString("0.###", CultureInfo.InvariantCulture);
         }
         finally
         {
@@ -341,6 +409,12 @@ internal sealed class MacroSetupWindow : Window
         {
             // The aim always sits at the center of the frame.
             _target = RegionCenter(_region);
+        }
+        else
+        {
+            // Compact aim: the analysis area is centered on the placed point, so the macro
+            // cannot keep using a region saved from another position.
+            _region = CenterRegionOnTarget(_region.Width, _region.Height);
         }
 
         if (!IsVisible)
@@ -380,6 +454,13 @@ internal sealed class MacroSetupWindow : Window
         _target = _useLargeFrame
             ? RegionCenter(_region)
             : ClampPointToSurface(_target, _surface);
+        if (!_useLargeFrame)
+        {
+            // Compact aim: the analysis area always follows the point the user placed,
+            // otherwise the macro would keep aiming at a stale region.
+            _region = CenterRegionOnTarget(_region.Width, _region.Height);
+        }
+
         if (IsVisible && surface.HasArea)
         {
             NativeWindowMethods.SetOverlayBounds(
@@ -431,6 +512,97 @@ internal sealed class MacroSetupWindow : Window
             BorderThickness = new Thickness(1),
             VerticalContentAlignment = VerticalAlignment.Center,
         };
+
+    /// <summary>
+    /// Builds a numeric field with up/down arrows. The arrows replace the default clear
+    /// adornment and step the value by a fixed amount, keeping the dot as the separator.
+    /// </summary>
+    private static TextBox CreateNumericInput(
+        string text,
+        double step,
+        double minimum,
+        double maximum,
+        out Grid host)
+    {
+        var input = new TextBox
+        {
+            Text = text,
+            Height = 25,
+            Padding = new Thickness(5, 2, 18, 2),
+            Background = new SolidColorBrush(Color.FromRgb(8, 24, 40)),
+            Foreground = Brushes.White,
+            BorderBrush = new SolidColorBrush(Color.FromRgb(71, 119, 142)),
+            BorderThickness = new Thickness(1),
+            VerticalContentAlignment = VerticalAlignment.Center,
+        };
+        AutomationProperties.SetName(input, text);
+
+        var arrows = new StackPanel
+        {
+            Orientation = Orientation.Vertical,
+            HorizontalAlignment = HorizontalAlignment.Right,
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(0, 0, 1, 0),
+        };
+        arrows.Children.Add(CreateStepButton("▲", step, minimum, maximum, input, increase: true));
+        arrows.Children.Add(CreateStepButton("▼", step, minimum, maximum, input, increase: false));
+
+        host = new Grid { Width = 82, Height = 25 };
+        host.Children.Add(input);
+        host.Children.Add(arrows);
+        return input;
+    }
+
+    private static Button CreateStepButton(
+        string glyph,
+        double step,
+        double minimum,
+        double maximum,
+        TextBox input,
+        bool increase)
+    {
+        var button = new Button
+        {
+            Content = glyph,
+            Width = 17,
+            Height = 12,
+            Padding = new Thickness(0),
+            FontSize = 6.5,
+            Background = new SolidColorBrush(Color.FromRgb(13, 33, 51)),
+            Foreground = new SolidColorBrush(Color.FromRgb(168, 215, 239)),
+            BorderBrush = new SolidColorBrush(Color.FromRgb(47, 86, 107)),
+            BorderThickness = new Thickness(0.5),
+            Cursor = Cursors.Hand,
+            Focusable = false,
+        };
+        button.Click += (_, _) => StepInputValue(input, step, minimum, maximum, increase);
+        AutomationProperties.SetName(
+            button,
+            increase
+                ? Localize("Macro_IncreaseValue", "Aumentar valor")
+                : Localize("Macro_DecreaseValue", "Diminuir valor"));
+        return button;
+    }
+
+    private static void StepInputValue(
+        TextBox input,
+        double step,
+        double minimum,
+        double maximum,
+        bool increase)
+    {
+        double current = TryParseNumber(input.Text, out double parsed) ? parsed : minimum;
+        double next = Math.Clamp(
+            Math.Round(current + (increase ? step : -step), 2, MidpointRounding.AwayFromZero),
+            minimum,
+            maximum);
+        string formatted = step >= 1
+            ? next.ToString("0", CultureInfo.InvariantCulture)
+            : next.ToString("0.##", CultureInfo.InvariantCulture);
+        input.Text = formatted;
+        input.CaretIndex = formatted.Length;
+        input.Focus();
+    }
 
     private static Button CreateButton(string text, Brush background)
     {
@@ -589,11 +761,7 @@ internal sealed class MacroSetupWindow : Window
             return;
         }
 
-        _speed = double.TryParse(
-                _speedInput.Text,
-                NumberStyles.Float,
-                CultureInfo.CurrentCulture,
-                out double parsed)
+        _speed = TryParseNumber(_speedInput.Text, out double parsed)
             ? Math.Clamp(parsed, 0.25, 4.0)
             : 1.0;
         SettingsChanged?.Invoke(this, EventArgs.Empty);
@@ -656,7 +824,13 @@ internal sealed class MacroSetupWindow : Window
             return (1, 1);
         }
 
-        return (ActualWidth / _surface.Width, ActualHeight / _surface.Height);
+        // The overlay window is placed with SetWindowPos (physical pixels) while WPF
+        // reports ActualWidth/ActualHeight in DIPs, so the per-monitor scale has to be
+        // applied or the frame and the aim drift away from the game surface.
+        DpiScale dpi = VisualTreeHelper.GetDpi(this);
+        return (
+            ActualWidth * dpi.DpiScaleX / _surface.Width,
+            ActualHeight * dpi.DpiScaleY / _surface.Height);
     }
 
     private SurfaceRegion ClampRegion(SurfaceRegion candidate)

@@ -29,6 +29,12 @@ internal sealed class MacroAssistantViewModel : ObservableObject, IDisposable
 
     public RelayCommand CycleModeCommand => _cycleModeCommand;
 
+    /// <summary>
+    /// Raised when the user pressed the start button: the launcher shows the account
+    /// picker so the macro runs only on the sessions chosen by the user.
+    /// </summary>
+    public event EventHandler? StartSelectionRequested;
+
     public MacroMode Mode
     {
         get => _mode;
@@ -138,9 +144,25 @@ internal sealed class MacroAssistantViewModel : ObservableObject, IDisposable
             return;
         }
 
-        foreach (IMacroSession session in Sessions)
+        if (Sessions.Count == 1)
         {
-            session.Start();
+            // A single account has nothing to choose from.
+            Sessions[0].Start();
+            return;
+        }
+
+        StartSelectionRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    internal void StartSelected(IReadOnlyList<IMacroSession> selected)
+    {
+        ArgumentNullException.ThrowIfNull(selected);
+        foreach (IMacroSession session in selected)
+        {
+            if (!session.IsActive)
+            {
+                session.Start();
+            }
         }
     }
 

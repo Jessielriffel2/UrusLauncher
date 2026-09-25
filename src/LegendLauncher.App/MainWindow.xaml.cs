@@ -38,6 +38,7 @@ public partial class MainWindow : Window
         _viewModel.UpdateInstallerStarted += ViewModelOnUpdateInstallerStarted;
         _viewModel.Workspace.DetachRequested += WorkspaceOnDetachRequested;
         _viewModel.Workspace.SessionRemoved += WorkspaceOnSessionRemoved;
+        _viewModel.Workspace.MacroAssistant.StartSelectionRequested += MacroAssistantOnStartSelectionRequested;
         DataContext = _viewModel;
 
         Loaded += OnLoaded;
@@ -371,6 +372,7 @@ public partial class MainWindow : Window
         _viewModel.UpdateInstallerStarted -= ViewModelOnUpdateInstallerStarted;
         _viewModel.Workspace.DetachRequested -= WorkspaceOnDetachRequested;
         _viewModel.Workspace.SessionRemoved -= WorkspaceOnSessionRemoved;
+        _viewModel.Workspace.MacroAssistant.StartSelectionRequested -= MacroAssistantOnStartSelectionRequested;
         _macroAssistant.Dispose();
         _viewModel.Dispose();
         _httpClient.Dispose();
@@ -420,6 +422,21 @@ public partial class MainWindow : Window
 
         window.ReattachRequested -= DetachedWindowOnReattachRequested;
         window.CloseWithoutReattaching();
+    }
+
+    private void MacroAssistantOnStartSelectionRequested(object? sender, EventArgs eventArgs)
+    {
+        IMacroSession[] sessions = [.. _viewModel.Workspace.MacroAssistant.Sessions];
+        if (sessions.Length == 0)
+        {
+            return;
+        }
+
+        IReadOnlyList<IMacroSession>? selected = MacroSessionPickerWindow.Pick(this, sessions);
+        if (selected is { Count: > 0 })
+        {
+            _viewModel.Workspace.MacroAssistant.StartSelected(selected);
+        }
     }
 
     private void DetachedWindowOnReattachRequested(object? sender, EventArgs eventArgs)

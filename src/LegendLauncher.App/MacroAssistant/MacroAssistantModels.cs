@@ -28,6 +28,8 @@ internal interface IMacroSession : INotifyPropertyChanged, IDisposable
 
     string StatusText { get; }
 
+    string SessionTitle { get; }
+
     bool OverlayVisible { get; set; }
 
     void SetMode(MacroMode mode);
