@@ -646,7 +646,7 @@
                                 <RowDefinition Height="16" />
                                 <RowDefinition Height="72" />
                                 <RowDefinition Height="16" />
-                                <RowDefinition Height="54" />
+                                <RowDefinition Height="Auto" />
                                 <RowDefinition Height="10" />
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>

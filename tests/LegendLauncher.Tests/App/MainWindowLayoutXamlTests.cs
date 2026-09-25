@@ -100,7 +100,7 @@ public sealed class MainWindowLayoutXamlTests
         XElement outerGrid = Assert.IsType<XElement>(scrollViewer.Parent);
         Assert.Equal("Grid", outerGrid.Name.LocalName);
         Assert.Equal(
-            new[] { "*", "16", "72", "16", "54", "10", "Auto" },
+            new[] { "*", "16", "72", "16", "Auto", "10", "Auto" },
             outerGrid
                 .Element(Presentation + "Grid.RowDefinitions")!
                 .Elements(Presentation + "RowDefinition")
