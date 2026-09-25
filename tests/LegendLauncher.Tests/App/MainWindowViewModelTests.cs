@@ -327,9 +327,44 @@ public sealed class MainWindowViewModelTests
 
         Assert.False(viewModel.HasSavedCredential);
         Assert.False(viewModel.CanStartGame);
+        Assert.True(viewModel.IsProfileEditorVisible);
+        Assert.True(viewModel.HasStatusError);
         Assert.Equal("Digite sua senha", viewModel.PasswordPlaceholderText);
         Assert.Contains("Digite-a novamente", viewModel.StatusMessage, StringComparison.Ordinal);
         Assert.True(vault.Contains(profile.CredentialKey));
+    }
+
+    [Fact]
+    public async Task PlatformAuthenticationRejectionNotifiesWithoutOpeningTheProfileEditor()
+    {
+        AccountProfile profile = AppTestData.Profile("player@example.test", null, "100");
+        var directory = new StubServerDirectory((_, _, _) =>
+            Task.FromResult(AppTestData.Catalog([AppTestData.Server("100")])));
+        var vault = new InMemoryCredentialVault();
+        vault.Seed(profile.CredentialKey, new CredentialSecret(profile.UserName, "saved-secret"));
+        var authentication = new StubAuthenticationService((_, _) =>
+            Task.FromResult(AuthenticationResult.Failure(
+                "http_error",
+                "A plataforma recusou a requisição de autenticação.")));
+        using MainWindowViewModel viewModel = CreateViewModel(
+            directory,
+            new InMemoryProfileStore(profile),
+            vault,
+            authentication);
+        await viewModel.InitializeAsync();
+        await Task.Yield();
+        Assert.True(viewModel.HasSavedCredential);
+
+        await viewModel.StartGameAsync();
+
+        // Platform/server failures must surface the error; they are not account problems,
+        // so the profile editor stays closed and the saved password is kept for a retry.
+        Assert.False(viewModel.IsProfileEditorVisible);
+        Assert.True(viewModel.HasStatusError);
+        Assert.True(viewModel.HasSavedCredential);
+        Assert.Contains("recusou", viewModel.StatusMessage, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal("Login não confirmado", viewModel.CatalogStatus);
+        Assert.Single(authentication.Requests);
     }
 
     [Fact]

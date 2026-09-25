@@ -47,6 +47,7 @@
   "Macro_PickerHint": "Escolha a conta ou as contas em que o macro deve executar.",
   "Macro_PickerAll": "Todas as contas",
   "Macro_PickerStart": "Iniciar macro",
+  "Session_ErrorNotification": "Erro da última tentativa de conexão",
   "Credentials_RememberPassword": "Manter/salvar senha no Cofre do Windows",
   "Profiles_Save": "Salvar perfil",
   "Common_Cancel": "Cancelar",

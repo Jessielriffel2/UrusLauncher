@@ -508,8 +508,20 @@ internal sealed partial class MainWindowViewModel : ObservableObject, IDisposabl
     public Brush CatalogStatusBrush
     {
         get => _catalogStatusBrush;
-        private set => SetProperty(ref _catalogStatusBrush, value);
+        private set
+        {
+            if (SetProperty(ref _catalogStatusBrush, value))
+            {
+                OnPropertyChanged(nameof(HasStatusError));
+            }
+        }
     }
+
+    /// <summary>
+    /// True while the last status is an error, so the session card can show a prominent
+    /// notification instead of leaving the message hidden behind other UI.
+    /// </summary>
+    public bool HasStatusError => ReferenceEquals(_catalogStatusBrush, ErrorBrush);
 
     public string ServerCountLabel => _localization.Format(
         VisibleServers.Count == 1 ? "Servers_CountSingular" : "Servers_CountPlural",

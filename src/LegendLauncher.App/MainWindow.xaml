@@ -811,16 +811,48 @@
                                 </Grid>
                             </Border>
 
-                            <Button x:Name="PinnedPrimaryAction"
-                                    Grid.Row="4" Style="{StaticResource PrimaryButtonStyle}"
-                                    Command="{Binding PlayCommand}" IsEnabled="{Binding CanStartGame}"
-                                    Click="PlayButton_OnClick">
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="&#xE7FC;" FontFamily="Segoe Fluent Icons" FontSize="18"
-                                               Margin="0,0,12,0" VerticalAlignment="Center" />
-                                    <TextBlock Text="{Binding PrimaryActionLabel}" VerticalAlignment="Center" />
-                                </StackPanel>
-                            </Button>
+                            <StackPanel Grid.Row="4">
+                                <Border Background="#33E5484D"
+                                        BorderBrush="{StaticResource DangerBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="8"
+                                        Padding="10,7"
+                                        Margin="0,0,0,10"
+                                        AutomationProperties.Name="{loc:Localize Session_ErrorNotification}">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding HasStatusError}" Value="True">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="&#xE783;" FontFamily="Segoe Fluent Icons"
+                                                   FontSize="12"
+                                                   Foreground="{StaticResource DangerBrush}"
+                                                   Margin="0,0,8,0"
+                                                   VerticalAlignment="Center" />
+                                        <TextBlock Text="{Binding StatusMessage}"
+                                                   FontSize="11.5"
+                                                   Foreground="{StaticResource DangerBrush}"
+                                                   TextWrapping="Wrap"
+                                                   VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Border>
+                                <Button x:Name="PinnedPrimaryAction"
+                                        Style="{StaticResource PrimaryButtonStyle}"
+                                        Command="{Binding PlayCommand}" IsEnabled="{Binding CanStartGame}"
+                                        Click="PlayButton_OnClick">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="&#xE7FC;" FontFamily="Segoe Fluent Icons" FontSize="18"
+                                                   Margin="0,0,12,0" VerticalAlignment="Center" />
+                                        <TextBlock Text="{Binding PrimaryActionLabel}" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
                             <TextBlock x:Name="PinnedSessionCaption"
                                        Grid.Row="6"
                                        Text="{loc:Localize Session_IsolationCaption}"

@@ -47,6 +47,7 @@
   "Macro_PickerHint": "Elige la cuenta o las cuentas en las que el macro debe ejecutarse.",
   "Macro_PickerAll": "Todas las cuentas",
   "Macro_PickerStart": "Iniciar macro",
+  "Session_ErrorNotification": "Error del último intento de conexión",
   "Credentials_RememberPassword": "Mantener/guardar la contraseña en el Administrador de credenciales de Windows",
   "Profiles_Save": "Guardar perfil",
   "Common_Cancel": "Cancelar",

@@ -281,9 +281,33 @@ public sealed class MainWindowLayoutXamlTests
         XElement element = document
             .Descendants()
             .Single(candidate => candidate.Attribute(Xaml + "Name")?.Value == name);
-        Assert.Equal(expectedRow, element.Attribute("Grid.Row")?.Value);
         Assert.DoesNotContain(element, scrollViewer.Descendants());
-        Assert.Same(scrollViewer.Parent, element.Parent);
+
+        // The element is a direct child of the card grid, or sits in a pinned wrapper
+        // (the error banner and the primary action share one StackPanel pinned at row 4).
+        XElement pinned = element;
+        while (pinned.Parent is not null &&
+               !ReferenceEquals(scrollViewer.Parent, pinned.Parent))
+        {
+            pinned = pinned.Parent;
+        }
+
+        Assert.Same(scrollViewer.Parent, pinned.Parent);
+        Assert.Equal(expectedRow, pinned.Attribute("Grid.Row")?.Value);
+    }
+
+    [Fact]
+    public void SessionCardSurfacesTheStatusErrorAboveThePrimaryAction()
+    {
+        XDocument document = LoadMainWindow();
+        XElement primaryAction = FindNamedElement(document, "Button", "PinnedPrimaryAction");
+        XElement pinnedPanel = Assert.IsType<XElement>(primaryAction.Parent);
+        XElement banner = pinnedPanel.Elements(Presentation + "Border").Single();
+
+        Assert.Equal("4", pinnedPanel.Attribute("Grid.Row")?.Value);
+        Assert.Contains("HasStatusError", banner.ToString(), StringComparison.Ordinal);
+        Assert.Contains("{Binding StatusMessage}", banner.ToString(), StringComparison.Ordinal);
+        Assert.Contains("DangerBrush", banner.ToString(), StringComparison.Ordinal);
     }
 
     private static XDocument LoadMainWindow() =>

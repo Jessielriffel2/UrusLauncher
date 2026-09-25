@@ -108,17 +108,29 @@ internal sealed partial class MainWindowViewModel
                     ("errorMessage", outcome.ErrorMessage),
                     ("failureDiagnostic", outcome.FailureDiagnostic?.ToString()));
                 CatalogStatusBrush = ErrorBrush;
-                IsProfileEditorVisible = true;
-                if (outcome.CredentialSource == SessionCredentialSource.Stored &&
-                    IsCredentialRejection(outcome.ErrorCode))
+                if (IsCredentialRejection(outcome.ErrorCode))
                 {
-                    HasSavedCredential = false;
+                    // Wrong password: the profile editor is the path to fix it.
                     IsProfileEditorVisible = true;
-                    SetCatalogStatus("Auth_RetypePassword");
-                    SetStatusMessage("Auth_SavedPasswordRejected");
+                    if (outcome.CredentialSource == SessionCredentialSource.Stored)
+                    {
+                        HasSavedCredential = false;
+                        SetCatalogStatus("Auth_RetypePassword");
+                        SetStatusMessage("Auth_SavedPasswordRejected");
+                    }
+                    else
+                    {
+                        SetCatalogStatus("Auth_LoginNotConfirmed");
+                        SetStatusMessage("Auth_CredentialRejected");
+                    }
+
                     return;
                 }
 
+                // Platform/server failures (HTTP errors, timeouts, maintenance) must notify
+                // the user instead of opening the profile editor, which would cover the
+                // error and make it look like an account problem.
+                IsProfileEditorVisible = false;
                 SetCatalogStatus("Auth_LoginNotConfirmed");
                 SetStatusMessage(BuildAuthenticationFailureKey(outcome.ErrorCode),
                     string.IsNullOrWhiteSpace(outcome.ErrorCode) ? [] : [outcome.ErrorCode]);
