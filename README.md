@@ -29,7 +29,7 @@ Launcher Windows para Legend Online, escrito do zero em C#/.NET 10 e distribuíd
 | Autenticação Passport OAS | Implementada nas oito variantes; QA abriu o Reborn turco S115 até a interface jogável e validou Passport + sessão do Classic Português S100 |
 | GameHost Flash x64 separado | Implementado, isolado por sessão e encerrado quando o processo pai desaparece; jogabilidade real confirmada no S115 |
 | Execução direta sem `H2Proxy.exe` | Implementada |
-| Distribuição Windows | Pipeline self-contained `win-x64`, runtime registration-free fornecido pelo mantenedor, instalador Inno Setup por usuário, ZIP portátil, manifesto e SHA-256 implementados; a [v1.1.12](https://github.com/Jessielriffel2/UrusLauncher/releases/tag/v1.1.12) está publicada e a [v1.1.13](https://github.com/Jessielriffel2/UrusLauncher/releases/tag/v1.1.13) está preparada para publicação |
+| Distribuição Windows | Pipeline self-contained `win-x64`, runtime registration-free fornecido pelo mantenedor, instalador Inno Setup por usuário, ZIP portátil, manifesto e SHA-256 implementados; as [v1.1.12](https://github.com/Jessielriffel2/UrusLauncher/releases/tag/v1.1.12) e [v1.1.13](https://github.com/Jessielriffel2/UrusLauncher/releases/tag/v1.1.13) estão publicadas |
 | Atualizações públicas | Consulta antecipada por GitHub Releases ao abrir, download/validação automática por usuário, cache verificado e instalação somente após clique explícito |
 | Ruffle | Avaliação futura |
 | Favoritos/múltiplos servidores fixados por conta | Melhoria futura |
@@ -121,7 +121,7 @@ Os patch notes de cada versão nascem de `docs/releases/vX.Y.Z.json` em `pt-BR`,
 
 A versão 1.0.1 não possui atualizador e precisa receber manualmente o instalador público mais recente. A 1.1.0 foi o primeiro bootstrap, mas sua consulta pode esbarrar na cota da API em redes de IP compartilhado; nesse caso, a passagem também é manual. As versões 1.1.1 e 1.1.2 detectam a 1.1.3 pelo fluxo anterior: nessa passagem única, a pessoa ainda clica em **Atualizar** para baixar e instalar. Depois de instalada a 1.1.3, versões futuras são baixadas e validadas automaticamente e ficam aguardando o clique em **Instalar**. Perfis, settings e senhas permanecem preservados.
 
-A [v1.1.12](https://github.com/Jessielriffel2/UrusLauncher/releases/tag/v1.1.12) está publicada e a [v1.1.13](https://github.com/Jessielriffel2/UrusLauncher/releases/tag/v1.1.13) está preparada para publicação, seguindo esse fluxo de atualização preparado pela 1.1.3.
+A [v1.1.13](https://github.com/Jessielriffel2/UrusLauncher/releases/tag/v1.1.13) está publicada, seguindo esse fluxo de atualização preparado pela 1.1.3.
 
 ## Desenvolvimento
 
