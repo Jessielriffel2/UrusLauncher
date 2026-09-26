@@ -2,6 +2,17 @@
 
 As mudanças relevantes do Urus Launcher são registradas aqui. As versões públicas seguem versionamento semântico e são publicadas em `vMAJOR.MINOR.PATCH`.
 
+## 1.1.14 — 26/09/2026
+
+### Adicionado
+
+- Falhas de plataforma que não são de credencial (HTTP 403, timeout, servidor fora do ar) exibem um banner de erro vermelho acima de **ENTRAR E JOGAR** em vez de abrir a edição de perfil; a senha salva é mantida para nova tentativa. Credencial rejeitada continua abrindo a edição para re-digitação.
+- Cada conta logada recebe uma cor própria na barra lateral, permitindo distinguir de relance o avatar e os botões de relogar e fechar mesmo com várias contas abertas.
+
+### Corrigido
+
+- O botão **ENTRAR E JOGAR** não é mais cortado quando o banner de erro aparece: a linha passou de altura fixa para automática e o bloco de contas acima se ajusta.
+
 ## 1.1.11 — 24/09/2026
 
 ### Corrigido

@@ -11,8 +11,8 @@ public sealed class FeatureCatalogTests
         IReadOnlyList<ReleaseCatalogEntry> entries = ReleaseCatalog.Load();
 
         Assert.NotEmpty(entries);
-        Assert.Equal(new Version(1, 1, 13), entries[0].Version);
-        Assert.Contains(entries, entry => entry.Version == new Version(1, 1, 12));
+        Assert.Equal(new Version(1, 1, 14), entries[0].Version);
+        Assert.Contains(entries, entry => entry.Version == new Version(1, 1, 13));
         Assert.All(entries, entry => Assert.False(string.IsNullOrWhiteSpace(entry.GetTitle("pt-BR"))));
     }
 
@@ -23,7 +23,7 @@ public sealed class FeatureCatalogTests
             ReleaseCatalog.Load(),
             "pt-BR");
 
-        Assert.Contains("v1.1.13", history, StringComparison.Ordinal);
+        Assert.Contains("v1.1.14", history, StringComparison.Ordinal);
         Assert.Contains("v1.1.12", history, StringComparison.Ordinal);
         Assert.Contains("v1.1.11", history, StringComparison.Ordinal);
         Assert.Contains("Macro Assistant", history, StringComparison.Ordinal);
@@ -37,8 +37,8 @@ public sealed class FeatureCatalogTests
             "pt-BR");
 
         Assert.NotEmpty(items);
-        Assert.Equal("v1.1.13", items[0].VersionText);
-        Assert.Equal("v1.1.12", items[1].VersionText);
+        Assert.Equal("v1.1.14", items[0].VersionText);
+        Assert.Equal("v1.1.13", items[1].VersionText);
         Assert.All(items, item =>
         {
             Assert.StartsWith("v", item.VersionText, StringComparison.Ordinal);

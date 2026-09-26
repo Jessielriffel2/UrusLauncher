@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "version": "1.1.14",
+  "title": {
+    "pt-BR": "Banner de erro de plataforma e cor própria por conta",
+    "en-US": "Platform error banner and a dedicated color per account",
+    "es-ES": "Banner de error de plataforma y color propio por cuenta"
+  },
+  "notes": {
+    "pt-BR": [
+      "Novo: quando o servidor está fora do ar, recusa o acesso (HTTP 403) ou demora demais para responder, o launcher mostra um banner vermelho acima do botão ENTRAR E JOGAR em vez de abrir a edição de perfil — a senha salva é mantida para você tentar de novo.",
+      "Correção: o botão ENTRAR E JOGAR não fica mais cortado quando o banner de erro aparece; a linha agora cresce e o bloco de contas acima se ajusta.",
+      "Novo: cada conta logada recebe uma cor própria na barra lateral — o avatar e seus botões de relogar e fechar ficam fáceis de distinguir de relance, mesmo com várias contas abertas."
+    ],
+    "en-US": [
+      "New: when the server is down, rejects access (HTTP 403), or takes too long to answer, the launcher shows a red banner above the ENTER AND PLAY button instead of opening the profile editor — the saved password is kept so you can try again.",
+      "Fix: the ENTER AND PLAY button is no longer clipped when the error banner shows; the row now grows and the account block above adjusts.",
+      "New: every logged-in account gets its own color in the sidebar — the avatar and its relog and close buttons are easy to tell apart at a glance, even with several accounts open."
+    ],
+    "es-ES": [
+      "Nuevo: cuando el servidor está caído, rechaza el acceso (HTTP 403) o tarda demasiado en responder, el launcher muestra un banner rojo sobre el botón ENTRAR Y JUGAR en lugar de abrir la edición de perfil — la contraseña guardada se conserva para reintentar.",
+      "Corrección: el botón ENTRAR Y JUGAR ya no queda cortado cuando aparece el banner de error; la fila ahora crece y el bloque de cuentas de arriba se ajusta.",
+      "Nuevo: cada cuenta iniciada recibe su propio color en la barra lateral: el avatar y sus botones de reiniciar sesión y cerrar se distinguen de un vistazo, incluso con varias cuentas abiertas."
+    ]
+  }
+}
