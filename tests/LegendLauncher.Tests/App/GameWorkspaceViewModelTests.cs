@@ -235,6 +235,45 @@ public sealed class GameWorkspaceViewModelTests
         Assert.Contains(pair.Rear!, workspace.VisibleSessions);
     }
 
+    [Fact]
+    public void EveryRunningAccountGetsItsOwnSidebarColorAndKeepsItWhileItStaysOpen()
+    {
+        using GameWorkspaceViewModel workspace = CreateWorkspace();
+        GameSessionViewModel first = AddSession(workspace, 1);
+        GameSessionViewModel second = AddSession(workspace, 2);
+        GameSessionViewModel third = AddSession(workspace, 3);
+
+        int[] slots = [first.AccentSlot, second.AccentSlot, third.AccentSlot];
+        Assert.Equal(slots.Length, slots.Distinct().Count());
+        Assert.All(slots, slot => Assert.InRange(slot, 0, SessionAccentPalette.SlotCount - 1));
+        Assert.Equal(first.AccentBrush, first.AccentBrush);
+        Assert.NotEqual(first.AccentBrush, second.AccentBrush);
+
+        int[] original = slots;
+        int released = second.AccentSlot;
+        workspace.CloseSessionCommand.Execute(second);
+
+        // Closing one account must not recolor the accounts that stay open.
+        Assert.Equal(original[0], first.AccentSlot);
+        Assert.Equal(original[2], third.AccentSlot);
+
+        GameSessionViewModel reopened = AddSession(workspace, 4);
+        Assert.Equal(released, reopened.AccentSlot);
+    }
+
+    [Fact]
+    public void ReopeningTheSameProfileReusesItsSidebarColor()
+    {
+        using GameWorkspaceViewModel workspace = CreateWorkspace();
+        Guid profileId = Guid.NewGuid();
+        GameSessionViewModel first = AddSession(workspace, 1, profileId);
+        int slot = first.AccentSlot;
+
+        workspace.CloseSessionCommand.Execute(first);
+        GameSessionViewModel reopened = AddSession(workspace, 2, profileId);
+
+        Assert.Equal(slot, reopened.AccentSlot);
+    }
     private static GameWorkspaceViewModel CreateWorkspace()
     {
         var audio = new GameAudioService(static (_, _) => { }, TimeSpan.FromHours(1));

@@ -150,6 +150,46 @@ public sealed class GameWorkspaceXamlTests
         Assert.Contains("SidebarAccountActionButtonStyle", avatars, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void SidebarAccountControlsWrapTheAvatarAndCarryTheAccountColor()
+    {
+        XDocument document = XDocument.Load(FindRepositoryFile(
+            "src",
+            "LegendLauncher.App",
+            "Views",
+            "Game",
+            "GameWorkspaceView.xaml"));
+        XElement avatarList = FindNamedElement(document, "ItemsControl", "SessionAvatarList");
+        string avatars = avatarList.ToString();
+
+        XElement rearRow = FindNamedElement(document, "StackPanel", "RearActionRow");
+        XElement avatarButton = avatarList
+            .Descendants(Presentation + "Button")
+            .Single(button => button
+                .Attribute("Command")?.Value
+                ?.Contains("ActivateSidebarAvatarCommand", StringComparison.Ordinal) == true);
+        XElement frontRow = FindNamedElement(document, "StackPanel", "FrontActionRow");
+
+        // The top account controls sit above the avatar, the bottom account controls below it.
+        Assert.Equal("0", rearRow.Attribute("Grid.Row")?.Value);
+        Assert.Equal("1", avatarButton.Attribute("Grid.Row")?.Value);
+        Assert.Equal("2", frontRow.Attribute("Grid.Row")?.Value);
+
+        Assert.Contains("CommandParameter=\"{Binding Rear}\"", rearRow.ToString(), StringComparison.Ordinal);
+        Assert.Contains("CommandParameter=\"{Binding Front}\"", frontRow.ToString(), StringComparison.Ordinal);
+        Assert.Contains("IsPair", rearRow.ToString(), StringComparison.Ordinal);
+
+        // Every control is tinted with the color of the account it acts on.
+        Assert.Contains("Background=\"{Binding Rear.AccentSoftBrush}\"", rearRow.ToString(), StringComparison.Ordinal);
+        Assert.Contains("Foreground=\"{Binding Front.AccentBrush}\"", frontRow.ToString(), StringComparison.Ordinal);
+
+        XElement style = document
+            .Descendants(Presentation + "Style")
+            .Single(element => element.Attribute(Xaml + "Key")?.Value == "SidebarAccountActionButtonStyle");
+        Assert.Contains("TemplateBinding Background", style.ToString(), StringComparison.Ordinal);
+        Assert.Contains("TemplateBinding BorderBrush", style.ToString(), StringComparison.Ordinal);
+    }
+
     private static XElement FindNamedElement(
         XDocument document,
         string localName,

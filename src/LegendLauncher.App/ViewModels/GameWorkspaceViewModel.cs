@@ -17,6 +17,8 @@ internal sealed class GameWorkspaceViewModel : ObservableObject, IDisposable
     private readonly ProfileAvatarStore? _avatarStore;
     private readonly LocalizationService _localization;
     private readonly Func<nint, int, GameWindowAttachment?> _attachmentFactory;
+    private readonly Dictionary<Guid, int> _accentSlots = [];
+    private readonly HashSet<int> _accentSlotsInUse = [];
     private IReadOnlyList<GameSessionViewModel> _visibleSessions = [];
     private IReadOnlyList<WorkspaceAvatarItem> _sidebarAvatars = [];
     private IReadOnlyList<GameSessionViewModel> _splitPair = [];
@@ -259,6 +261,7 @@ internal sealed class GameWorkspaceViewModel : ObservableObject, IDisposable
             throw;
         }
         item.Exited += SessionOnExited;
+        item.AccentSlot = AcquireAccentSlot(item.ProfileId);
         Sessions.Add(item);
         if (!item.IsRunning)
         {
@@ -444,6 +447,7 @@ internal sealed class GameWorkspaceViewModel : ObservableObject, IDisposable
 
         session.Exited -= SessionOnExited;
         _audioService.UnregisterProcess(session.ProcessId);
+        ReleaseAccentSlot(session.ProfileId);
         session.Dispose();
         SessionRemoved?.Invoke(this, session);
         SelectedSession = Sessions.FirstOrDefault(candidate => !candidate.IsDetached) ??
@@ -491,6 +495,46 @@ internal sealed class GameWorkspaceViewModel : ObservableObject, IDisposable
             : [];
         VisibleSessions = candidates;
         RefreshSidebarAvatars();
+    }
+
+    /// <summary>
+    /// Reserves the first palette slot that no other running account is using so every
+    /// account keeps its own color for as long as it stays open.
+    /// </summary>
+    private int AcquireAccentSlot(Guid profileId)
+    {
+        if (_accentSlots.TryGetValue(profileId, out int reserved))
+        {
+            return reserved;
+        }
+
+        int slot = 0;
+        while (slot < SessionAccentPalette.SlotCount && _accentSlotsInUse.Contains(slot))
+        {
+            slot++;
+        }
+
+        if (slot >= SessionAccentPalette.SlotCount)
+        {
+            // More live accounts than palette entries: derive a stable fallback slot.
+            slot = Math.Abs(profileId.GetHashCode() % SessionAccentPalette.SlotCount);
+            while (_accentSlotsInUse.Contains(slot))
+            {
+                slot = (slot + 1) % SessionAccentPalette.SlotCount;
+            }
+        }
+
+        _accentSlots[profileId] = slot;
+        _accentSlotsInUse.Add(slot);
+        return slot;
+    }
+
+    private void ReleaseAccentSlot(Guid profileId)
+    {
+        if (_accentSlots.Remove(profileId, out int released))
+        {
+            _accentSlotsInUse.Remove(released);
+        }
     }
 
     private void RefreshSidebarAvatars()

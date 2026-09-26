@@ -16,6 +16,7 @@ internal sealed class GameSessionViewModel : ObservableObject, IDisposable
     private bool _isDetached;
     private bool _isRunning = true;
     private bool _isSelected;
+    private int _accentSlot;
     private bool _disposed;
 
     public GameSessionViewModel(
@@ -132,6 +133,32 @@ internal sealed class GameSessionViewModel : ObservableObject, IDisposable
         get => _isSelected;
         internal set => SetProperty(ref _isSelected, value);
     }
+
+    /// <summary>
+    /// Palette slot that gives this account its own color in the workspace sidebar.
+    /// </summary>
+    public int AccentSlot
+    {
+        get => _accentSlot;
+        internal set
+        {
+            if (SetProperty(ref _accentSlot, value))
+            {
+                OnPropertyChanged(nameof(AccentColor));
+                OnPropertyChanged(nameof(AccentBrush));
+                OnPropertyChanged(nameof(AccentStrongBrush));
+                OnPropertyChanged(nameof(AccentSoftBrush));
+            }
+        }
+    }
+
+    public Color AccentColor => SessionAccentPalette.GetColor(AccentSlot);
+
+    public Brush AccentBrush => SessionAccentPalette.GetBrush(AccentSlot);
+
+    public Brush AccentStrongBrush => SessionAccentPalette.GetStrongBrush(AccentSlot);
+
+    public Brush AccentSoftBrush => SessionAccentPalette.GetSoftBrush(AccentSlot);
 
     public void Terminate()
     {

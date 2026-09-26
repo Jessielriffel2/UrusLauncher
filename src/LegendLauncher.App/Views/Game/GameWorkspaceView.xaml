@@ -91,6 +91,8 @@
             <Setter Property="Padding" Value="0" />
             <Setter Property="FontFamily" Value="Segoe Fluent Icons" />
             <Setter Property="FontSize" Value="10" />
+            <Setter Property="Background" Value="#D50C1B2B" />
+            <Setter Property="BorderBrush" Value="#47667C" />
             <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="shell:WindowChrome.IsHitTestVisibleInChrome" Value="True" />
@@ -98,20 +100,25 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
                         <Border x:Name="Border"
-                                Background="#D50C1B2B"
-                                BorderBrush="#47667C"
-                                BorderThickness="1"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
                                 CornerRadius="11">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <Grid>
+                                <Border x:Name="HoverFill"
+                                        Background="{TemplateBinding BorderBrush}"
+                                        CornerRadius="10"
+                                        Opacity="0" />
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Grid>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource AccentStrongBrush}" />
-                                <Setter TargetName="Border" Property="Background" Value="#E0122838" />
-                                <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+                                <Setter TargetName="HoverFill" Property="Opacity" Value="1" />
+                                <Setter Property="Foreground" Value="#FF0A1727" />
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="Border" Property="Opacity" Value="0.72" />
+                                <Setter TargetName="HoverFill" Property="Opacity" Value="0.72" />
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter TargetName="Border" Property="Opacity" Value="0.4" />
@@ -367,131 +374,192 @@
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <Grid Margin="0,0,0,10">
-                                    <Button Margin="0"
-                                            Padding="0"
-                                            Background="Transparent"
-                                            BorderThickness="0"
-                                            Command="{Binding DataContext.Workspace.ActivateSidebarAvatarCommand, ElementName=WorkspaceRoot}"
-                                            CommandParameter="{Binding}"
-                                            ToolTip="{Binding ToolTip}"
-                                            AutomationProperties.Name="{Binding AutomationName}">
-                                        <Grid Width="52" Height="52">
-                                            <Grid x:Name="SplitPairAvatars">
-                                                <Grid.Style>
-                                                    <Style TargetType="Grid">
-                                                        <Setter Property="Visibility" Value="Collapsed" />
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding IsPair}" Value="True">
-                                                                <Setter Property="Visibility" Value="Visible" />
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </Grid.Style>
-                                                <Border Width="36"
-                                                        Height="36"
-                                                        CornerRadius="18"
-                                                        HorizontalAlignment="Left"
-                                                        VerticalAlignment="Top"
-                                                        Margin="0,2,0,0"
-                                                        Background="#B8133541"
-                                                        BorderBrush="#47667C"
-                                                        BorderThickness="1">
-                                                    <Grid>
-                                                        <Image Source="{Binding RearAvatarImage}" Stretch="UniformToFill">
-                                                            <Image.Style>
-                                                                <Style TargetType="Image">
-                                                                    <Setter Property="Visibility" Value="Collapsed" />
-                                                                    <Style.Triggers>
-                                                                        <DataTrigger Binding="{Binding RearHasAvatar}" Value="True">
-                                                                            <Setter Property="Visibility" Value="Visible" />
-                                                                        </DataTrigger>
-                                                                    </Style.Triggers>
-                                                                </Style>
-                                                            </Image.Style>
-                                                        </Image>
-                                                        <TextBlock Text="{Binding RearInitial}"
-                                                                   Foreground="{StaticResource AccentBrush}"
-                                                                   FontWeight="Bold"
-                                                                   FontSize="13"
-                                                                   HorizontalAlignment="Center"
-                                                                   VerticalAlignment="Center">
-                                                            <TextBlock.Style>
-                                                                <Style TargetType="TextBlock">
-                                                                    <Style.Triggers>
-                                                                        <DataTrigger Binding="{Binding RearHasAvatar}" Value="True">
-                                                                            <Setter Property="Visibility" Value="Collapsed" />
-                                                                        </DataTrigger>
-                                                                    </Style.Triggers>
-                                                                </Style>
-                                                            </TextBlock.Style>
-                                                        </TextBlock>
-                                                    </Grid>
-                                                </Border>
-                                                <Border Width="36"
-                                                        Height="36"
-                                                        CornerRadius="18"
-                                                        HorizontalAlignment="Right"
-                                                        VerticalAlignment="Bottom"
-                                                        Margin="0,0,0,2">
-                                                    <Border.Style>
-                                                        <Style TargetType="Border">
-                                                            <Setter Property="Background" Value="#B8133541" />
-                                                            <Setter Property="BorderBrush" Value="#47667C" />
-                                                            <Setter Property="BorderThickness" Value="1" />
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
+
+                                        <!-- Top account of a split pair: controls sit at the very top of the item. -->
+                                        <StackPanel x:Name="RearActionRow"
+                                                    Grid.Row="0"
+                                                    Orientation="Horizontal"
+                                                    HorizontalAlignment="Center"
+                                                    Margin="0,0,0,4">
+                                            <StackPanel.Style>
+                                                <Style TargetType="StackPanel">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsPair}" Value="True">
+                                                            <Setter Property="Visibility" Value="Visible" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </StackPanel.Style>
+                                            <Button Style="{StaticResource SidebarAccountActionButtonStyle}"
+                                                    Content="&#xE72C;"
+                                                    Background="{Binding Rear.AccentSoftBrush}"
+                                                    BorderBrush="{Binding Rear.AccentBrush}"
+                                                    Foreground="{Binding Rear.AccentBrush}"
+                                                    Command="{Binding DataContext.Workspace.RelogSessionCommand, ElementName=WorkspaceRoot}"
+                                                    CommandParameter="{Binding Rear}"
+                                                    ToolTip="{loc:Localize Session_RelogTooltip}"
+                                                    AutomationProperties.Name="{loc:Localize Session_Relog}" />
+                                            <Button Style="{StaticResource SidebarAccountActionButtonStyle}"
+                                                    Content="&#xE711;"
+                                                    Margin="2,0,0,0"
+                                                    Background="{Binding Rear.AccentSoftBrush}"
+                                                    BorderBrush="{Binding Rear.AccentBrush}"
+                                                    Foreground="{Binding Rear.AccentBrush}"
+                                                    Command="{Binding DataContext.Workspace.CloseSessionCommand, ElementName=WorkspaceRoot}"
+                                                    CommandParameter="{Binding Rear}"
+                                                    ToolTip="{loc:Localize Session_End}"
+                                                    AutomationProperties.Name="{loc:Localize Session_End}" />
+                                        </StackPanel>
+
+                                        <Button Grid.Row="1"
+                                                Margin="0"
+                                                Padding="0"
+                                                Background="Transparent"
+                                                BorderThickness="0"
+                                                Command="{Binding DataContext.Workspace.ActivateSidebarAvatarCommand, ElementName=WorkspaceRoot}"
+                                                CommandParameter="{Binding}"
+                                                ToolTip="{Binding ToolTip}"
+                                                AutomationProperties.Name="{Binding AutomationName}">
+                                            <Grid Width="52" Height="52">
+                                                <Grid x:Name="SplitPairAvatars">
+                                                    <Grid.Style>
+                                                        <Style TargetType="Grid">
+                                                            <Setter Property="Visibility" Value="Collapsed" />
                                                             <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding IsHighlighted}" Value="True">
-                                                                    <Setter Property="Background" Value="#E0205A6A" />
-                                                                    <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
-                                                                    <Setter Property="BorderThickness" Value="2" />
+                                                                <DataTrigger Binding="{Binding IsPair}" Value="True">
+                                                                    <Setter Property="Visibility" Value="Visible" />
                                                                 </DataTrigger>
                                                             </Style.Triggers>
                                                         </Style>
-                                                    </Border.Style>
-                                                    <Grid>
-                                                        <Image Source="{Binding FrontAvatarImage}" Stretch="UniformToFill">
-                                                            <Image.Style>
-                                                                <Style TargetType="Image">
-                                                                    <Setter Property="Visibility" Value="Collapsed" />
-                                                                    <Style.Triggers>
-                                                                        <DataTrigger Binding="{Binding FrontHasAvatar}" Value="True">
-                                                                            <Setter Property="Visibility" Value="Visible" />
-                                                                        </DataTrigger>
-                                                                    </Style.Triggers>
-                                                                </Style>
-                                                            </Image.Style>
-                                                        </Image>
-                                                        <TextBlock Text="{Binding FrontInitial}"
-                                                                   Foreground="{StaticResource AccentBrush}"
-                                                                   FontWeight="Bold"
-                                                                   FontSize="13"
-                                                                   HorizontalAlignment="Center"
-                                                                   VerticalAlignment="Center">
-                                                            <TextBlock.Style>
-                                                                <Style TargetType="TextBlock">
-                                                                    <Style.Triggers>
-                                                                        <DataTrigger Binding="{Binding FrontHasAvatar}" Value="True">
-                                                                            <Setter Property="Visibility" Value="Collapsed" />
-                                                                        </DataTrigger>
-                                                                    </Style.Triggers>
-                                                                </Style>
-                                                            </TextBlock.Style>
-                                                        </TextBlock>
-                                                    </Grid>
-                                                </Border>
-                                                <Ellipse Width="9" Height="9"
-                                                         Fill="{StaticResource SuccessBrush}"
-                                                         Stroke="#071321"
-                                                         StrokeThickness="2"
-                                                         HorizontalAlignment="Left"
-                                                         VerticalAlignment="Top"
-                                                         Margin="24,2,0,0" />
-                                                <Ellipse Width="9" Height="9"
-                                                         Fill="{StaticResource SuccessBrush}"
-                                                         Stroke="#071321"
-                                                         StrokeThickness="2"
-                                                         HorizontalAlignment="Right"
-                                                         VerticalAlignment="Bottom"
-                                                         Margin="0,0,1,3" />
+                                                    </Grid.Style>
+                                                    <Border Width="36"
+                                                            Height="36"
+                                                            CornerRadius="18"
+                                                            HorizontalAlignment="Left"
+                                                            VerticalAlignment="Top"
+                                                            Margin="0,2,0,0">
+                                                        <Border.Style>
+                                                            <Style TargetType="Border">
+                                                                <Setter Property="Background" Value="{Binding Rear.AccentSoftBrush}" />
+                                                                <Setter Property="BorderBrush" Value="{Binding Rear.AccentBrush}" />
+                                                                <Setter Property="BorderThickness" Value="1" />
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsHighlighted}" Value="True">
+                                                                        <Setter Property="Background" Value="{Binding Rear.AccentBrush}" />
+                                                                        <Setter Property="BorderBrush" Value="{Binding Rear.AccentStrongBrush}" />
+                                                                        <Setter Property="BorderThickness" Value="2" />
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Border.Style>
+                                                        <Grid>
+                                                            <Image Source="{Binding RearAvatarImage}" Stretch="UniformToFill">
+                                                                <Image.Style>
+                                                                    <Style TargetType="Image">
+                                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding RearHasAvatar}" Value="True">
+                                                                                <Setter Property="Visibility" Value="Visible" />
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </Image.Style>
+                                                            </Image>
+                                                            <TextBlock Text="{Binding RearInitial}"
+                                                                       FontWeight="Bold"
+                                                                       FontSize="13"
+                                                                       HorizontalAlignment="Center"
+                                                                       VerticalAlignment="Center">
+                                                                <TextBlock.Style>
+                                                                    <Style TargetType="TextBlock">
+                                                                        <Setter Property="Foreground" Value="{Binding Rear.AccentBrush}" />
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding RearHasAvatar}" Value="True">
+                                                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                                            </DataTrigger>
+                                                                            <DataTrigger Binding="{Binding IsHighlighted}" Value="True">
+                                                                                <Setter Property="Foreground" Value="#FF0A1727" />
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </TextBlock.Style>
+                                                            </TextBlock>
+                                                        </Grid>
+                                                    </Border>
+                                                    <Border Width="36"
+                                                            Height="36"
+                                                            CornerRadius="18"
+                                                            HorizontalAlignment="Right"
+                                                            VerticalAlignment="Bottom"
+                                                            Margin="0,0,0,2">
+                                                        <Border.Style>
+                                                            <Style TargetType="Border">
+                                                                <Setter Property="Background" Value="{Binding Front.AccentSoftBrush}" />
+                                                                <Setter Property="BorderBrush" Value="{Binding Front.AccentBrush}" />
+                                                                <Setter Property="BorderThickness" Value="1" />
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsHighlighted}" Value="True">
+                                                                        <Setter Property="Background" Value="{Binding Front.AccentBrush}" />
+                                                                        <Setter Property="BorderBrush" Value="{Binding Front.AccentStrongBrush}" />
+                                                                        <Setter Property="BorderThickness" Value="2" />
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Border.Style>
+                                                        <Grid>
+                                                            <Image Source="{Binding FrontAvatarImage}" Stretch="UniformToFill">
+                                                                <Image.Style>
+                                                                    <Style TargetType="Image">
+                                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding FrontHasAvatar}" Value="True">
+                                                                                <Setter Property="Visibility" Value="Visible" />
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </Image.Style>
+                                                            </Image>
+                                                            <TextBlock Text="{Binding FrontInitial}"
+                                                                       FontWeight="Bold"
+                                                                       FontSize="13"
+                                                                       HorizontalAlignment="Center"
+                                                                       VerticalAlignment="Center">
+                                                                <TextBlock.Style>
+                                                                    <Style TargetType="TextBlock">
+                                                                        <Setter Property="Foreground" Value="{Binding Front.AccentBrush}" />
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding FrontHasAvatar}" Value="True">
+                                                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                                            </DataTrigger>
+                                                                            <DataTrigger Binding="{Binding IsHighlighted}" Value="True">
+                                                                                <Setter Property="Foreground" Value="#FF0A1727" />
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </TextBlock.Style>
+                                                            </TextBlock>
+                                                        </Grid>
+                                                    </Border>
+                                                    <Ellipse Width="9" Height="9"
+                                                             Fill="{StaticResource SuccessBrush}"
+                                                             Stroke="#071321"
+                                                             StrokeThickness="2"
+                                                             HorizontalAlignment="Left"
+                                                             VerticalAlignment="Top"
+                                                             Margin="24,2,0,0" />
+                                                    <Ellipse Width="9" Height="9"
+                                                             Fill="{StaticResource SuccessBrush}"
+                                                             Stroke="#071321"
+                                                             StrokeThickness="2"
+                                                             HorizontalAlignment="Right"
+                                                             VerticalAlignment="Bottom"
+                                                             Margin="0,0,1,3" />
                                             </Grid>
                                             <Grid x:Name="SingleAvatar">
                                                 <Grid.Style>
@@ -510,13 +578,13 @@
                                                         CornerRadius="22">
                                                     <Border.Style>
                                                         <Style TargetType="Border">
-                                                            <Setter Property="Background" Value="#B8133541" />
-                                                            <Setter Property="BorderBrush" Value="#47667C" />
+                                                            <Setter Property="Background" Value="{Binding Front.AccentSoftBrush}" />
+                                                            <Setter Property="BorderBrush" Value="{Binding Front.AccentBrush}" />
                                                             <Setter Property="BorderThickness" Value="1" />
                                                             <Style.Triggers>
                                                                 <DataTrigger Binding="{Binding IsHighlighted}" Value="True">
-                                                                    <Setter Property="Background" Value="#E0205A6A" />
-                                                                    <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+                                                                    <Setter Property="Background" Value="{Binding Front.AccentBrush}" />
+                                                                    <Setter Property="BorderBrush" Value="{Binding Front.AccentStrongBrush}" />
                                                                     <Setter Property="BorderThickness" Value="2" />
                                                                 </DataTrigger>
                                                             </Style.Triggers>
@@ -536,16 +604,19 @@
                                                             </Image.Style>
                                                         </Image>
                                                         <TextBlock Text="{Binding FrontInitial}"
-                                                                   Foreground="{StaticResource AccentBrush}"
                                                                    FontWeight="Bold"
                                                                    FontSize="15"
                                                                    HorizontalAlignment="Center"
                                                                    VerticalAlignment="Center">
                                                             <TextBlock.Style>
                                                                 <Style TargetType="TextBlock">
+                                                                    <Setter Property="Foreground" Value="{Binding Front.AccentBrush}" />
                                                                     <Style.Triggers>
                                                                         <DataTrigger Binding="{Binding FrontHasAvatar}" Value="True">
                                                                             <Setter Property="Visibility" Value="Collapsed" />
+                                                                        </DataTrigger>
+                                                                        <DataTrigger Binding="{Binding IsHighlighted}" Value="True">
+                                                                            <Setter Property="Foreground" Value="#FF0A1727" />
                                                                         </DataTrigger>
                                                                     </Style.Triggers>
                                                                 </Style>
@@ -562,58 +633,39 @@
                                                          Margin="0,0,1,2" />
                                             </Grid>
                                         </Grid>
-                                    </Button>
-                                    <StackPanel Orientation="Vertical"
-                                                HorizontalAlignment="Center"
-                                                VerticalAlignment="Top"
-                                                Margin="0,56,0,0">
-                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                            <Button Style="{StaticResource SidebarAccountActionButtonStyle}"
-                                                    Content="&#xE72C;"
-                                                    Command="{Binding DataContext.Workspace.RelogSessionCommand, ElementName=WorkspaceRoot}"
-                                                    CommandParameter="{Binding Front}"
-                                                    ToolTip="{loc:Localize Session_RelogTooltip}"
-                                                    AutomationProperties.Name="{loc:Localize Session_Relog}" />
-                                            <Button Style="{StaticResource SidebarAccountActionButtonStyle}"
-                                                    Content="&#xE711;"
-                                                    Margin="3,0,0,0"
-                                                    Command="{Binding DataContext.Workspace.CloseSessionCommand, ElementName=WorkspaceRoot}"
-                                                    CommandParameter="{Binding Front}"
-                                                    ToolTip="{loc:Localize Session_End}"
-                                                    AutomationProperties.Name="{loc:Localize Session_End}" />
-                                        </StackPanel>
-                                        <StackPanel Orientation="Horizontal"
+                                        </Button>
+
+                                        <!-- Bottom account: controls sit lower, under the avatar, grouped tight. -->
+                                        <StackPanel x:Name="FrontActionRow"
+                                                    Grid.Row="2"
+                                                    Orientation="Horizontal"
                                                     HorizontalAlignment="Center"
-                                                    Margin="0,3,0,0">
-                                            <StackPanel.Style>
-                                                <Style TargetType="StackPanel">
-                                                    <Setter Property="Visibility" Value="Collapsed" />
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding IsPair}" Value="True">
-                                                            <Setter Property="Visibility" Value="Visible" />
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </StackPanel.Style>
+                                                    Margin="0,4,0,0">
                                             <Button Style="{StaticResource SidebarAccountActionButtonStyle}"
                                                     Content="&#xE72C;"
+                                                    Background="{Binding Front.AccentSoftBrush}"
+                                                    BorderBrush="{Binding Front.AccentBrush}"
+                                                    Foreground="{Binding Front.AccentBrush}"
                                                     Command="{Binding DataContext.Workspace.RelogSessionCommand, ElementName=WorkspaceRoot}"
-                                                    CommandParameter="{Binding Rear}"
+                                                    CommandParameter="{Binding Front}"
                                                     ToolTip="{loc:Localize Session_RelogTooltip}"
                                                     AutomationProperties.Name="{loc:Localize Session_Relog}" />
                                             <Button Style="{StaticResource SidebarAccountActionButtonStyle}"
                                                     Content="&#xE711;"
-                                                    Margin="3,0,0,0"
+                                                    Margin="2,0,0,0"
+                                                    Background="{Binding Front.AccentSoftBrush}"
+                                                    BorderBrush="{Binding Front.AccentBrush}"
+                                                    Foreground="{Binding Front.AccentBrush}"
                                                     Command="{Binding DataContext.Workspace.CloseSessionCommand, ElementName=WorkspaceRoot}"
-                                                    CommandParameter="{Binding Rear}"
+                                                    CommandParameter="{Binding Front}"
                                                     ToolTip="{loc:Localize Session_End}"
                                                     AutomationProperties.Name="{loc:Localize Session_End}" />
                                         </StackPanel>
-                                    </StackPanel>
                                     </Grid>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
+
                         </ScrollViewer>
                     </Grid>
                 </Grid>
