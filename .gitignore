@@ -18,6 +18,7 @@ artifacts/
 *.tmp
 *.bak
 Thumbs.db
+_qa/
 profiles.json
 credentials.json
 settings.json
