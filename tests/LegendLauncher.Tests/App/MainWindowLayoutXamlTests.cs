@@ -175,6 +175,43 @@ public sealed class MainWindowLayoutXamlTests
     }
 
     [Fact]
+    public void ManualServerEntryStaysHiddenUntilTheCatalogIsUnavailable()
+    {
+        XDocument document = LoadMainWindow();
+        XElement manualServerInput = FindNamedElement(document, "TextBox", "ManualServerInput");
+
+        Assert.Equal(
+            "{Binding ManualServerId, UpdateSourceTrigger=PropertyChanged}",
+            manualServerInput.Attribute("Text")?.Value);
+        Assert.StartsWith(
+            "{loc:Localize ",
+            manualServerInput.Attribute("Tag")?.Value,
+            StringComparison.Ordinal);
+
+        XElement container = Assert.IsType<XElement>(manualServerInput.Parent);
+        Assert.Equal("7", container.Attribute("Grid.Row")?.Value);
+        Assert.Contains(
+            "IsCatalogFallbackAvailable",
+            container.Attribute("Visibility")?.Value ?? string.Empty,
+            StringComparison.Ordinal);
+
+        XElement useButton = container.Elements(Presentation + "Button").Single();
+        Assert.Equal("{Binding UseManualServerCommand}", useButton.Attribute("Command")?.Value);
+        Assert.Equal(
+            "{loc:Localize Catalog_ManualServerUse}",
+            useButton.Attribute("Content")?.Value);
+
+        // The server list keeps its own contract untouched: the new row only sits below it.
+        XElement serverList = document
+            .Descendants(Presentation + "ListBox")
+            .Single(element => element.Attribute("ItemsSource")?.Value == "{Binding VisibleServers}");
+        Assert.Equal(
+            "{StaticResource ServerRowTemplate}",
+            serverList.Attribute("ItemTemplate")?.Value);
+        Assert.NotEqual("7", serverList.Attribute("Grid.Row")?.Value);
+    }
+
+    [Fact]
     public void PublicBrandAndMainArtifactUseUrusWithoutChangingCodeNamespace()
     {
         XDocument mainWindow = LoadMainWindow();

@@ -1,3 +1,4 @@
+using System.Globalization;
 using LegendLauncher.Core.Models;
 
 namespace LegendLauncher.Providers.Oas;
@@ -82,4 +83,41 @@ public static class OasPlatformCatalog
     public static PlatformDefinition? Find(string platformId) =>
         All.FirstOrDefault(platform =>
             string.Equals(platform.Id, platformId, StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>
+    /// Rebuilds the launch address of a known OAS server from its numeric identifier, so a profile
+    /// that already played can keep its target when the remote catalog is unavailable. The address
+    /// is only produced for platforms in this verified catalog, using the same platform guard the
+    /// server directory applies, and only for identifiers the passport flow accepts, so a caller can
+    /// never invent a host, a port or a path.
+    /// </summary>
+    public static bool TryBuildFallbackLaunchUri(
+        PlatformDefinition platform,
+        string? serverId,
+        out Uri? launchUri)
+    {
+        ArgumentNullException.ThrowIfNull(platform);
+
+        launchUri = null;
+        string trimmedId = serverId?.Trim() ?? string.Empty;
+        if (trimmedId.Length == 0 || !trimmedId.All(char.IsAsciiDigit))
+        {
+            return false;
+        }
+
+        PlatformDefinition? knownPlatform = Find(platform.Id);
+        if (knownPlatform is null ||
+            !string.Equals(platform.GameCode, knownPlatform.GameCode, StringComparison.OrdinalIgnoreCase) ||
+            !Uri.Equals(platform.ServerListEndpoint, knownPlatform.ServerListEndpoint))
+        {
+            return false;
+        }
+
+        launchUri = new Uri(
+            string.Create(
+                CultureInfo.InvariantCulture,
+                $"https://{knownPlatform.GameCode}.creaction-network.com/serverlist/s{trimmedId}"),
+            UriKind.Absolute);
+        return true;
+    }
 }

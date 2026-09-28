@@ -142,4 +142,77 @@ public sealed class OasPlatformCatalogTests
 
         Assert.Throws<NotSupportedException>(() => list.Add(OasPlatformCatalog.Brazil));
     }
+
+    [Theory]
+    [InlineData("oas-lobr", "100", "https://lobr.creaction-network.com/serverlist/s100")]
+    [InlineData("oas-lortr", "115", "https://lortr.creaction-network.com/serverlist/s115")]
+    [InlineData("oas-lopl", "7", "https://lopl.creaction-network.com/serverlist/s7")]
+    public void TryBuildFallbackLaunchUri_RebuildsTheAddressFromTheVerifiedGameCode(
+        string platformId,
+        string serverId,
+        string expectedAddress)
+    {
+        PlatformDefinition platform = Assert.IsType<PlatformDefinition>(
+            OasPlatformCatalog.Find(platformId));
+
+        bool built = OasPlatformCatalog.TryBuildFallbackLaunchUri(platform, serverId, out Uri? launchUri);
+
+        Assert.True(built);
+        Assert.Equal(new Uri(expectedAddress), launchUri);
+        Assert.Equal(Uri.UriSchemeHttps, launchUri!.Scheme);
+        Assert.Equal(443, launchUri.Port);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    [InlineData("abc")]
+    [InlineData("s100")]
+    [InlineData("100; rm -rf /")]
+    [InlineData("../../../etc/passwd")]
+    [InlineData("100.0")]
+    [InlineData("١٠٠")]
+    [InlineData(null)]
+    public void TryBuildFallbackLaunchUri_RefusesAnythingButPlainDigits(string? serverId)
+    {
+        bool built = OasPlatformCatalog.TryBuildFallbackLaunchUri(
+            OasPlatformCatalog.Brazil,
+            serverId,
+            out Uri? launchUri);
+
+        Assert.False(built);
+        Assert.Null(launchUri);
+    }
+
+    [Fact]
+    public void TryBuildFallbackLaunchUri_RefusesAPlatformOutsideTheVerifiedCatalog()
+    {
+        var impostor = new PlatformDefinition(
+            OasPlatformCatalog.Brazil.Id,
+            "Legend Online Brasil (OAS)",
+            "lobr",
+            new Uri("https://attacker.example/api/game/serverlist", UriKind.Absolute),
+            "pt-BR");
+
+        bool built = OasPlatformCatalog.TryBuildFallbackLaunchUri(impostor, "100", out Uri? launchUri);
+
+        Assert.False(built);
+        Assert.Null(launchUri);
+    }
+
+    [Fact]
+    public void TryBuildFallbackLaunchUri_RefusesAPlatformWithATamperedGameCode()
+    {
+        var impostor = new PlatformDefinition(
+            OasPlatformCatalog.Brazil.Id,
+            "Legend Online Brasil (OAS)",
+            "attacker",
+            OasPlatformCatalog.Brazil.ServerListEndpoint,
+            "pt-BR");
+
+        bool built = OasPlatformCatalog.TryBuildFallbackLaunchUri(impostor, "100", out Uri? launchUri);
+
+        Assert.False(built);
+        Assert.Null(launchUri);
+    }
 }

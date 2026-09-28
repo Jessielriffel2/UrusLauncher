@@ -136,6 +136,7 @@ internal sealed partial class MainWindowViewModel : ObservableObject, IDisposabl
                 !IsLaunching &&
                 RecentServers.Contains(server));
         PlayCommand = new AsyncRelayCommand(StartGameAsync, () => CanStartGame);
+        UseManualServerCommand = new RelayCommand(UseManualServer);
     }
 
     public IReadOnlyList<PlatformItemViewModel> Platforms { get; }
@@ -169,6 +170,8 @@ internal sealed partial class MainWindowViewModel : ObservableObject, IDisposabl
     public RelayCommand<ServerRowViewModel> SelectRecentServerCommand { get; }
 
     public AsyncRelayCommand PlayCommand { get; }
+
+    public RelayCommand UseManualServerCommand { get; }
 
     public PlatformItemViewModel SelectedPlatform
     {

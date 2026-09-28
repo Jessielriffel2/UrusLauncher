@@ -5,6 +5,32 @@ namespace LegendLauncher.App.ViewModels;
 
 internal sealed partial class MainWindowViewModel
 {
+    private bool _isCatalogFallbackAvailable;
+    private string _manualServerId = string.Empty;
+
+    /// <summary>
+    /// True only while the remote catalog is unavailable, which is when the saved and manual
+    /// server affordances are offered. A healthy catalog keeps them hidden.
+    /// </summary>
+    public bool IsCatalogFallbackAvailable
+    {
+        get => _isCatalogFallbackAvailable;
+        private set
+        {
+            if (SetProperty(ref _isCatalogFallbackAvailable, value) && !value)
+            {
+                // Do not leave a stale number behind for the next outage to re-offer.
+                ManualServerId = string.Empty;
+            }
+        }
+    }
+
+    public string ManualServerId
+    {
+        get => _manualServerId;
+        set => SetProperty(ref _manualServerId, value);
+    }
+
     private async Task LoadServersAsync(bool forceRefresh)
     {
         if (_disposed)
@@ -59,6 +85,7 @@ internal sealed partial class MainWindowViewModel
             RefreshRecentServers();
             ApplyServerFilter();
             RestoreServerSelection(catalog);
+            IsCatalogFallbackAvailable = false;
             SetCatalogStatus(catalog.IsFromCache ? "Catalog_Cached" : "Catalog_Online");
             CatalogStatusBrush = catalog.IsFromCache ? WarningBrush : OnlineBrush;
             SetStatusMessage(
@@ -81,8 +108,11 @@ internal sealed partial class MainWindowViewModel
             }
 
             _allServers.Clear();
+            int savedServerCount = ShowSavedServerFallback(requestedPlatform, requestedLastServerId);
+            IsCatalogFallbackAvailable = true;
             RefreshRecentServers();
             ApplyServerFilter();
+            RestoreServerSelection(catalog: null);
             System.Diagnostics.Debug.WriteLine($"Catalog loading failed: {exception}");
             LogFailure(
                 "catalog.load",
@@ -95,7 +125,7 @@ internal sealed partial class MainWindowViewModel
                 ("forceRefresh", forceRefresh.ToString()));
             SetCatalogStatus("Catalog_Unavailable");
             CatalogStatusBrush = ErrorBrush;
-            SetStatusMessage("Catalog_LoadFailed");
+            SetStatusMessage(savedServerCount > 0 ? "Catalog_UsingSavedServer" : "Catalog_LoadFailed");
         }
         finally
         {
@@ -105,6 +135,74 @@ internal sealed partial class MainWindowViewModel
             }
         }
     }
+
+    /// <summary>
+    /// Offers the servers the selected profile already used when the remote catalog is
+    /// unavailable, so a catalog outage does not strand an account that has a last target.
+    /// Returns how many entries became visible.
+    /// </summary>
+    private int ShowSavedServerFallback(
+        PlatformItemViewModel platform,
+        string? lastServerId)
+    {
+        AccountProfile? profile = SelectedProfile?.Model;
+        IReadOnlyList<GameServer> savedServers = profile is null
+            ? []
+            : CatalogFallbackServers.FromSavedIds(
+                platform.Model,
+                EnumerateRecentServerIds(profile, platform.Id));
+
+        if (savedServers.Count == 0)
+        {
+            return 0;
+        }
+
+        _allServers.AddRange(ServerCatalogPresentation.BuildRows(
+            BuildFallbackCatalog(platform.Id, savedServers),
+            _timeProvider.GetUtcNow(),
+            lastServerId,
+            _localization));
+        return savedServers.Count;
+    }
+
+    /// <summary>
+    /// Turns a server identifier typed while the catalog is unavailable into a playable row.
+    /// Invalid input is ignored so the field keeps whatever the person typed.
+    /// </summary>
+    private void UseManualServer()
+    {
+        IReadOnlyList<GameServer> servers = CatalogFallbackServers.FromSavedIds(
+            SelectedPlatform.Model,
+            [ManualServerId]);
+
+        if (servers.Count == 0)
+        {
+            return;
+        }
+
+        _allServers.Clear();
+        _allServers.AddRange(ServerCatalogPresentation.BuildRows(
+            BuildFallbackCatalog(SelectedPlatform.Id, servers),
+            _timeProvider.GetUtcNow(),
+            servers[0].Id,
+            _localization));
+        SearchText = string.Empty;
+        RefreshRecentServers();
+        ApplyServerFilter();
+        RestoreServerSelection(catalog: null);
+        SetStatusMessage("Catalog_UsingManualServer");
+    }
+
+    private ServerCatalog BuildFallbackCatalog(
+        string platformId,
+        IReadOnlyList<GameServer> servers) =>
+        new(
+            platformId,
+            servers,
+            Played: [],
+            Current: null,
+            _timeProvider.GetUtcNow(),
+            ServerCatalogSource.Cache);
 
     private void ApplyServerFilter()
     {

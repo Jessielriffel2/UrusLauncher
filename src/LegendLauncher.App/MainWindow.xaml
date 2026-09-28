@@ -540,6 +540,7 @@
                                 <RowDefinition Height="28" />
                                 <RowDefinition Height="8" />
                                 <RowDefinition Height="*" />
+                                <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
 
                             <Grid>
@@ -635,6 +636,22 @@
                                     <TextBlock Text="{loc:Localize Servers_EmptyDescription}"
                                                Style="{StaticResource CaptionTextStyle}" Margin="0,4,0,0" />
                                 </StackPanel>
+                            </Grid>
+
+                            <Grid Grid.Row="7" Margin="0,12,0,0"
+                                  Visibility="{Binding IsCatalogFallbackAvailable, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBox x:Name="ManualServerInput" Style="{StaticResource InputStyle}"
+                                         Tag="{loc:Localize Catalog_ManualServerHint}"
+                                         Text="{Binding ManualServerId, UpdateSourceTrigger=PropertyChanged}"
+                                         AutomationProperties.Name="{loc:Localize Catalog_ManualServerAutomation}" />
+                                <Button Grid.Column="1" Margin="10,0,0,0" Content="{loc:Localize Catalog_ManualServerUse}"
+                                        Style="{StaticResource SecondaryButtonStyle}"
+                                        Command="{Binding UseManualServerCommand}"
+                                        AutomationProperties.Name="{loc:Localize Catalog_ManualServerAutomation}" />
                             </Grid>
                         </Grid>
                     </Border>
