@@ -93,6 +93,58 @@ public sealed class WindowsDistributionContractTests
     }
 
     [Fact]
+    public void ReleaseVersionArgumentStampsEveryAssemblyVersionProperty()
+    {
+        string source = File.ReadAllText(FindRepositoryFile("scripts", "build-urus-distribution.ps1"));
+
+        // -p:Version alone does not override AssemblyVersion/FileVersion/InformationalVersion that
+        // Directory.Build.props declares, which once shipped a release whose binaries still
+        // reported the previous version and made the updater offer it forever.
+        Assert.Contains("function Assert-StampedVersion", source, StringComparison.Ordinal);
+        Assert.Contains("\"-p:Version=$Version\"", source, StringComparison.Ordinal);
+        Assert.Contains("\"-p:AssemblyVersion=$fileVersion\"", source, StringComparison.Ordinal);
+        Assert.Contains("\"-p:FileVersion=$fileVersion\"", source, StringComparison.Ordinal);
+        Assert.Contains("\"-p:InformationalVersion=$Version\"", source, StringComparison.Ordinal);
+        Assert.Contains("$releaseVersionProperties", source, StringComparison.Ordinal);
+        Assert.Contains(") + $releaseVersionProperties", source, StringComparison.Ordinal);
+
+        // Both executables are checked, so neither can ship a stale version.
+        Assert.Contains("Assert-StampedVersion $mainExecutable $Version $fileVersion", source, StringComparison.Ordinal);
+        Assert.Contains("Assert-StampedVersion $gameHostExecutable $Version $fileVersion", source, StringComparison.Ordinal);
+        Assert.Contains("Validated stamped version", source, StringComparison.Ordinal);
+
+        // Nesting the property array inside an @(...) literal collapses it into a single argument,
+        // which MSBuild reads as one malformed property and rejects with MSB4030. Both publishes
+        // must therefore append it outside the literal.
+        int appendedOutsideLiteral = source.Split(") + $publishProperties)").Length - 1;
+        Assert.Equal(2, appendedOutsideLiteral);
+        Assert.DoesNotContain(
+            "        $publishProperties\n    )",
+            source.Replace("\r\n", "\n", StringComparison.Ordinal),
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void StampedVersionCheckToleratesTheAppendedSourceRevision()
+    {
+        string source = File.ReadAllText(FindRepositoryFile("scripts", "build-urus-distribution.ps1"));
+
+        // ProductVersion is stamped as "<version>+<sha>" because the repository is deterministic.
+        Assert.Contains(
+            "StartsWith(\"$ExpectedVersion+\", [System.StringComparison]::Ordinal)",
+            source,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "reports product version '$productVersion' but the release is '$ExpectedVersion'",
+            source,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "reports file version '$fileVersion' but the release requires '$ExpectedFileVersion'",
+            source,
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void NativeExecutablesDisableCetShadowStacksForDebuggerCompatibility()
     {
         string root = FindRepositoryRoot();

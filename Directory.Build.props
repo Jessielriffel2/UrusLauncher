@@ -4,6 +4,14 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <WarningsNotAsErrors>WPF0001</WarningsNotAsErrors>
     <Deterministic>true</Deterministic>
+    <!--
+      Developer-build defaults only. The release version is NOT set here: the packaging script
+      (scripts/build-urus-distribution.ps1) passes -p:Version, -p:AssemblyVersion, -p:FileVersion
+      and -p:InformationalVersion from its -Version argument, which is the single source of truth
+      for a release, and Assert-StampedVersion rejects any payload whose stamped version drifts.
+      Do not bump these four values for a release; passing only -p:Version does not override the
+      other three, which shipped 1.1.14 binaries still reporting 1.1.13 and looping the updater.
+    -->
     <Version>1.1.13</Version>
     <AssemblyVersion>1.1.13.0</AssemblyVersion>
     <FileVersion>1.1.13.0</FileVersion>

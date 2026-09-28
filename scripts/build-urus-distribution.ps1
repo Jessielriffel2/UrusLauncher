@@ -158,6 +158,36 @@ function Write-Utf8NoBomFile {
     [System.IO.File]::WriteAllText($Path, $Content, $encoding)
 }
 
+function Assert-StampedVersion {
+    param(
+        [Parameter(Mandatory)]
+        [string]$ExecutablePath,
+
+        [Parameter(Mandatory)]
+        [string]$ExpectedVersion,
+
+        [Parameter(Mandatory)]
+        [string]$ExpectedFileVersion
+    )
+
+    Assert-FileExists $ExecutablePath 'Stamped launcher executable'
+    $info = ([System.IO.FileInfo]$ExecutablePath).VersionInfo
+    $productVersion = [string]$info.ProductVersion
+    $fileVersion = [string]$info.FileVersion
+
+    # ProductVersion may carry an appended source revision ("1.1.15+sha"), so compare the prefix.
+    if ($productVersion -ne $ExpectedVersion -and
+        -not $productVersion.StartsWith("$ExpectedVersion+", [System.StringComparison]::Ordinal)) {
+        throw "The published executable reports product version '$productVersion' but the release is '$ExpectedVersion'. Pass -p:Version, -p:InformationalVersion, -p:AssemblyVersion and -p:FileVersion so the build cannot ship a stale version."
+    }
+
+    if ($fileVersion -ne $ExpectedFileVersion) {
+        throw "The published executable reports file version '$fileVersion' but the release requires '$ExpectedFileVersion'. Pass -p:AssemblyVersion and -p:FileVersion so the build cannot ship a stale version."
+    }
+
+    Write-Host "Validated stamped version: product $productVersion, file $fileVersion."
+}
+
 function Assert-SelfContainedApplication {
     param(
         [Parameter(Mandatory)]
@@ -459,6 +489,9 @@ if ($releaseDefinition.schemaVersion -ne 1 -or
     throw "Release definition must use schemaVersion 1 and version '$Version'."
 }
 
+$versionParts = $Version.Split('.')
+$fileVersion = if ($versionParts.Count -eq 3) { "$Version.0" } else { $Version }
+
 $releaseLanguages = @('pt-BR', 'en-US', 'es-ES')
 $localizedNotes = [ordered]@{}
 foreach ($languageCode in $releaseLanguages) {
@@ -500,38 +533,50 @@ try {
         )
     }
 
+    # The release version argument is the single source of truth for the stamped assembly
+    # version. Directory.Build.props also declares a version for plain developer builds, and
+    # -p:Version alone does not override AssemblyVersion/FileVersion/InformationalVersion, so a
+    # build could ship binaries that still report an older release. Every property is passed
+    # explicitly and Assert-StampedVersion later rejects any mismatch.
+    #
+    # The properties must reach the call sites through '+' outside an @(...) literal: nesting a
+    # variable built with '+' inside @(...) collapses the whole array into one single argument,
+    # which MSBuild then reads as a malformed property and fails with MSB4030.
+    $releaseVersionProperties = @(
+        "-p:Version=$Version",
+        "-p:AssemblyVersion=$fileVersion",
+        "-p:FileVersion=$fileVersion",
+        "-p:InformationalVersion=$Version"
+    )
+
     $publishProperties = @(
         '-p:DebugSymbols=false',
         '-p:DebugType=None',
         '-p:PublishTrimmed=false',
         '-p:UseAppHost=true'
-    )
+    ) + $releaseVersionProperties
 
     Write-Host 'Publishing Urus Launcher as self-contained win-x64...'
-    Invoke-CheckedCommand $dotnet @(
+    Invoke-CheckedCommand $dotnet (@(
         'publish',
         $appProject,
         '--configuration', 'Release',
         '--runtime', $RuntimeIdentifier,
         '--self-contained', 'true',
         '--output', $payloadDirectory,
-        '--nologo',
-        "-p:Version=$Version"
-        $publishProperties
-    )
+        '--nologo'
+    ) + $publishProperties)
 
     Write-Host 'Publishing the isolated GameHost as self-contained win-x64...'
-    Invoke-CheckedCommand $dotnet @(
+    Invoke-CheckedCommand $dotnet (@(
         'publish',
         $gameHostProject,
         '--configuration', 'Release',
         '--runtime', $RuntimeIdentifier,
         '--self-contained', 'true',
         '--output', $gameHostStaging,
-        '--nologo',
-        "-p:Version=$Version"
-        $publishProperties
-    )
+        '--nologo'
+    ) + $publishProperties)
 }
 finally {
     Pop-Location
@@ -560,6 +605,12 @@ $mainExecutable = Join-Path $payloadDirectory 'UrusLauncher.App.exe'
 $gameHostExecutable = Join-Path $payloadDirectory 'LegendLauncher.GameHost.Legacy.exe'
 Assert-FileExists $mainExecutable 'Main Urus Launcher executable'
 Assert-FileExists $gameHostExecutable 'Isolated GameHost executable'
+
+# A binary that still reports an older version makes the updater offer the same release forever,
+# so refuse to package it instead of shipping an endless update loop.
+Assert-StampedVersion $mainExecutable $Version $fileVersion
+Assert-StampedVersion $gameHostExecutable $Version $fileVersion
+
 Assert-FileExists (Join-Path $payloadDirectory 'coreclr.dll') '.NET Core runtime'
 Assert-FileExists (Join-Path $payloadDirectory 'hostfxr.dll') '.NET host resolver'
 Assert-FileExists (Join-Path $payloadDirectory 'PresentationFramework.dll') 'WPF runtime'
@@ -577,8 +628,6 @@ if (-not $SkipPortableStartupSmoke) {
 
 $previousProductVersion = $env:URUS_LAUNCHER_VERSION
 $previousFileVersion = $env:URUS_LAUNCHER_FILE_VERSION
-$versionParts = $Version.Split('.')
-$fileVersion = if ($versionParts.Count -eq 3) { "$Version.0" } else { $Version }
 try {
     $env:URUS_LAUNCHER_VERSION = $Version
     $env:URUS_LAUNCHER_FILE_VERSION = $fileVersion

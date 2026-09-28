@@ -2,6 +2,18 @@
 
 As mudanças relevantes do Urus Launcher são registradas aqui. As versões públicas seguem versionamento semântico e são publicadas em `vMAJOR.MINOR.PATCH`.
 
+## 1.1.15 — 26/09/2026
+
+### Adicionado
+
+- Quando a lista oficial de servidores está fora do ar, o launcher passa a oferecer o servidor que a conta já usou, em vez de desabilitar **ENTRAR E JOGAR** e travar a tela.
+- Na mesma situação, um campo opcional permite digitar o número do servidor e jogar direto, inclusive em contas que nunca entraram em um servidor.
+
+### Corrigido
+
+- O launcher parava de oferecer a mesma versão para sempre depois de instalar: o binário era gravado com a versão anterior, então a atualização era detectada de novo a cada abertura. A 1.1.14 foi publicada com esse defeito; a 1.1.15 corrige.
+- O empacotador passa a reprovar qualquer build cujo binário reporte uma versão diferente da release, e a gravar todas as propriedades de versão a partir do argumento `-Version`, para que o defeito não se repita.
+
 ## 1.1.14 — 26/09/2026
 
 ### Adicionado

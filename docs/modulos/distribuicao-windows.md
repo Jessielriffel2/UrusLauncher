@@ -159,6 +159,12 @@ O fluxo normal executa testes, publica os dois processos, compõe e valida o pay
 
 Antes do comando, deve existir `docs/releases/v1.1.4.json` (ou o arquivo da versão passada) com conteúdo não vazio nas três culturas. A origem do runtime precisa conter `Adobe.Flash.Control.manifest` e o OCX assinado referenciado. Não há fallback para notas inventadas ou runtime baixado de mirror: versão, JSON fonte, tag, nome do setup e manifesto precisam coincidir.
 
+### Versão estampada no assembly
+
+O argumento `-Version` é a única fonte de verdade da versão de uma release. O publish passa `-p:Version`, `-p:AssemblyVersion`, `-p:FileVersion` e `-p:InformationalVersion`, e `Assert-StampedVersion` confere `UrusLauncher.App.exe` e `LegendLauncher.GameHost.Legacy.exe` depois da publicação: ProductVersion precisa ser a versão pedida (aceitando o sufixo `+<sha>` do build determinístico) e FileVersion precisa ser `<versão>.0`. Payload com versão divergente reprova o build.
+
+Isso é obrigatório porque `Directory.Build.props` também declara as quatro propriedades para builds de desenvolvimento, e passar apenas `-p:Version` **não** sobrepõe `AssemblyVersion`, `FileVersion` nem `InformationalVersion`. A 1.1.14 foi publicada com os binários ainda reportando `1.1.13`: o app instalado via "instalar" offeria a 1.1.14 de novo, indefinidamente, porque `1.1.14 > 1.1.13`. A 1.1.15 carrega a correção do versionamento e da própria verificação.
+
 ## Publicação por tag e bootstrap
 
 O workflow `.github/workflows/release.yml` aceita somente tags no formato `vMAJOR.MINOR.PATCH`. O job `build` possui apenas `contents: read`, usa actions fixadas por SHA, desabilita persistência de credenciais no checkout, instala uma versão fixa do Inno Setup, testa e gera os pacotes. Somente os arquivos explícitos são transferidos ao job `publish`, que recebe `contents: write`. Desde a 1.1.4, porém, a automação por tag permanece indisponível no runner hospedado enquanto não houver uma forma autorizada e segura de provisionar a origem licenciada do runtime; sem ela, o build falha antes de criar pacote incompleto. Por isso a 1.1.4 foi construída, validada e publicada manualmente a partir da máquina autorizada. O [workflow 29471074585](https://github.com/Jessielriffel2/UrusLauncher/actions/runs/29471074585), disparado pela criação da tag via API, foi cancelado antes de build/publicação para não concorrer com a release manual. O `GITHUB_TOKEN` é efêmero e não entra no código ou pacote.

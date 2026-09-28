@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "version": "1.1.15",
+  "title": {
+    "pt-BR": "Atualização corrigida e servidor de reserva quando o catálogo falha",
+    "en-US": "Fixed updater and a saved server when the catalog fails",
+    "es-ES": "Actualizador corregido y servidor de reserva cuando el catálogo falla"
+  },
+  "notes": {
+    "pt-BR": [
+      "Correção: o launcher parou de oferecer a mesma versão para sempre depois de instalar. O binário agora é gravado com a versão correta, então a atualização é reconhecida e o aviso some sozinho.",
+      "Correção: quando a lista oficial de servidores está fora do ar, o launcher agora oferece o servidor que a conta já usou, em vez de desabilitar o botão de entrar e travar a tela.",
+      "Novo: na mesma situação, dá para digitar o número do servidor e jogar direto — inclusive em uma conta que nunca entrou em nenhum servidor.",
+      "O launcher passa a recusar a montagem de um pacote cuja versão não bate com a da release, para que esse aviso não se repita."
+    ],
+    "en-US": [
+      "Fix: the launcher no longer offers the same version forever after you install it. The binary is now stamped with the correct version, so the update is recognized and the notice clears on its own.",
+      "Fix: when the official server list is down, the launcher now offers the server the account already used instead of disabling the enter button and stranding the screen.",
+      "New: in the same situation, you can type the server number and play directly — including on an account that never joined a server.",
+      "The launcher now refuses to package a build whose version does not match the release, so this notice cannot come back."
+    ],
+    "es-ES": [
+      "Corrección: el launcher ya no ofrece la misma versión indefinidamente después de instalarla. El binario ahora se graba con la versión correcta, así que la actualización se reconoce y el aviso desaparece solo.",
+      "Corrección: cuando la lista oficial de servidores está caída, el launcher ahora ofrece el servidor que la cuenta ya usó, en lugar de deshabilitar el botón de entrar y dejar la pantalla bloqueada.",
+      "Nuevo: en la misma situación, puedes escribir el número del servidor y jugar directamente, incluso en una cuenta que nunca entró a ningún servidor.",
+      "El launcher ahora rechaza montar un paquete cuya versión no coincide con la de la release, para que este aviso no vuelva a aparecer."
+    ]
+  }
+}
