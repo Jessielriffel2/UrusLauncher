@@ -54,7 +54,8 @@ public sealed class LauncherUpdateViewModelTests
 
         await viewModel.CheckForUpdatesAsync();
 
-        Assert.True(viewModel.IsUpdateCardVisible);
+        // Nothing to update: the card stays out of the layout and takes no space.
+        Assert.False(viewModel.IsUpdateCardVisible);
         Assert.False(viewModel.IsUpdateReadyToInstall);
         Assert.Equal("Launcher is up to date", viewModel.UpdateTitleText);
         Assert.Contains("1.0.1", viewModel.UpdateDetailText, StringComparison.Ordinal);

@@ -22,7 +22,8 @@ internal sealed class MacroOverlayWindow : Window
         ResizeMode = ResizeMode.NoResize;
         ShowInTaskbar = false;
         ShowActivated = false;
-        Topmost = true;
+        // Not Topmost: an owned window stays above its owner (the launcher or the detached game
+        // window) and hides with it, but never floats over other applications.
         AllowsTransparency = true;
         Background = Brushes.Transparent;
         IsHitTestVisible = false;
@@ -33,6 +34,15 @@ internal sealed class MacroOverlayWindow : Window
     }
 
     public Guid SessionId => _sessionId;
+
+    /// <summary>Window that shows the game surface; this overlay is owned by it.</summary>
+    public void FollowHost(nint hostWindow)
+    {
+        if (new WindowInteropHelper(this).EnsureHandle() is { } handle && handle != nint.Zero)
+        {
+            NativeWindowMethods.SetWindowOwner(handle, hostWindow);
+        }
+    }
 
     public void Apply(
         SurfaceGeometry geometry,

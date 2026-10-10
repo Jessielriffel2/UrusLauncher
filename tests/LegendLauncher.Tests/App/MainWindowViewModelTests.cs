@@ -237,7 +237,9 @@ public sealed class MainWindowViewModelTests
         Assert.False(viewModel.CanStartGame);
 
         vault.Seed(profile.CredentialKey, new CredentialSecret(profile.UserName, "vault-secret"));
-        viewModel.SelectedProfile = null;
+        // a deselection pushed by the list is refused; a new-profile flow clears it on purpose
+        viewModel.NewProfileCommand.Execute(null);
+        Assert.Null(viewModel.SelectedProfile);
         viewModel.SelectedProfile = viewModel.Profiles.Single();
         await Task.Yield();
         Assert.True(viewModel.CanStartGame);

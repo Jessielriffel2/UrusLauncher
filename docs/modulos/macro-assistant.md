@@ -18,6 +18,7 @@ A primeira versão contempla os módulos **Gemas/Cristais**, **Cosmo** e **Cliqu
 8. `DirectGameInput` localiza a janela filha da sessão e envia `WM_MOUSEMOVE`, `WM_LBUTTONDOWN`, `WM_LBUTTONUP` e, quando necessário, mensagens de tecla diretamente para a HWND.
 9. No modo **Cliques**, o controlador usa a mira como ponto alvo — centralizada na moldura quando ela está ativa — e repete `WM_*` conforme quantidade/intervalo; `0` significa infinito. Velocidade, intervalo, alvo, tamanho da moldura e região são salvos por perfil e modo.
 10. Minimizar ou ocultar o launcher, ou minimizar/ocultar a janela do jogo, cancela o loop imediatamente, esconde o overlay e impede novas capturas, análises e cliques.
+11. A moldura, o painel e a mira pertencem à janela que mostra o jogo agora (o launcher ou uma janela destacada): `MacroSessionController.FollowGameHost` troca o dono nativo (`NativeWindowMethods.SetWindowOwner` sobre `GetRootWindow`) antes de mostrar/atualizar. Assim ficam sempre acima dessa janela, somem e minimizam com ela e nunca aparecem sobre outros programas. `IsHostWindowShowing` exige a janela anfitriã visível e não minimizada, porque uma superfície dentro de uma janela minimizada ainda se diz visível.
 
 O novo caminho não chama `SetCursorPos`, `mouse_event` ou `SendInput`. Não existe fallback automático para entrada global: se o Flash/ActiveX não aceitar a mensagem direta, a sessão exibe erro em vez de sequestrar o mouse do usuário.
 
@@ -58,7 +59,7 @@ O motor precisa de Python, Pillow, OpenCV e NumPy. O empacotamento congelado do 
 | `GemMacroBridgeClient.cs` | Processo Python persistente e protocolo JSON por linha. |
 | `GameSurfaceCapture.cs` | Captura da HWND do jogo em JPEG. |
 | `DirectGameInput.cs` | Mensagens Win32 direcionadas e coordenadas locais. |
-| `MacroOverlayWindow.cs` | Overlay WPF click-through, visual e dependente da geometria da sessão. |
+| `MacroOverlayWindow.cs` | Overlay WPF click-through, visual e dependente da geometria da sessão; não é `Topmost`: é de propriedade (Win32 owner) da janela que mostra o jogo. |
 | `MacroAssistantViewModel.cs` | Comandosglobais de iniciar/parar, modo e rótulos localizados. |
 | `C:\Users\Jessiel\Documents\GemMacroAssistant\gem_macro_assistant\worker.py` | Worker de visão que reutiliza os detectores/solvers existentes sem entrada global. |
 

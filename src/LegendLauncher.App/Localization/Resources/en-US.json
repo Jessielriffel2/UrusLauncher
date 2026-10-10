@@ -282,5 +282,8 @@
   "Registration_Rejected": "The server refused the sign-up. Check the data.",
   "Registration_Failed": "The account could not be created right now. Try again shortly.",
   "Registration_Created": "Account {0} created. Profile saved: you can sign in and play.",
-  "Registration_CreatedNotSaved": "Account {0} was created, but the profile was not saved. Save a profile with that login and password to play."
+  "Registration_CreatedNotSaved": "Account {0} was created, but the profile was not saved. Save a profile with that login and password to play.",
+  "Platforms_SearchPlaceholder": "Search provider...",
+  "Platforms_SearchEmpty": "No provider found.",
+  "Macro_DragPanel": "Drag to move the panel"
 }

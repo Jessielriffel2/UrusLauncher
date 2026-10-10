@@ -9,7 +9,13 @@ internal sealed partial class MainWindowViewModel
 {
     private async Task LoadProfilesAsync(Guid? selectProfileId = null, bool preferHotPlatform = false)
     {
-        IReadOnlyList<AccountProfile> stored = await _profileStorage.GetAllAsync().ConfigureAwait(true);
+        // Profiles saved for a provider this launcher no longer offers (a removed one, or the
+        // developer-only local one) stay on disk untouched but are not listed: opening one would
+        // try its login on a provider where it does not exist.
+        IReadOnlyList<AccountProfile> stored = (await _profileStorage.GetAllAsync().ConfigureAwait(true))
+            .Where(profile => Platforms.Any(platform =>
+                ProfilePlatformCompatibility.ShareAccountIdentity(platform.Id, profile.PlatformId)))
+            .ToArray();
         Profiles.Clear();
         foreach (AccountProfile profile in stored.OrderByDescending(static profile => profile.UpdatedAtUtc))
         {
@@ -251,7 +257,7 @@ internal sealed partial class MainWindowViewModel
         try
         {
             await _profileStorage.DeleteAsync(profile.Model).ConfigureAwait(true);
-            SelectedProfile = null;
+            ClearSelectedProfile();
             await LoadProfilesAsync().ConfigureAwait(true);
             await LoadServersAsync(forceRefresh: false).ConfigureAwait(true);
             if (Profiles.Count == 0)
@@ -281,10 +287,24 @@ internal sealed partial class MainWindowViewModel
         OnPropertyChanged(nameof(HasPendingAvatarSelection));
     }
 
+    /// <summary>The only way to leave the launcher without a selected profile (new profile, delete).</summary>
+    private void ClearSelectedProfile()
+    {
+        _allowEmptyProfileSelection = true;
+        try
+        {
+            SelectedProfile = null;
+        }
+        finally
+        {
+            _allowEmptyProfileSelection = false;
+        }
+    }
+
     private void NewProfile()
     {
         IsWorkspaceVisible = false;
-        SelectedProfile = null;
+        ClearSelectedProfile();
         ProfileLabel = string.Empty;
         LoginHint = string.Empty;
         PendingPassword = string.Empty;

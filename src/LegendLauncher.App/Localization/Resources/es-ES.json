@@ -282,5 +282,8 @@
   "Registration_Rejected": "El servidor rechazó el registro. Revisa los datos.",
   "Registration_Failed": "No se pudo crear la cuenta ahora. Inténtalo de nuevo en unos instantes.",
   "Registration_Created": "Cuenta {0} creada. Perfil guardado: ya puedes entrar y jugar.",
-  "Registration_CreatedNotSaved": "La cuenta {0} se creó, pero el perfil no se guardó. Guarda un perfil con ese usuario y contraseña para jugar."
+  "Registration_CreatedNotSaved": "La cuenta {0} se creó, pero el perfil no se guardó. Guarda un perfil con ese usuario y contraseña para jugar.",
+  "Platforms_SearchPlaceholder": "Buscar proveedor...",
+  "Platforms_SearchEmpty": "No se encontró ningún proveedor.",
+  "Macro_DragPanel": "Arrastra para mover el panel"
 }

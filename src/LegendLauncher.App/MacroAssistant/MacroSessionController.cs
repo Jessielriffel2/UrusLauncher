@@ -173,18 +173,65 @@ internal sealed class MacroSessionController : ObservableObject, IMacroSession
         CancelSafely(_cancellation);
         _setupTimer.Stop();
         _saveTimer.Stop();
-        CaptureSetupState();
-        _ = PersistPreferencesAsync();
+
+        // Hide the setup panel, the frame and the aim FIRST: nothing below may keep them on screen.
+        if (_dispatcher.CheckAccess())
+        {
+            HideMacroWindows();
+        }
+        else
+        {
+            _ = _dispatcher.InvokeAsync(HideMacroWindows);
+        }
+
+        try
+        {
+            CaptureSetupState();
+            _ = PersistPreferencesAsync();
+        }
+        catch (Exception exception) when (
+            exception is InvalidOperationException or System.ComponentModel.Win32Exception)
+        {
+            // The windows may already be gone; saving the last state is best effort.
+        }
+
         _ = _dispatcher.InvokeAsync(() =>
         {
-            _setup.HideSetup();
-            _overlay.HideOverlay();
             if (!_disposed)
             {
                 SetState(MacroSessionState.Stopped);
                 SetStatus("Parado");
             }
         });
+    }
+
+    private void HideMacroWindows()
+    {
+        try
+        {
+            _setup.HideSetup();
+            _overlay.HideOverlay();
+        }
+        catch (InvalidOperationException)
+        {
+            // Closed while the launcher was shutting down.
+        }
+    }
+
+    /// <summary>
+    /// The panel, the frame and the aim belong to the window that shows the game right now (the launcher
+    /// or a detached game window): they stay above it, hide with it and never float over other apps.
+    /// </summary>
+    private void FollowGameHost()
+    {
+        nint host = NativeWindowMethods.GetRootWindow(_session.Attachment?.GameWindow ?? nint.Zero);
+        if (host == nint.Zero)
+        {
+            return;
+        }
+
+        _setup.FollowHost(host);
+        _overlay.FollowHost(host);
     }
 
     public void Dispose()
@@ -253,6 +300,7 @@ internal sealed class MacroSessionController : ObservableObject, IMacroSession
             var clickSettings = new ClickMacroSettings(
                 preferences.ClickCount,
                 TimeSpan.FromSeconds(preferences.ClickIntervalSeconds));
+            FollowGameHost();
             _setup.ShowSetup(
                 surface,
                 region,
@@ -460,6 +508,7 @@ internal sealed class MacroSessionController : ObservableObject, IMacroSession
                 return;
             }
 
+            FollowGameHost();
             _setup.ApplySurface(surface);
             _surface = surface;
             CaptureSetupState();
@@ -840,6 +889,7 @@ internal sealed class MacroSessionController : ObservableObject, IMacroSession
             SetStatus(result.Status);
             try
             {
+                FollowGameHost();
                 _overlay.Apply(geometry, result, result.Status, _overlayVisible);
             }
             catch (InvalidOperationException)
@@ -904,7 +954,9 @@ internal sealed class MacroSessionController : ObservableObject, IMacroSession
         nint gameWindow = attachment.GameWindow;
         return NativeWindowMethods.IsWindowHandle(gameWindow) &&
                NativeWindowMethods.IsWindowVisible(gameWindow) &&
-               !NativeWindowMethods.IsWindowMinimized(gameWindow);
+               !NativeWindowMethods.IsWindowMinimized(gameWindow) &&
+               // a surface inside a minimized launcher / detached window still reports itself visible
+               NativeWindowMethods.IsHostWindowShowing(gameWindow);
     }
 
     private bool IsOwnerAvailable()

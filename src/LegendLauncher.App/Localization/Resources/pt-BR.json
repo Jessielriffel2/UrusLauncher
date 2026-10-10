@@ -282,5 +282,8 @@
   "Registration_Rejected": "O servidor recusou o cadastro. Confira os dados.",
   "Registration_Failed": "Não foi possível criar a conta agora. Tente novamente em instantes.",
   "Registration_Created": "Conta {0} criada. Perfil salvo: já pode entrar e jogar.",
-  "Registration_CreatedNotSaved": "Conta {0} criada, mas o perfil não foi salvo. Salve o perfil com esse login e a senha para jogar."
+  "Registration_CreatedNotSaved": "Conta {0} criada, mas o perfil não foi salvo. Salve o perfil com esse login e a senha para jogar.",
+  "Platforms_SearchPlaceholder": "Buscar provedor...",
+  "Platforms_SearchEmpty": "Nenhum provedor encontrado.",
+  "Macro_DragPanel": "Arraste para mover o painel"
 }

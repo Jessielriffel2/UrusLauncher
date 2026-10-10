@@ -185,6 +185,7 @@
                             Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
+                            Padding="{TemplateBinding Padding}"
                             CornerRadius="9">
                         <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                                           VerticalAlignment="Center" />
@@ -223,6 +224,7 @@
                             Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
+                            Padding="{TemplateBinding Padding}"
                             CornerRadius="7">
                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
@@ -315,12 +317,27 @@
         </Setter>
     </Style>
 
+    <LinearGradientBrush x:Key="HotProviderBrush" StartPoint="0,0" EndPoint="1,0">
+        <GradientStop Color="#3A1B22" Offset="0" />
+        <GradientStop Color="#1D2A3A" Offset="1" />
+    </LinearGradientBrush>
+
     <Style x:Key="PlatformComboItemStyle" TargetType="ComboBoxItem">
         <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="Padding" Value="12,9" />
         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
         <Style.Triggers>
+            <!-- The highlighted provider (SwordOnline) stands out: taller, bigger, tinted, with an edge. -->
+            <DataTrigger Binding="{Binding IsHot}" Value="True">
+                <Setter Property="Padding" Value="14,15" />
+                <Setter Property="FontSize" Value="17" />
+                <Setter Property="FontWeight" Value="Bold" />
+                <Setter Property="Margin" Value="0,0,0,6" />
+                <Setter Property="Background" Value="{StaticResource HotProviderBrush}" />
+                <Setter Property="BorderBrush" Value="#FF5A5A" />
+                <Setter Property="BorderThickness" Value="3,0,0,0" />
+            </DataTrigger>
             <Trigger Property="IsHighlighted" Value="True">
                 <Setter Property="Background" Value="{StaticResource SurfaceRaisedBrush}" />
             </Trigger>
@@ -377,14 +394,39 @@
                                Focusable="False"
                                StaysOpen="False">
                             <Border MinWidth="340"
-                                    Margin="0,5,0,0" Padding="4" CornerRadius="9"
+                                    Margin="0,5,0,0" Padding="6" CornerRadius="9"
                                     Background="#0A1727" BorderBrush="{StaticResource BorderStrongBrush}" BorderThickness="1">
-                                <ScrollViewer MaxHeight="260"
-                                              CanContentScroll="True"
-                                              VerticalScrollBarVisibility="Auto">
-                                    <StackPanel IsItemsHost="True"
-                                                KeyboardNavigation.DirectionalNavigation="Contained" />
-                                </ScrollViewer>
+                                <StackPanel>
+                                    <TextBox x:Name="PART_PlatformSearch"
+                                             Style="{StaticResource SearchInputStyle}"
+                                             Height="38"
+                                             Margin="0,0,0,8"
+                                             Tag="{Binding DataContext.PlatformSearchPlaceholder, RelativeSource={RelativeSource TemplatedParent}}"
+                                             Text="{Binding DataContext.PlatformSearchText, RelativeSource={RelativeSource TemplatedParent}, UpdateSourceTrigger=PropertyChanged}"
+                                             AutomationProperties.Name="{Binding DataContext.PlatformSearchPlaceholder, RelativeSource={RelativeSource TemplatedParent}}" />
+                                    <ScrollViewer MaxHeight="300"
+                                                  CanContentScroll="True"
+                                                  VerticalScrollBarVisibility="Auto">
+                                        <StackPanel IsItemsHost="True"
+                                                    KeyboardNavigation.DirectionalNavigation="Contained" />
+                                    </ScrollViewer>
+                                    <TextBlock Text="{Binding DataContext.PlatformSearchEmptyText, RelativeSource={RelativeSource TemplatedParent}}"
+                                               Margin="10,12,10,10"
+                                               FontSize="12"
+                                               Foreground="{StaticResource TextMutedBrush}"
+                                               TextWrapping="Wrap">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding DataContext.ShowPlatformSearchEmpty, RelativeSource={RelativeSource TemplatedParent}}" Value="True">
+                                                        <Setter Property="Visibility" Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </StackPanel>
                             </Border>
                         </Popup>
                     </Grid>

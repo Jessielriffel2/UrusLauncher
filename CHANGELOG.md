@@ -2,6 +2,23 @@
 
 As mudanças relevantes do Urus Launcher são registradas aqui. As versões públicas seguem versionamento semântico e são publicadas em `vMAJOR.MINOR.PATCH`.
 
+## 1.1.19 — 10/10/2026
+
+### Corrigido
+
+- **Botões "coladinhos" nas pontas**: os templates de `PrimaryButtonStyle` e `SecondaryButtonStyle` ignoravam o `Padding` (o conteúdo ia direto na borda). Agora repassam `Padding` ao conteúdo (`Themes/Controls.xaml`); botões de ícone mantêm `Padding="0"`.
+- **Cartão de atualização**: só aparece quando há atualização para agir (baixando, pronta, instalando, ou falha de uma atualização conhecida); "launcher atualizado" e a verificação silenciosa não ocupam mais espaço (`IsUpdateCardVisible`). Título e texto ganham a largura toda e os botões INSTALAR e VER NOVIDADES ficam numa linha própria, maiores e com folga.
+- **Modal de Novidades**: botão FECHAR mais baixo, com respiro nas laterais.
+- **Perfil nunca fica desmarcado**: com perfis na lista, o ViewModel recusa a desseleção empurrada pela lista (Ctrl+clique, lista reconstruída) e a lista volta a marcar o perfil; só "novo perfil", "excluir" e "criar conta" limpam a seleção de propósito (`ClearSelectedProfile`).
+- **Macro Assistant embutido no launcher**: a moldura, o painel e a mira (`MacroSetupWindow`, `MacroOverlayWindow`) deixaram de ser `Topmost`; passam a ser **de propriedade** da janela que mostra o jogo (o launcher ou a janela destacada, via `SetWindowOwner`/`GetRootWindow`), então ficam acima dela, escondem e minimizam junto e nunca flutuam sobre outros programas. A checagem de disponibilidade agora também exige que a janela anfitriã esteja visível e não minimizada (uma superfície dentro de janela minimizada continuava "visível"). `Stop()` esconde tudo primeiro, antes de salvar. A entrada continua só por `PostMessage` na HWND do jogo (não usa o mouse do jogador).
+
+### Alterado
+
+- **Painel do Macro Assistant** redesenhado: mais largo, campos numéricos com setas dentro de uma moldura arredondada (não são mais cortados), botões Play/Parar arredondados e iguais, divisor e texto maior.
+- **Seletor de provedores**: caixa de busca no topo do dropdown (filtra ignorando maiúsculas e acentos; "Nenhum provedor encontrado" quando vazio; fechar o dropdown limpa a busca) e o provedor em destaque (SwordOnline) fica maior, em negrito e com faixa lateral.
+- **Só o SwordOnline é oferecido**: o launcher público lista apenas o SwordOnline. Elarionis, OAS e 7wan saíram de `LauncherComposition` porque não funcionavam (catálogo OAS responde 403 da Cloudflare, login OAS recusado com 403, todos os servidores do 7wan encerrados). Os projetos e os testes continuam no repositório, desligados; o App deixou de referenciar Elarionis e 7wan.
+- **Perfis de provedores que não existem mais** (ou do provedor de desenvolvimento) deixam de ser listados, mas continuam no disco sem alteração (`LoadProfilesAsync`).
+
 ## 1.1.18 — 10/10/2026
 
 ### Corrigido

@@ -45,7 +45,7 @@ internal sealed class MacroSetupWindow : Window
         WindowStyle = WindowStyle.None;
         ResizeMode = ResizeMode.NoResize;
         ShowInTaskbar = false;
-        Topmost = true;
+        // Not Topmost: owned by the window that shows the game, so it hides and minimizes with it.
         ShowActivated = true;
         AllowsTransparency = true;
         Background = Brushes.Transparent;
@@ -126,30 +126,56 @@ internal sealed class MacroSetupWindow : Window
         // move it out of the way to see the whole game area.
         _panel = new Border
         {
-            Width = 300,
-            Padding = new Thickness(12),
-            Background = new SolidColorBrush(Color.FromArgb(242, 5, 16, 29)),
-            BorderBrush = new SolidColorBrush(Color.FromRgb(44, 96, 124)),
+            Width = 340,
+            Padding = new Thickness(20, 16, 20, 18),
+            Background = new SolidColorBrush(Color.FromArgb(246, 4, 13, 24)),
+            BorderBrush = new SolidColorBrush(Color.FromArgb(150, 35, 230, 255)),
             BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(8),
+            CornerRadius = new CornerRadius(16),
             HorizontalAlignment = HorizontalAlignment.Left,
             VerticalAlignment = VerticalAlignment.Top,
             Margin = new Thickness(12),
+            Effect = new System.Windows.Media.Effects.DropShadowEffect
+            {
+                Color = Color.FromRgb(35, 230, 255),
+                BlurRadius = 24,
+                ShadowDepth = 0,
+                Opacity = 0.22,
+            },
         };
         var panelContent = new StackPanel();
-        panelContent.Children.Add(new TextBlock
+
+        var header = new Grid();
+        header.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        header.Children.Add(new TextBlock
         {
             Text = Localize("Macro_SetupTitle", "Macro Assistant"),
             Foreground = Brushes.White,
-            FontSize = 15,
+            FontSize = 17,
             FontWeight = FontWeights.SemiBold,
+            VerticalAlignment = VerticalAlignment.Center,
         });
+        var grip = new TextBlock
+        {
+            Text = "⠿",
+            Foreground = new SolidColorBrush(Color.FromRgb(98, 140, 165)),
+            FontSize = 16,
+            VerticalAlignment = VerticalAlignment.Center,
+            IsHitTestVisible = false,
+            ToolTip = Localize("Macro_DragPanel", "Arraste para mover o painel"),
+        };
+        Grid.SetColumn(grip, 1);
+        header.Children.Add(grip);
+        panelContent.Children.Add(header);
+
         _hint = new TextBlock
         {
             Text = Localize("Macro_SetupHintVision", "Arraste a moldura para cobrir a área de análise."),
             Foreground = new SolidColorBrush(Color.FromRgb(173, 194, 211)),
-            FontSize = 10.5,
-            Margin = new Thickness(0, 4, 0, 9),
+            FontSize = 12,
+            LineHeight = 17,
+            Margin = new Thickness(0, 6, 0, 12),
             TextWrapping = TextWrapping.Wrap,
         };
         panelContent.Children.Add(_hint);
@@ -157,64 +183,45 @@ internal sealed class MacroSetupWindow : Window
         {
             Text = Localize("Macro_SetupStatus", "Ajuste a bolinha e pressione Play."),
             Foreground = new SolidColorBrush(Color.FromRgb(255, 223, 107)),
-            FontSize = 10.5,
+            FontSize = 12,
+            FontWeight = FontWeights.SemiBold,
             TextWrapping = TextWrapping.Wrap,
-            Margin = new Thickness(0, 0, 0, 9),
+            Margin = new Thickness(0, 0, 0, 14),
         };
         AutomationProperties.SetName(_status, "Macro setup status");
         panelContent.Children.Add(_status);
+        panelContent.Children.Add(new Border
+        {
+            Height = 1,
+            Background = new SolidColorBrush(Color.FromArgb(70, 98, 140, 165)),
+            Margin = new Thickness(0, 0, 0, 14),
+        });
 
         _clickSettingsPanel = new StackPanel
         {
             Orientation = Orientation.Vertical,
-            Margin = new Thickness(0, 0, 0, 9),
             Visibility = Visibility.Collapsed,
         };
-        var countRow = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 5) };
-        countRow.Children.Add(new TextBlock
-        {
-            Text = Localize("Macro_CountLabel", "Quantidade (0 = infinito)"),
-            Width = 184,
-            Foreground = Brushes.White,
-            VerticalAlignment = VerticalAlignment.Center,
-            FontSize = 10.5,
-        });
         _clickCountInput = CreateNumericInput("0", 1, 0, 9999, out Grid countHost);
-        countRow.Children.Add(countHost);
-        _clickSettingsPanel.Children.Add(countRow);
-
-        var intervalRow = new StackPanel { Orientation = Orientation.Horizontal };
-        intervalRow.Children.Add(new TextBlock
-        {
-            Text = Localize("Macro_IntervalLabel", "Intervalo entre cliques (s)"),
-            Width = 184,
-            Foreground = Brushes.White,
-            VerticalAlignment = VerticalAlignment.Center,
-            FontSize = 10.5,
-        });
+        _clickSettingsPanel.Children.Add(CreateFieldRow(
+            Localize("Macro_CountLabel", "Quantidade (0 = infinito)"),
+            countHost));
         _clickIntervalInput = CreateNumericInput("0.10", 0.10, 0.01, 3600, out Grid intervalHost);
-        intervalRow.Children.Add(intervalHost);
-        _clickSettingsPanel.Children.Add(intervalRow);
+        _clickSettingsPanel.Children.Add(CreateFieldRow(
+            Localize("Macro_IntervalLabel", "Intervalo entre cliques (s)"),
+            intervalHost));
         panelContent.Children.Add(_clickSettingsPanel);
 
-        var speedRow = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 7) };
-        speedRow.Children.Add(new TextBlock
-        {
-            Text = Localize("Macro_SpeedLabel", "Velocidade (0,25x–4x)"),
-            Width = 184,
-            Foreground = Brushes.White,
-            VerticalAlignment = VerticalAlignment.Center,
-            FontSize = 10.5,
-        });
         _speedInput = CreateNumericInput("1.0", 0.10, 0.25, 4.0, out Grid speedHost);
         _speedInput.TextChanged += SpeedInputOnTextChanged;
-        speedRow.Children.Add(speedHost);
-        panelContent.Children.Add(speedRow);
+        panelContent.Children.Add(CreateFieldRow(
+            Localize("Macro_SpeedLabel", "Velocidade (0,25x–4x)"),
+            speedHost));
 
         _largeFrameToggle = new ToggleButton
         {
-            Width = 40,
-            Height = 22,
+            Width = 44,
+            Height = 24,
             Cursor = Cursors.Hand,
             Focusable = true,
             Template = CreateLargeFrameToggleTemplate(),
@@ -224,7 +231,7 @@ internal sealed class MacroSetupWindow : Window
         _largeFrameToggleRow = new StackPanel
         {
             Orientation = Orientation.Horizontal,
-            Margin = new Thickness(0, 0, 0, 9),
+            Margin = new Thickness(0, 2, 0, 14),
             VerticalAlignment = VerticalAlignment.Center,
         };
         _largeFrameToggleRow.Children.Add(_largeFrameToggle);
@@ -232,20 +239,24 @@ internal sealed class MacroSetupWindow : Window
         {
             Text = Localize("Macro_LargeFrame", "Usar moldura grande"),
             Foreground = Brushes.White,
-            FontSize = 10.5,
+            FontSize = 12.5,
             VerticalAlignment = VerticalAlignment.Center,
-            Margin = new Thickness(9, 0, 0, 0),
+            Margin = new Thickness(12, 0, 0, 0),
         });
         panelContent.Children.Add(_largeFrameToggleRow);
 
-        var buttons = new StackPanel { Orientation = Orientation.Horizontal };
-        _playButton = CreateButton("Play", new SolidColorBrush(Color.FromRgb(34, 120, 78)));
+        var buttons = new Grid { Margin = new Thickness(0, 4, 0, 0) };
+        buttons.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        buttons.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(12) });
+        buttons.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        _playButton = CreateButton("Play", Color.FromRgb(34, 138, 90));
         _playButton.Content = Localize("Macro_Play", "Play");
         _stopButton = CreateButton(
             Localize("Macro_Stop", "Parar"),
-            new SolidColorBrush(Color.FromRgb(100, 42, 52)));
+            Color.FromRgb(150, 56, 70));
         _playButton.Click += PlayButtonOnClick;
         _stopButton.Click += StopButtonOnClick;
+        Grid.SetColumn(_stopButton, 2);
         buttons.Children.Add(_playButton);
         buttons.Children.Add(_stopButton);
         panelContent.Children.Add(buttons);
@@ -257,7 +268,7 @@ internal sealed class MacroSetupWindow : Window
             BorderThickness = new Thickness(0),
             Cursor = Cursors.SizeAll,
             Focusable = false,
-            Height = 34,
+            Height = 40,
             VerticalAlignment = VerticalAlignment.Top,
         };
         panelDragThumb.DragDelta += PanelDragDelta;
@@ -494,6 +505,15 @@ internal sealed class MacroSetupWindow : Window
 
     public void HideSetup() => Hide();
 
+    /// <summary>Window that shows the game surface; this panel is owned by it.</summary>
+    public void FollowHost(nint hostWindow)
+    {
+        if (new WindowInteropHelper(this).EnsureHandle() is { } handle && handle != nint.Zero)
+        {
+            NativeWindowMethods.SetWindowOwner(handle, hostWindow);
+        }
+    }
+
     private static string Localize(string key, string fallback) =>
         LocalizationService.Current.Get(key) is string value && value != $"[{key}]"
             ? value
@@ -513,9 +533,29 @@ internal sealed class MacroSetupWindow : Window
             VerticalContentAlignment = VerticalAlignment.Center,
         };
 
+    /// <summary>One settings row: the label takes the free width and the field has a fixed one.</summary>
+    private static Grid CreateFieldRow(string label, UIElement field)
+    {
+        var row = new Grid { Margin = new Thickness(0, 0, 0, 12) };
+        row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        row.Children.Add(new TextBlock
+        {
+            Text = label,
+            Foreground = Brushes.White,
+            FontSize = 12.5,
+            TextWrapping = TextWrapping.Wrap,
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(0, 0, 14, 0),
+        });
+        Grid.SetColumn(field, 1);
+        row.Children.Add(field);
+        return row;
+    }
+
     /// <summary>
-    /// Builds a numeric field with up/down arrows. The arrows replace the default clear
-    /// adornment and step the value by a fixed amount, keeping the dot as the separator.
+    /// Builds a numeric field with up/down arrows inside one rounded frame. The arrows step the value
+    /// by a fixed amount, keeping the dot as the separator.
     /// </summary>
     private static TextBox CreateNumericInput(
         string text,
@@ -527,29 +567,49 @@ internal sealed class MacroSetupWindow : Window
         var input = new TextBox
         {
             Text = text,
-            Height = 25,
-            Padding = new Thickness(5, 2, 18, 2),
-            Background = new SolidColorBrush(Color.FromRgb(8, 24, 40)),
+            Height = 34,
+            Padding = new Thickness(10, 0, 4, 0),
+            Background = Brushes.Transparent,
             Foreground = Brushes.White,
-            BorderBrush = new SolidColorBrush(Color.FromRgb(71, 119, 142)),
-            BorderThickness = new Thickness(1),
+            CaretBrush = Brushes.White,
+            BorderThickness = new Thickness(0),
+            FontSize = 13,
             VerticalContentAlignment = VerticalAlignment.Center,
         };
         AutomationProperties.SetName(input, text);
 
-        var arrows = new StackPanel
-        {
-            Orientation = Orientation.Vertical,
-            HorizontalAlignment = HorizontalAlignment.Right,
-            VerticalAlignment = VerticalAlignment.Center,
-            Margin = new Thickness(0, 0, 1, 0),
-        };
-        arrows.Children.Add(CreateStepButton("▲", step, minimum, maximum, input, increase: true));
-        arrows.Children.Add(CreateStepButton("▼", step, minimum, maximum, input, increase: false));
+        var arrows = new Grid { Width = 28, Margin = new Thickness(0) };
+        arrows.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+        arrows.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+        Button up = CreateStepButton("▲", step, minimum, maximum, input, increase: true);
+        Button down = CreateStepButton("▼", step, minimum, maximum, input, increase: false);
+        Grid.SetRow(down, 1);
+        arrows.Children.Add(up);
+        arrows.Children.Add(down);
 
-        host = new Grid { Width = 82, Height = 25 };
-        host.Children.Add(input);
-        host.Children.Add(arrows);
+        var inner = new Grid();
+        inner.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        inner.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        inner.Children.Add(input);
+        Grid.SetColumn(arrows, 1);
+        inner.Children.Add(arrows);
+
+        var frame = new Border
+        {
+            CornerRadius = new CornerRadius(9),
+            BorderThickness = new Thickness(1),
+            BorderBrush = new SolidColorBrush(Color.FromRgb(71, 119, 142)),
+            Background = new SolidColorBrush(Color.FromRgb(8, 24, 40)),
+            ClipToBounds = true,
+            Child = inner,
+        };
+        input.GotKeyboardFocus += (_, _) =>
+            frame.BorderBrush = new SolidColorBrush(Color.FromRgb(35, 230, 255));
+        input.LostKeyboardFocus += (_, _) =>
+            frame.BorderBrush = new SolidColorBrush(Color.FromRgb(71, 119, 142));
+
+        host = new Grid { Width = 124, Height = 34 };
+        host.Children.Add(frame);
         return input;
     }
 
@@ -564,16 +624,14 @@ internal sealed class MacroSetupWindow : Window
         var button = new Button
         {
             Content = glyph,
-            Width = 17,
-            Height = 12,
             Padding = new Thickness(0),
-            FontSize = 6.5,
-            Background = new SolidColorBrush(Color.FromRgb(13, 33, 51)),
+            FontSize = 8,
             Foreground = new SolidColorBrush(Color.FromRgb(168, 215, 239)),
-            BorderBrush = new SolidColorBrush(Color.FromRgb(47, 86, 107)),
-            BorderThickness = new Thickness(0.5),
+            Background = new SolidColorBrush(Color.FromRgb(13, 33, 51)),
+            BorderThickness = new Thickness(0),
             Cursor = Cursors.Hand,
             Focusable = false,
+            Template = CreateFlatButtonTemplate(0),
         };
         button.Click += (_, _) => StepInputValue(input, step, minimum, maximum, increase);
         AutomationProperties.SetName(
@@ -582,6 +640,39 @@ internal sealed class MacroSetupWindow : Window
                 ? Localize("Macro_IncreaseValue", "Aumentar valor")
                 : Localize("Macro_DecreaseValue", "Diminuir valor"));
         return button;
+    }
+
+    /// <summary>Flat button chrome with a hover state; <paramref name="radius"/> rounds the corners.</summary>
+    private static ControlTemplate CreateFlatButtonTemplate(double radius)
+    {
+        var template = new ControlTemplate(typeof(Button));
+        var border = new FrameworkElementFactory(typeof(Border), "Chrome");
+        border.SetValue(Border.CornerRadiusProperty, new CornerRadius(radius));
+        border.SetBinding(Border.BackgroundProperty, new System.Windows.Data.Binding("Background")
+        {
+            RelativeSource = new System.Windows.Data.RelativeSource(System.Windows.Data.RelativeSourceMode.TemplatedParent),
+        });
+        border.SetBinding(Border.BorderBrushProperty, new System.Windows.Data.Binding("BorderBrush")
+        {
+            RelativeSource = new System.Windows.Data.RelativeSource(System.Windows.Data.RelativeSourceMode.TemplatedParent),
+        });
+        border.SetBinding(Border.BorderThicknessProperty, new System.Windows.Data.Binding("BorderThickness")
+        {
+            RelativeSource = new System.Windows.Data.RelativeSource(System.Windows.Data.RelativeSourceMode.TemplatedParent),
+        });
+        var presenter = new FrameworkElementFactory(typeof(ContentPresenter));
+        presenter.SetValue(FrameworkElement.HorizontalAlignmentProperty, HorizontalAlignment.Center);
+        presenter.SetValue(FrameworkElement.VerticalAlignmentProperty, VerticalAlignment.Center);
+        border.AppendChild(presenter);
+        template.VisualTree = border;
+
+        var hover = new Trigger { Property = UIElement.IsMouseOverProperty, Value = true };
+        hover.Setters.Add(new Setter(UIElement.OpacityProperty, 0.86, "Chrome"));
+        template.Triggers.Add(hover);
+        var pressed = new Trigger { Property = System.Windows.Controls.Primitives.ButtonBase.IsPressedProperty, Value = true };
+        pressed.Setters.Add(new Setter(UIElement.OpacityProperty, 0.7, "Chrome"));
+        template.Triggers.Add(pressed);
+        return template;
     }
 
     private static void StepInputValue(
@@ -604,20 +695,20 @@ internal sealed class MacroSetupWindow : Window
         input.Focus();
     }
 
-    private static Button CreateButton(string text, Brush background)
+    private static Button CreateButton(string text, Color background)
     {
         var button = new Button
         {
             Content = text,
-            Width = 88,
-            Height = 30,
-            Margin = new Thickness(0, 0, 8, 0),
-            Background = background,
+            Height = 40,
+            Background = new SolidColorBrush(background),
             Foreground = Brushes.White,
-            BorderBrush = Brushes.White,
+            BorderBrush = new SolidColorBrush(Color.FromArgb(120, 255, 255, 255)),
             BorderThickness = new Thickness(1),
+            FontSize = 13.5,
             FontWeight = FontWeights.SemiBold,
             Cursor = Cursors.Hand,
+            Template = CreateFlatButtonTemplate(10),
         };
         AutomationProperties.SetName(button, text);
         return button;

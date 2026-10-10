@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "version": "1.1.19",
+  "title": {
+    "pt-BR": "Launcher mais enxuto e mais bonito",
+    "en-US": "A leaner, nicer launcher",
+    "es-ES": "Un launcher más ligero y más bonito"
+  },
+  "notes": {
+    "pt-BR": [
+      "Agora o launcher oferece só o SwordOnline: OAS, 7wan e Elarionis saíram da lista porque não estavam funcionando.",
+      "Novo: caixa de busca no seletor de provedores, e o SwordOnline aparece em destaque.",
+      "O perfil nunca fica desmarcado: se a lista tentar desmarcar, o launcher mantém a conta selecionada e o botão ENTRAR E JOGAR continua liberado.",
+      "O aviso de atualização só aparece quando existe uma atualização nova, e os botões ganharam folga e ficaram maiores.",
+      "Botões do launcher inteiro com espaçamento interno correto (nada mais colado nas bordas), incluindo o FECHAR das Novidades.",
+      "Macro Assistant: a moldura, o painel e a mira agora ficam presos à janela do jogo. Ao minimizar o launcher, tudo some junto e nada fica sobre outros programas. O painel foi redesenhado."
+    ],
+    "en-US": [
+      "The launcher now offers only SwordOnline: OAS, 7wan and Elarionis were removed from the list because they were not working.",
+      "New: search box in the provider selector, and SwordOnline stands out.",
+      "A profile is never left unselected: if the list tries to deselect it, the launcher keeps the account selected and the ENTER AND PLAY button stays enabled.",
+      "The update notice only shows when there is a new update, and its buttons are bigger with more room.",
+      "Buttons across the launcher have proper inner spacing (nothing glued to the edges), including CLOSE in What's new.",
+      "Macro Assistant: the frame, the panel and the aim are now tied to the game window. Minimizing the launcher hides everything together and nothing stays over other programs. The panel was redesigned."
+    ],
+    "es-ES": [
+      "Ahora el launcher ofrece solo SwordOnline: OAS, 7wan y Elarionis salieron de la lista porque no funcionaban.",
+      "Nuevo: cuadro de búsqueda en el selector de proveedores, y SwordOnline aparece destacado.",
+      "El perfil nunca queda sin seleccionar: si la lista intenta deseleccionarlo, el launcher mantiene la cuenta seleccionada y el botón ENTRAR Y JUGAR sigue habilitado.",
+      "El aviso de actualización solo aparece cuando hay una actualización nueva, y sus botones son más grandes y con más espacio.",
+      "Los botones de todo el launcher tienen el espaciado interno correcto (nada pegado a los bordes), incluido CERRAR en Novedades.",
+      "Macro Assistant: el marco, el panel y la mira ahora quedan ligados a la ventana del juego. Al minimizar el launcher, todo desaparece junto y nada queda sobre otros programas. El panel fue rediseñado."
+    ]
+  }
+}

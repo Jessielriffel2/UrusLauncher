@@ -21,6 +21,8 @@ internal static class NativeWindowMethods
 
     private const int WindowLongStyle = -16;
     private const int WindowLongExStyle = -20;
+    private const int WindowLongOwner = -8;
+    private const uint GetAncestorRoot = 2;
     private const uint StaticBlackRectangle = 0x00000004;
     private const uint WindowExStyleLayered = 0x00080000;
     private const uint WindowExStyleNoActivate = 0x08000000;
@@ -125,6 +127,48 @@ internal static class NativeWindowMethods
 
     internal static bool IsWindowMinimized(nint windowHandle) =>
         windowHandle != nint.Zero && IsIconic(windowHandle);
+
+    /// <summary>
+    /// The top-level window that currently shows <paramref name="window"/>: the launcher itself or a
+    /// detached game window. Zero when the handle is not valid.
+    /// </summary>
+    internal static nint GetRootWindow(nint window) =>
+        window != nint.Zero && IsWindow(window) ? GetAncestor(window, GetAncestorRoot) : nint.Zero;
+
+    /// <summary>
+    /// Whether the window that hosts the game surface can be seen: a surface whose launcher (or detached
+    /// window) is minimized still reports itself visible, so the host has to be checked as well.
+    /// </summary>
+    internal static bool IsHostWindowShowing(nint gameWindow)
+    {
+        nint root = GetRootWindow(gameWindow);
+        return root != nint.Zero && IsWindowVisibleNative(root) && !IsIconic(root);
+    }
+
+    /// <summary>
+    /// Makes <paramref name="owner"/> the Win32 owner of the top-level <paramref name="window"/>: an owned
+    /// window always stays above its owner, hides when the owner is minimized and never floats over
+    /// other applications. Works on a visible window, unlike WPF's <c>Window.Owner</c>.
+    /// </summary>
+    internal static void SetWindowOwner(nint window, nint owner)
+    {
+        if (window == nint.Zero || owner == nint.Zero || window == owner)
+        {
+            return;
+        }
+
+        nint current = IntPtr.Size == 8
+            ? GetWindowLongPtr64(window, WindowLongOwner)
+            : new nint(GetWindowLong32(window, WindowLongOwner));
+        if (current == owner)
+        {
+            return;
+        }
+
+        _ = IntPtr.Size == 8
+            ? SetWindowLongPtr64(window, WindowLongOwner, owner)
+            : new nint(SetWindowLong32(window, WindowLongOwner, owner.ToInt32()));
+    }
 
     internal static uint GetWindowProcessId(nint windowHandle)
     {
@@ -414,6 +458,9 @@ internal static class NativeWindowMethods
 
     [DllImport("user32.dll")]
     private static extern nint GetParent(nint windowHandle);
+
+    [DllImport("user32.dll")]
+    private static extern nint GetAncestor(nint windowHandle, uint flags);
 
     [DllImport("user32.dll", EntryPoint = "GetWindowLongPtrW", SetLastError = true)]
     private static extern nint GetWindowLongPtr64(nint windowHandle, int index);

@@ -27,7 +27,17 @@ internal sealed partial class MainWindowViewModel
 
     public RelayCommand CloseUpdateNotesCommand { get; private set; } = null!;
 
-    public bool IsUpdateCardVisible => _updateState != LauncherUpdateState.Idle;
+    /// <summary>
+    /// The card appears only when there is an update to act on (downloading, ready, installing, or a
+    /// failed attempt to get a known update). Idle, checking and "already up to date" keep it out of
+    /// the layout so it takes no space.
+    /// </summary>
+    public bool IsUpdateCardVisible =>
+        _updateState is
+            LauncherUpdateState.Downloading or
+            LauncherUpdateState.ReadyToInstall or
+            LauncherUpdateState.Installing ||
+        (_updateState == LauncherUpdateState.Failed && _availableUpdate is not null);
 
     public bool IsUpdateReadyToInstall =>
         _updateState == LauncherUpdateState.ReadyToInstall;

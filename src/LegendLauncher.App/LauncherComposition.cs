@@ -13,9 +13,6 @@ using LegendLauncher.Infrastructure.Paths;
 using LegendLauncher.Infrastructure.Persistence;
 using LegendLauncher.Infrastructure.Runtime;
 using LegendLauncher.Infrastructure.Security;
-using LegendLauncher.Providers.Oas;
-using LegendLauncher.Providers.SevenWan;
-using LegendLauncher.Providers.Elarionis;
 using LegendLauncher.Providers.SwordOnline;
 #if LOREBORN_LOCAL
 using LegendLauncher.Providers.Local;
@@ -41,54 +38,18 @@ internal static class LauncherComposition
         var profilePreferences = new ProfilePreferencesStore(paths.ProfilePreferencesFile);
         var avatarStore = new ProfileAvatarStore(paths.ProfileAvatarsDirectory);
 
-        var cache = new JsonServerCatalogCache(paths.CatalogCacheFile);
         var profiles = new JsonProfileStore(paths.ProfilesFile);
         var credentialVault = new WindowsCredentialVault();
         LocalizationService localization = LocalizationService.Current;
-        Action<Exception, string> onCatalogFailure = (exception, platformId) =>
-            DiagnosticLog.Current.WriteFailure(
-                "catalog.remote",
-                "The remote server catalog failed; a local cache will be used if one exists.",
-                exception,
-                ("platformId", platformId));
-        var oasServerDirectory = new OasServerDirectory(
-            httpClient,
-            cache,
-            onRecoverableFailure: onCatalogFailure);
-        var sevenWanServerDirectory = new SevenWanServerDirectory(
-            httpClient,
-            cache,
-            onRecoverableFailure: onCatalogFailure);
-        var oasAuthentication = new OasAuthenticationService();
-        var sevenWanAuthentication = new UnavailablePlatformAuthenticationService(
-            "sevenwan_service_unavailable",
-            "O catálogo 7wan foi reconhecido, mas seus servidores estão marcados como encerrados pela plataforma.");
-        var elarionisServerDirectory = new ElarionisServerDirectory(
-            httpClient,
-            cache,
-            onRecoverableFailure: onCatalogFailure);
-        var elarionisAuthentication = new ElarionisAuthenticationService();
         var swordOnlineServerDirectory = new SwordOnlineServerDirectory();
         var swordOnlineAuthentication = new SwordOnlineAuthenticationService(httpClient);
-        // SwordOnline is listed first: PlatformAdapterRegistry keeps this order and the launcher
-        // opens with the first platform selected.
+        // SwordOnline is the only public provider: the OAS and 7wan catalogs stopped answering (the
+        // OAS edge answers 403 and every 7wan server is closed), so they are no longer offered.
         var adapters = SwordOnlinePlatformCatalog.All
             .Select(platform => new PlatformAdapter(
                 platform,
                 swordOnlineServerDirectory,
-                swordOnlineAuthentication))
-            .Concat(OasPlatformCatalog.All.Select(platform => new PlatformAdapter(
-                platform,
-                oasServerDirectory,
-                oasAuthentication)))
-            .Concat(SevenWanPlatformCatalog.All.Select(platform => new PlatformAdapter(
-                platform,
-                sevenWanServerDirectory,
-                sevenWanAuthentication)))
-            .Concat(ElarionisPlatformCatalog.All.Select(platform => new PlatformAdapter(
-                platform,
-                elarionisServerDirectory,
-                elarionisAuthentication)));
+                swordOnlineAuthentication));
 #if LOREBORN_LOCAL
         // Developer-only: LOReborn running on this machine. Compiled out of public releases
         // (IncludeLocalProvider=false), so it cannot be enabled by an end user.

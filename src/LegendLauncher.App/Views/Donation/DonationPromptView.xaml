@@ -347,6 +347,7 @@
 
                     <Button Width="38"
                             Height="38"
+                            Padding="0"
                             Margin="0,-17,-17,0"
                             HorizontalAlignment="Right"
                             VerticalAlignment="Top"

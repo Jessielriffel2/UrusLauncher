@@ -170,6 +170,30 @@ public partial class MainWindow : Window
         eventArgs.Handled = true;
     }
 
+    private void PlatformSelector_OnDropDownOpened(object? sender, EventArgs eventArgs)
+    {
+        if (sender is not ComboBox selector)
+        {
+            return;
+        }
+
+        // Put the cursor in the search box so typing filters the providers right away.
+        Dispatcher.BeginInvoke(
+            () =>
+            {
+                if (selector.Template.FindName("PART_PlatformSearch", selector) is TextBox box)
+                {
+                    box.Focus();
+                }
+            },
+            System.Windows.Threading.DispatcherPriority.Input);
+    }
+
+    private void PlatformSelector_OnDropDownClosed(object? sender, EventArgs eventArgs)
+    {
+        _viewModel.ResetPlatformSearch();
+    }
+
     private void ComboBoxSelector_OnPreviewKeyDown(object sender, KeyEventArgs eventArgs)
     {
         if (sender is not ComboBox selector || selector.IsDropDownOpen)

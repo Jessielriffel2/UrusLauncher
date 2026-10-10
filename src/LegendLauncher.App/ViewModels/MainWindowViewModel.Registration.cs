@@ -292,7 +292,7 @@ internal sealed partial class MainWindowViewModel
         bool keepTypedLabel = _registrationOpenedFromEditor &&
             SelectedProfile is null &&
             !string.IsNullOrWhiteSpace(ProfileLabel);
-        SelectedProfile = null;
+        ClearSelectedProfile();
         ProfileLabel = keepTypedLabel ? ProfileLabel : login;
         LoginHint = login;
         PendingPassword = password;

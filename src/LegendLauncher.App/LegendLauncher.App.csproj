@@ -5,8 +5,6 @@
     <ProjectReference Include="..\LegendLauncher.GameHost.Legacy\LegendLauncher.GameHost.Legacy.csproj" />
     <ProjectReference Include="..\LegendLauncher.Infrastructure\LegendLauncher.Infrastructure.csproj" />
     <ProjectReference Include="..\LegendLauncher.Providers.Oas\LegendLauncher.Providers.Oas.csproj" />
-    <ProjectReference Include="..\LegendLauncher.Providers.SevenWan\LegendLauncher.Providers.SevenWan.csproj" />
-    <ProjectReference Include="..\LegendLauncher.Providers.Elarionis\LegendLauncher.Providers.Elarionis.csproj" />
     <ProjectReference Include="..\LegendLauncher.Providers.SwordOnline\LegendLauncher.Providers.SwordOnline.csproj" />
   </ItemGroup>
 

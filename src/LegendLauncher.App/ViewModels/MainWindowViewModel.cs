@@ -54,6 +54,7 @@ internal sealed partial class MainWindowViewModel : ObservableObject, IDisposabl
     private bool _isWorkspaceVisible;
     private bool _isProfileEditorVisible;
     private bool _suppressProfileCatalogReload;
+    private bool _allowEmptyProfileSelection;
     private Brush _catalogStatusBrush = MutedBrush;
     private bool _disposed;
 
@@ -217,6 +218,18 @@ internal sealed partial class MainWindowViewModel : ObservableObject, IDisposabl
                 _selectedProfile is not null &&
                 !IsProfileVisibleInCurrentFilter(_selectedProfile))
             {
+                return;
+            }
+
+            // A profile must always stay selected while there are profiles: a deselected list (a
+            // Ctrl+click, a rebuilt list) leaves "Entrar e jogar" disabled and looks like a bug.
+            // Only the deliberate flows (new profile, delete, create account) may clear it.
+            if (value is null &&
+                _selectedProfile is not null &&
+                Profiles.Count > 0 &&
+                !_allowEmptyProfileSelection)
+            {
+                OnPropertyChanged(nameof(SelectedProfile));
                 return;
             }
 
