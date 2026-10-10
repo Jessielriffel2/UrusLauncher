@@ -33,16 +33,19 @@ public sealed class AccountRegistrationViewModelTests
         // no profile yet: the editor opens by itself on the first platform
         Assert.True(viewModel.IsProfileEditorVisible);
         Assert.True(viewModel.CanCreateAccount);
+        Assert.True(viewModel.ShowCreateAccountInEditor);
         Assert.True(viewModel.OpenRegistrationCommand.CanExecute(null));
+        Assert.Contains("Registerable Test", viewModel.CreateAccountButtonText);
         Assert.Contains("Registerable Test", viewModel.CreateAccountLinkText);
 
         viewModel.SelectedPlatform = viewModel.Platforms.First(platform => platform.Id != RegisterablePlatform.Id);
         Assert.False(viewModel.CanCreateAccount);
+        Assert.False(viewModel.ShowCreateAccountInEditor);
         Assert.False(viewModel.OpenRegistrationCommand.CanExecute(null));
     }
 
     [Fact]
-    public async Task CanCreateAccount_IsNeverOfferedWithoutAServiceOrWhileEditingAnExistingProfile()
+    public async Task CreateAccount_IsNotOfferedWithoutAService_AndNotInsideTheEditorOfAnExistingProfile()
     {
         AccountProfile existing = AppTestData.Profile("heroi", 1, "1") with
         {
@@ -67,7 +70,46 @@ public sealed class AccountRegistrationViewModelTests
         editing.EditProfileCommand.Execute(null);
 
         Assert.True(editing.IsProfileEditorVisible);
-        Assert.False(editing.CanCreateAccount);
+        // the main-screen button stays available, but the editor link must not overwrite this profile
+        Assert.True(editing.CanCreateAccount);
+        Assert.False(editing.ShowCreateAccountInEditor);
+    }
+
+    [Fact]
+    public async Task Submit_FromTheMainScreenWithAnExistingProfile_CreatesANewProfileAndLeavesTheOldOneUntouched()
+    {
+        AccountProfile existing = AppTestData.Profile("antigo", 1, "1") with
+        {
+            PlatformId = RegisterablePlatform.Id,
+            DisplayName = "Conta antiga",
+        };
+        var profiles = new InMemoryProfileStore(existing);
+        var vault = new InMemoryCredentialVault();
+        using MainWindowViewModel viewModel = CreateViewModel(
+            profiles,
+            vault,
+            new StubRegistrationService(),
+            [RegisterablePlatform]);
+        await viewModel.InitializeAsync();
+        await Task.Yield();
+        Assert.Equal("antigo", viewModel.SelectedProfile!.Model.UserName);
+        Assert.False(viewModel.IsProfileEditorVisible);
+
+        viewModel.OpenRegistrationCommand.Execute(null);
+        viewModel.RegistrationLogin = "Novato_01";
+        viewModel.RegistrationPassword = "Senha12345";
+        viewModel.RegistrationPasswordConfirm = "Senha12345";
+        await SubmitAsync(viewModel);
+
+        Assert.Equal(2, profiles.Values.Count);
+        AccountProfile created = Assert.Single(profiles.Values, profile => profile.UserName == "Novato_01");
+        Assert.Equal("Novato_01", created.DisplayName);
+        AccountProfile untouched = Assert.Single(profiles.Values, profile => profile.UserName == "antigo");
+        Assert.Equal("Conta antiga", untouched.DisplayName);
+        Assert.True(vault.Contains(created.CredentialKey));
+        Assert.Equal("Novato_01", viewModel.SelectedProfile!.Model.UserName);
+        Assert.False(viewModel.IsRegistrationVisible);
+        Assert.False(viewModel.IsProfileEditorVisible);
     }
 
     [Fact]

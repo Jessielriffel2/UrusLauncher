@@ -37,6 +37,39 @@ public sealed class GameHostWindowTests
     }
 
     [Fact]
+    public void SessionForm_NeverShowsUpInAltTabOrTheTaskView()
+    {
+        var result = RunInSta(() =>
+        {
+            using var form = new LegacyGameHostForm(
+                LegacyRuntimeAssets.Discover(Path.GetTempPath()),
+                new LaunchSession(new Uri(
+                    "https://lobr.creaction-network.com/client/Loading.swf")),
+                new GameRuntimeOptions(Path.GetTempPath()),
+                static (_, _) => { });
+            _ = form.Handle;
+            return (form.IsHiddenFromWindowSwitchers, GetExtendedStyle(form.Handle));
+        });
+
+        Assert.True(result.Item1);
+        Assert.NotEqual(0, result.Item2 & GameHostProcessAnchorForm.ExtendedStyleToolWindow);
+        Assert.Equal(0, result.Item2 & GameHostProcessAnchorForm.ExtendedStyleAppWindow);
+    }
+
+    [Fact]
+    public void DiagnosticForm_StaysAnOrdinaryWindowInTheSwitchers()
+    {
+        bool hidden = RunInSta(() =>
+        {
+            using var form = new LegacyGameHostForm(
+                LegacyRuntimeAssets.Discover(Path.GetTempPath()));
+            return form.IsHiddenFromWindowSwitchers;
+        });
+
+        Assert.False(hidden);
+    }
+
+    [Fact]
     public void DiagnosticForm_PreservesStandaloneWindowChrome()
     {
         var result = RunInSta(() =>
@@ -220,6 +253,11 @@ public sealed class GameHostWindowTests
     [DllImport("user32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool IsWindowVisible(nint window);
+
+    [DllImport("user32.dll", EntryPoint = "GetWindowLongPtrW")]
+    private static extern nint GetWindowLongPtr(nint window, int index);
+
+    private static int GetExtendedStyle(nint window) => (int)GetWindowLongPtr(window, -20);
 
     private sealed class TestNativeWindow : NativeWindow, IDisposable
     {

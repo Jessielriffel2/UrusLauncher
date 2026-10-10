@@ -98,6 +98,7 @@ internal sealed partial class MainWindowViewModel
         OnPropertyChanged(nameof(RuntimeStatusDetail));
         OnPropertyChanged(nameof(SelectedServerDisplayName));
         OnPropertyChanged(nameof(CreateAccountLinkText));
+        OnPropertyChanged(nameof(CreateAccountButtonText));
         OnPropertyChanged(nameof(RegistrationTitle));
         OnPropertyChanged(nameof(RegistrationSubmitLabel));
         OnPropertyChanged(nameof(RegistrationMessage));

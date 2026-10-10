@@ -12,6 +12,7 @@ internal sealed class LegacyGameHostForm : Form
     private RegistrationFreeActivationContext? _activationContext;
     private int _parentExitCloseRequested;
     private int _parentExitCloseQueued;
+    private readonly bool _embeddedSession;
 
     public LegacyGameHostForm(LegacyRuntimeAssets assets)
     {
@@ -31,9 +32,35 @@ internal sealed class LegacyGameHostForm : Form
         _runtimeOptions = runtimeOptions ?? throw new ArgumentNullException(nameof(runtimeOptions));
         _handshakeCompletion = handshakeCompletion ??
             throw new ArgumentNullException(nameof(handshakeCompletion));
+        _embeddedSession = true;
         ConfigureWindow("Legend Online");
         ConfigureEmbeddedSessionWindow();
         Controls.Add(BuildLoadingContent());
+    }
+
+    /// <summary>
+    /// The session window is only a vehicle for the Flash control: the launcher reparents it into its
+    /// own window. While it is still top-level (starting up, parked or detached) it must not appear in
+    /// Alt+Tab or the Windows task view as a stray black "Legend Online" window.
+    /// </summary>
+    internal bool IsHiddenFromWindowSwitchers =>
+        _embeddedSession &&
+        (CreateParams.ExStyle & GameHostProcessAnchorForm.ExtendedStyleToolWindow) != 0 &&
+        (CreateParams.ExStyle & GameHostProcessAnchorForm.ExtendedStyleAppWindow) == 0;
+
+    protected override CreateParams CreateParams
+    {
+        get
+        {
+            CreateParams createParams = base.CreateParams;
+            if (_embeddedSession)
+            {
+                createParams.ExStyle |= GameHostProcessAnchorForm.ExtendedStyleToolWindow;
+                createParams.ExStyle &= ~GameHostProcessAnchorForm.ExtendedStyleAppWindow;
+            }
+
+            return createParams;
+        }
     }
 
     protected override void OnLoad(EventArgs e)

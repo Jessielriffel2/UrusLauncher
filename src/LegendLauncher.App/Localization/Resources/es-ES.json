@@ -258,6 +258,7 @@
   "FeatureCatalog_MacroGuide": "Cómo usar:\n1. Abre una cuenta y entra en una sesión.\n2. En el pie, elige Gemas/Cristales, Cosmo o Clics.\n3. Pulsa INICIAR MACRO y arrastra el punto hasta el objetivo.\n4. El marco grande es opcional; el área de análisis sigue siendo segura para Gemas/Cosmo.\n5. Ajusta la velocidad y, en los clics, la cantidad y el intervalo. Los ajustes se guardan por perfil y modo.\n6. Usa el mismo botón para DETENER MACRO; detiene todas las sesiones activas.",
   "FeatureCatalog_HistoryTitle": "Historial de releases",
   "FeatureCatalog_Close": "CERRAR",
+  "Registration_Button": "Crear cuenta en {0}",
   "Registration_OpenLink": "¿Aún no tienes cuenta? Crear cuenta en {0}",
   "Registration_Title": "Crear cuenta en {0}",
   "Registration_Intro": "La cuenta se crea directamente en el servidor, gratis. Al terminar, el perfil queda guardado y puedes jugar.",

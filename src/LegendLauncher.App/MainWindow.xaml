@@ -359,7 +359,7 @@
                                     <RowDefinition Height="Auto" />
                                     <RowDefinition Height="Auto" />
                                     <RowDefinition Height="*" />
-                                    <RowDefinition Height="6" />
+                                    <RowDefinition Height="Auto" />
                                     <RowDefinition Height="Auto" />
                                     <RowDefinition Height="6" />
                                     <RowDefinition Height="Auto" />
@@ -501,6 +501,20 @@
                                                    HorizontalAlignment="Center" VerticalAlignment="Center" />
                                     </Grid>
                                 </Button>
+
+                                <Grid Grid.Row="3" MinHeight="6">
+                                    <Button x:Name="CreateAccountButton"
+                                            Margin="0,6,0,6"
+                                            Padding="10,8"
+                                            Command="{Binding OpenRegistrationCommand}"
+                                            Style="{StaticResource PrimaryButtonStyle}"
+                                            Visibility="{Binding CanCreateAccount, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                            AutomationProperties.Name="{Binding CreateAccountButtonText}">
+                                        <TextBlock Text="{Binding CreateAccountButtonText}" FontSize="13" FontWeight="SemiBold"
+                                                   TextWrapping="Wrap"
+                                                   TextAlignment="Center" />
+                                    </Button>
+                                </Grid>
 
                                 <updates:UpdateStatusView Grid.Row="4" />
 
@@ -1013,7 +1027,7 @@
                                 Command="{Binding OpenRegistrationCommand}"
                                 Content="{Binding CreateAccountLinkText}"
                                 Style="{StaticResource SecondaryButtonStyle}"
-                                Visibility="{Binding CanCreateAccount, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                Visibility="{Binding ShowCreateAccountInEditor, Converter={StaticResource BooleanToVisibilityConverter}}"
                                 AutomationProperties.Name="{Binding CreateAccountLinkText}" />
 
                         <TextBlock Text="{loc:Localize Profiles_NameLabel}" Style="{StaticResource FieldLabelStyle}" Margin="0,14,0,7" />

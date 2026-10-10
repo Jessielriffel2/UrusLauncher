@@ -13,6 +13,7 @@ internal sealed partial class MainWindowViewModel
 {
     private IAccountRegistrationService? _accountRegistration;
     private CancellationTokenSource? _registrationCancellation;
+    private bool _registrationOpenedFromEditor;
     private bool _isRegistrationVisible;
     private bool _isRegistering;
     private string _registrationLogin = string.Empty;
@@ -29,16 +30,26 @@ internal sealed partial class MainWindowViewModel
     public AsyncRelayCommand SubmitRegistrationCommand { get; private set; } = null!;
 
     /// <summary>
-    /// Whether the account editor offers "create an account" for the current platform: only when a
-    /// registration service exists, the platform supports it and a brand-new profile is being edited
-    /// (so an existing profile is never overwritten by a different login).
+    /// Whether the launcher offers "create an account" for the current platform: a registration
+    /// service exists and the platform supports it. The button lives on the main screen, so a player
+    /// who already has profiles can still find it.
     /// </summary>
     public bool CanCreateAccount =>
         !_disposed &&
         _accountRegistration is not null &&
-        SelectedPlatform.Model.SupportsAccountCreation &&
+        SelectedPlatform.Model.SupportsAccountCreation;
+
+    /// <summary>
+    /// The extra link inside the account editor, only while a brand-new profile is being edited
+    /// (so an existing profile is never overwritten by a different login).
+    /// </summary>
+    public bool ShowCreateAccountInEditor =>
+        CanCreateAccount &&
         IsProfileEditorVisible &&
         SelectedProfile is null;
+
+    public string CreateAccountButtonText =>
+        _localization.Format("Registration_Button", SelectedPlatform.DisplayName);
 
     public string CreateAccountLinkText =>
         _localization.Format("Registration_OpenLink", SelectedPlatform.DisplayName);
@@ -135,6 +146,8 @@ internal sealed partial class MainWindowViewModel
     private void NotifyRegistrationAvailability()
     {
         OnPropertyChanged(nameof(CanCreateAccount));
+        OnPropertyChanged(nameof(ShowCreateAccountInEditor));
+        OnPropertyChanged(nameof(CreateAccountButtonText));
         OnPropertyChanged(nameof(CreateAccountLinkText));
         OnPropertyChanged(nameof(RegistrationTitle));
         OpenRegistrationCommand.NotifyCanExecuteChanged();
@@ -147,6 +160,7 @@ internal sealed partial class MainWindowViewModel
             return;
         }
 
+        _registrationOpenedFromEditor = IsProfileEditorVisible;
         ResetRegistrationFields();
         IsRegistrationVisible = true;
         SubmitRegistrationCommand.NotifyCanExecuteChanged();
@@ -273,11 +287,13 @@ internal sealed partial class MainWindowViewModel
 
     private async Task CompleteRegistrationAsync(string login, string password)
     {
-        if (string.IsNullOrWhiteSpace(ProfileLabel))
-        {
-            ProfileLabel = login;
-        }
-
+        // The account is always saved as a NEW profile: whatever profile was selected on the main
+        // screen (or edited) stays exactly as it was.
+        bool keepTypedLabel = _registrationOpenedFromEditor &&
+            SelectedProfile is null &&
+            !string.IsNullOrWhiteSpace(ProfileLabel);
+        SelectedProfile = null;
+        ProfileLabel = keepTypedLabel ? ProfileLabel : login;
         LoginHint = login;
         PendingPassword = password;
         RememberPassword = true;
@@ -288,14 +304,14 @@ internal sealed partial class MainWindowViewModel
 
         // SaveProfileAsync closes the editor and selects the new profile; when it could not save
         // (it keeps the editor open), the account still exists and the player must be told.
-        SetStatusMessage(
-            SelectedProfile is not null && !IsProfileEditorVisible
-                ? "Registration_Created"
-                : "Registration_CreatedNotSaved",
-            login);
-        CatalogStatusBrush = SelectedProfile is not null && !IsProfileEditorVisible
-            ? OnlineBrush
-            : WarningBrush;
+        bool saved = SelectedProfile is not null && !IsProfileEditorVisible;
+        if (!saved)
+        {
+            IsProfileEditorVisible = true;
+        }
+
+        SetStatusMessage(saved ? "Registration_Created" : "Registration_CreatedNotSaved", login);
+        CatalogStatusBrush = saved ? OnlineBrush : WarningBrush;
     }
 
     private void ShowRegistrationFailure(AccountRegistrationResult result)
