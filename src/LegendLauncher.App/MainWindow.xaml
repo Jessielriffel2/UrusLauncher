@@ -90,7 +90,7 @@
                                    SnapsToDevicePixels="True" />
                         </Button>
                         <Button x:Name="FeatureCatalogButton"
-                                Width="104"
+                                Width="124"
                                 Height="38"
                                 Margin="10,0,0,0"
                                 Padding="10,0"
