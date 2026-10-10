@@ -45,10 +45,12 @@ public sealed class LegacyGameRuntime : IGameRuntime
     }
 
     public async Task<GameSession> LaunchAsync(
+        PlatformDefinition platform,
         LaunchSession session,
         GameRuntimeOptions options,
         CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(platform);
         ArgumentNullException.ThrowIfNull(session);
         ArgumentNullException.ThrowIfNull(options);
         cancellationToken.ThrowIfCancellationRequested();

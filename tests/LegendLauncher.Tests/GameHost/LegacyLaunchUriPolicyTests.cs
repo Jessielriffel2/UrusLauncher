@@ -42,17 +42,36 @@ public sealed class LegacyLaunchUriPolicyTests
     [InlineData("https://s1.lobr.creaction-network.com:443/client/Loading.swf")]
     [InlineData("https://elarionis.online/client/Loading.swf")]
     [InlineData("https://elarionis.online/client/Loading.swf?token=test")]
+    [InlineData("https://swordonline.tech/Loading.swf")]
     public void IsAllowed_AcceptsHttpsOasAndCreactionHosts(string address)
     {
         Assert.True(LegacyLaunchUriPolicy.IsAllowed(new Uri(address)));
     }
 
+#if LOREBORN_LOCAL
     [Theory]
-    [InlineData("http://lobr.creaction-network.com/client/Loading.swf")]
-    [InlineData("wss://lobr.creaction-network.com/websocket2")]
+    [InlineData("http://127.0.0.1:8081/Loading.swf")]
+    [InlineData("http://localhost:8081/Loading.swf")]
+    public void IsAllowed_AcceptsTheLocalPortalMovieOverLoopbackHttp(string address)
+    {
+        Assert.True(LegacyLaunchUriPolicy.IsAllowed(new Uri(address)));
+    }
+#else
+    [Theory]
+    [InlineData("http://127.0.0.1:8081/Loading.swf")]
+    [InlineData("http://localhost:8081/Loading.swf")]
+    [InlineData("http://[::1]:8081/Loading.swf")]
+    public void IsAllowed_PublicBuildRejectsLoopbackHttp(string address)
+    {
+        Assert.False(LegacyLaunchUriPolicy.IsAllowed(new Uri(address)));
+    }
+#endif
+
+    [Theory]
     [InlineData("https://oasgames.com.attacker.example/payload.swf")]
     [InlineData("https://user:password@oasgames.com/payload.swf")]
     [InlineData("https://127.0.0.1/payload.swf")]
+    [InlineData("http://192.168.0.10:8081/Loading.swf")]
     [InlineData("https://oasgames.com:444/payload.swf")]
     public void IsAllowed_RejectsAddressesOutsideFlashLaunchPolicy(string address)
     {

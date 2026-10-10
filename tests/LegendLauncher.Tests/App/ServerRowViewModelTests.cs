@@ -45,8 +45,18 @@ public sealed class ServerRowViewModelTests
     [InlineData("https://lobr.creaction-network.com/serverlist/s3257", true)]
     [InlineData("https://elarionis.online/s7/play?site=s7", true)]
     [InlineData("https://elarionis.online/play?site=local", true)]
+    [InlineData("https://swordonline.tech/Loading.swf", true)]
+    [InlineData("http://swordonline.tech/Loading.swf", false)]
+    [InlineData("https://swordonline.tech.attacker.example/Loading.swf", false)]
     [InlineData("https://attacker.example/s7/play?site=s7", false)]
     [InlineData("http://elarionis.online/s7/play?site=s7", false)]
+#if LOREBORN_LOCAL
+    [InlineData("http://127.0.0.1:8081/Loading.swf", true)]
+#else
+    [InlineData("http://127.0.0.1:8081/Loading.swf", false)]
+    [InlineData("http://localhost:8081/Loading.swf", false)]
+#endif
+    [InlineData("http://192.168.0.10:8081/Loading.swf", false)]
     public void CanLaunch_ValidatesSecureLaunchAddressPerProvider(
         string address,
         bool expectedCanLaunch)

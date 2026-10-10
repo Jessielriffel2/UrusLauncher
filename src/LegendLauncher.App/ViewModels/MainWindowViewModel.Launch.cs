@@ -110,8 +110,10 @@ internal sealed partial class MainWindowViewModel
                 CatalogStatusBrush = ErrorBrush;
                 if (IsCredentialRejection(outcome.ErrorCode))
                 {
-                    // Wrong password: the profile editor is the path to fix it.
-                    IsProfileEditorVisible = true;
+                    // Wrong password: stay on the main screen. The inline password field under the
+                    // account card is the way to retype it (HasSavedCredential=false below shows it);
+                    // opening the editor only covered the error message.
+                    IsProfileEditorVisible = false;
                     if (outcome.CredentialSource == SessionCredentialSource.Stored)
                     {
                         HasSavedCredential = false;

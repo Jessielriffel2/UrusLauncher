@@ -1,4 +1,20 @@
 <Project>
+  <!--
+    The Local (LOReborn on this very machine) provider is a developer-only feature and must never
+    ship in a public release. It is compiled in ONLY when IncludeLocalProvider=true:
+      * developer machine: create the git-ignored Directory.Build.local.props containing
+        <Project><PropertyGroup><IncludeLocalProvider>true</IncludeLocalProvider></PropertyGroup></Project>
+      * release: scripts/build-urus-distribution.ps1 passes -p:IncludeLocalProvider=false (a global
+        property always wins over this file) and refuses a payload that contains the Local assembly.
+  -->
+  <Import Project="$(MSBuildThisFileDirectory)Directory.Build.local.props"
+          Condition="Exists('$(MSBuildThisFileDirectory)Directory.Build.local.props')" />
+  <PropertyGroup>
+    <IncludeLocalProvider Condition="'$(IncludeLocalProvider)' == ''">false</IncludeLocalProvider>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(IncludeLocalProvider)' == 'true'">
+    <DefineConstants>$(DefineConstants);LOREBORN_LOCAL</DefineConstants>
+  </PropertyGroup>
   <PropertyGroup>
     <LangVersion>latest</LangVersion>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>

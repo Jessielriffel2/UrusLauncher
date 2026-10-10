@@ -2,7 +2,7 @@
 
 Fonte da verdade para a estrutura e os módulos do projeto.
 
-- **Última atualização:** 2026-09-24
+- **Última atualização:** 2026-10-08
 - **Raiz:** `LegendLauncherNext/`
 - **Escopo da árvore:** fontes, testes e documentação; `bin/`, `obj/` e `artifacts/` são saídas geradas e ficam fora.
 
@@ -63,6 +63,7 @@ LegendLauncherNext/
 │       ├── localizacao.md
 │       ├── network-bridge.md
 │       ├── providers-elarionis.md
+│       ├── providers-swordonline.md
 │       ├── providers-oas.md
 │       └── providers-sevenwan.md
 ├── installer/
@@ -248,24 +249,32 @@ LegendLauncherNext/
 │   │   ├── OasSystemCurlTransport.cs
 │   │   └── Properties/
 │   │       └── AssemblyInfo.cs
-│   └── LegendLauncher.Providers.SevenWan/
-│       ├── LegendLauncher.Providers.SevenWan.csproj
-│       ├── SevenWanPlatformCatalog.cs
-│       ├── SevenWanServerDirectory.cs
-│       ├── SevenWanServerDirectoryException.cs
-│       └── SevenWanServerPayloadParser.cs
-│   └── LegendLauncher.Providers.Elarionis/
-│       ├── LegendLauncher.Providers.Elarionis.csproj
-│       ├── ElarionisAuthenticationErrorCodes.cs
-│       ├── ElarionisAuthenticationService.cs
-│       ├── ElarionisLaunchPageParser.cs
-│       ├── ElarionisOriginPolicy.cs
-│       ├── ElarionisPlatformCatalog.cs
-│       ├── ElarionisServerDirectory.cs
-│       ├── ElarionisServerDirectoryException.cs
-│       ├── ElarionisShardPayloadParser.cs
-│       └── Properties/
-│           └── AssemblyInfo.cs
+│   ├── LegendLauncher.Providers.SevenWan/
+│   │   ├── LegendLauncher.Providers.SevenWan.csproj
+│   │   ├── SevenWanPlatformCatalog.cs
+│   │   ├── SevenWanServerDirectory.cs
+│   │   ├── SevenWanServerDirectoryException.cs
+│   │   └── SevenWanServerPayloadParser.cs
+│   ├── LegendLauncher.Providers.Elarionis/
+│   │   ├── LegendLauncher.Providers.Elarionis.csproj
+│   │   ├── ElarionisAuthenticationErrorCodes.cs
+│   │   ├── ElarionisAuthenticationService.cs
+│   │   ├── ElarionisLaunchPageParser.cs
+│   │   ├── ElarionisOriginPolicy.cs
+│   │   ├── ElarionisPlatformCatalog.cs
+│   │   ├── ElarionisServerDirectory.cs
+│   │   ├── ElarionisServerDirectoryException.cs
+│   │   ├── ElarionisShardPayloadParser.cs
+│   │   └── Properties/
+│   │       └── AssemblyInfo.cs
+│   └── LegendLauncher.Providers.SwordOnline/
+│       ├── LegendLauncher.Providers.SwordOnline.csproj
+│       ├── SwordOnlineAccountRegistrationService.cs
+│       ├── SwordOnlineAuthenticationErrorCodes.cs
+│       ├── SwordOnlineAuthenticationService.cs
+│       ├── SwordOnlinePlatformCatalog.cs
+│       ├── SwordOnlineRegistrationErrorCodes.cs
+│       └── SwordOnlineServerDirectory.cs
 └── tests/
     └── LegendLauncher.Tests/
         ├── LegendLauncher.Tests.csproj
@@ -340,6 +349,10 @@ LegendLauncherNext/
             ├── ElarionisAuthenticationServiceTests.cs
             ├── ElarionisLaunchPageParserTests.cs
             └── ElarionisServerDirectoryTests.cs
+        └── Local/
+            ├── LocalAuthenticationServiceTests.cs
+            ├── LocalLiveSmokeTests.cs
+            └── LocalServerDirectoryTests.cs
 ```
 
 ## Módulos de produção
@@ -358,6 +371,7 @@ LegendLauncherNext/
 | `LegendLauncher.Providers.Oas` | Oito plataformas OAS, catálogo/cache, Passports Creaction e OAS Games em wrapper curl único, launch em wrapper curl separado, executor comum, diagnóstico saneado, parsers e allowlists. | `OasAuthenticationService.cs`, `OasCurlPassportTransport.cs`, `OasCurlLaunchTransport.cs`, `OasSystemCurlTransport.cs`, `OasOriginPolicy.cs` | [providers-oas.md](modulos/providers-oas.md) |
 | `LegendLauncher.Providers.SevenWan` | Quatorze variantes Wartune/7wan e catálogo público normalizado; autenticação permanece indisponível. | `SevenWanPlatformCatalog.cs`, `SevenWanServerDirectory.cs`, `SevenWanServerPayloadParser.cs` | [providers-sevenwan.md](modulos/providers-sevenwan.md) |
 | `LegendLauncher.Providers.Elarionis` | Plataforma única Elarionis Online com 15 servidores, catálogo público e autenticação por token com sessão Flash resolvida para o GameHost interno. | `ElarionisPlatformCatalog.cs`, `ElarionisServerDirectory.cs`, `ElarionisAuthenticationService.cs`, `ElarionisLaunchPageParser.cs` | [providers-elarionis.md](modulos/providers-elarionis.md) |
+| `LegendLauncher.Providers.SwordOnline` | Plataforma única `swordonline` (servidor próprio em `https://swordonline.tech`): catálogo de servidor único com disponibilidade por `config.xml` e autenticação por login e senha (`POST /api/launcher`) que devolve a ficha de jogo para o Flash interno, e criação de conta dentro do launcher (`POST /api/conta/criar`). Faz parte dos releases. | `SwordOnlinePlatformCatalog.cs`, `SwordOnlineServerDirectory.cs`, `SwordOnlineAuthenticationService.cs`, `SwordOnlineAuthenticationErrorCodes.cs`, `SwordOnlineAccountRegistrationService.cs`, `SwordOnlineRegistrationErrorCodes.cs` | [providers-swordonline.md](modulos/providers-swordonline.md) |
 | `LegendLauncher.GameHost.Legacy` | Processo x64 separado que herda a cultura normalizada, recebe sessão por Named Pipe, ativa COM sem registro, hospeda Flash ActiveX, permanece anexável a ferramentas de memória x64, devolve uma superfície nativa validada e encerra quando o processo pai desaparece. | `LegacyGameRuntime.cs`, `GameHostLocalization.cs`, `GameHostProcessAnchorForm.cs`, `GameHostWindowIdentity.cs`, `ParentProcessLifetimeMonitor.cs`, `PipeCompletionProtocol.cs`, `FlashActiveXControl.cs` | [game-host-legacy.md](modulos/game-host-legacy.md) |
 | `LegendLauncher.NetworkBridge` | Política compartilhada de bind/upstream; valida destinos e não abre proxy neste marco. | `BridgeSecurityPolicy.cs`, `BridgeValidationResult.cs` | [network-bridge.md](modulos/network-bridge.md) |
 
@@ -369,7 +383,7 @@ LegendLauncherNext/
 | `CHANGELOG.md` | Histórico público resumido por versão semântica. |
 | `LICENSE` | Código e assets publicamente visíveis com direitos reservados; não concede redistribuição. |
 | `SECURITY.md` | Canal responsável para vulnerabilidades e orientação contra exposição de credenciais. |
-| `LegendLauncherNext.slnx` | Solução com oito projetos de produção e um projeto de testes. |
+| `LegendLauncherNext.slnx` | Solução com nove projetos de produção e um projeto de testes. |
 | `Directory.Build.props` | Linguagem atual, build determinístico e warnings como erros. |
 | `.gitignore` | Exclui saídas e estado local. |
 | `design-qa.md` | Registro de QA visual e de acabamento; barra/workspace, janela desacoplada, execução real S115, work area, modal PayPal, identidade Urus, distribuição versionada e contrato da lista de servidores por perfil. |
@@ -411,19 +425,19 @@ LegendLauncherNext/
 
 ## Relação entre módulos
 
-1. `LegendLauncher.App` compõe `Core`, `Infrastructure`, `Providers.Oas`, `Providers.SevenWan`, `Providers.Elarionis` e `GameHost.Legacy` por `PlatformAdapterRegistry`.
+1. `LegendLauncher.App` compõe `Core`, `Infrastructure`, `Providers.Oas`, `Providers.SevenWan`, `Providers.Elarionis`, `Providers.SwordOnline` e `GameHost.Legacy` por `PlatformAdapterRegistry`.
 2. O `Game Session Workspace` recebe `GameSession` e o perfil efetivo da App, identifica cada sessão por perfil + plataforma + servidor e compõe o HWND validado sem carregar ActiveX no WPF; eventos de processo retornam à `Dispatcher` antes de alterar a UI.
 3. `Providers.Oas` implementa catálogo/autenticação de `Core`; usa cache por contrato, mantém Passport OAS Games no .NET e limita o curl do Windows ao Passport Creaction exato e à entrada pós-Passport.
 4. `Providers.SevenWan` implementa catálogo de `Core`; a App associa suas variantes a autenticação indisponível explícita.
 5. `Providers.Elarionis` implementa catálogo e autenticação de `Core` em plataforma única; o login por token resolve o filme Flash da página `play` para o GameHost interno, e o token recebe o mesmo tratamento de senha do OAS no cofre e nos diagnósticos.
 6. `Localization` atualiza a App, o workspace, o pedido de apoio e o updater pela instância observável compartilhada; sua cultura é persistida no mesmo settings e propagada ao GameHost somente por ambiente normalizado.
 7. `Donation Prompt` usa UI/localização da App, um timestamp não sensível no settings e a área de transferência local para PIX; não acessa providers, credenciais ou sessões.
-8. `Branding` fornece assets e textos públicos à App, ao GameHost e ao instalador; não altera os nomes internos mantidos por compatibilidade.
-9. `Atualização` consulta o GitHub Release público, usa o diretório por usuário fornecido por Infrastructure e consome o manifesto/notas produzidos por Distribuição; uma versão superior é baixada/validada sem bloquear o jogo, mas nenhuma instalação ocorre sem clique, com sessão ativa ou durante a abertura de uma conta.
-10. `Distribuição Windows` consome builds Release, branding, definição trilíngue, testes e uma origem autorizada de runtime para gerar os pacotes. O workflow por tag só pode concluir quando o runner também receber essa origem; como ela não está disponível no runner hospedado, a 1.1.4 foi gerada e validada localmente com autorização confirmada pelo distribuidor e publicada manualmente para a tag apontada ao commit `31d6d16b063b43bdba161a028bc4edd4f3953b96`.
-11. `Infrastructure` implementa persistência/cofre definidos por `Core`; também fornece diretórios privados para cache, dados e downloads de atualização, além do probe usado sobre o runtime escolhido pela App.
-12. `GameHost.Legacy` implementa `IGameRuntime`, usa a política do `NetworkBridge`, localiza mensagens próprias, devolve PID/HWND, não recebe senha e monitora o PID pai para não sobreviver ao launcher.
-13. `NetworkBridge` mantém apenas validação neste marco; `H2Proxy.exe` não é iniciado.
+9. `Branding` fornece assets e textos públicos à App, ao GameHost e ao instalador; não altera os nomes internos mantidos por compatibilidade.
+10. `Atualização` consulta o GitHub Release público, usa o diretório por usuário fornecido por Infrastructure e consome o manifesto/notas produzidos por Distribuição; uma versão superior é baixada/validada sem bloquear o jogo, mas nenhuma instalação ocorre sem clique, com sessão ativa ou durante a abertura de uma conta.
+11. `Distribuição Windows` consome builds Release, branding, definição trilíngue, testes e uma origem autorizada de runtime para gerar os pacotes. O workflow por tag só pode concluir quando o runner também receber essa origem; como ela não está disponível no runner hospedado, a 1.1.4 foi gerada e validada localmente com autorização confirmada pelo distribuidor e publicada manualmente para a tag apontada ao commit `31d6d16b063b43bdba161a028bc4edd4f3953b96`.
+12. `Infrastructure` implementa persistência/cofre definidos por `Core`; também fornece diretórios privados para cache, dados e downloads de atualização, além do probe usado sobre o runtime escolhido pela App.
+13. `GameHost.Legacy` implementa `IGameRuntime`, usa a política do `NetworkBridge`, localiza mensagens próprias, devolve PID/HWND, não recebe senha e monitora o PID pai para não sobreviver ao launcher.
+14. `NetworkBridge` mantém apenas validação neste marco; `H2Proxy.exe` não é iniciado.
 
 ## Estado funcional resumido
 

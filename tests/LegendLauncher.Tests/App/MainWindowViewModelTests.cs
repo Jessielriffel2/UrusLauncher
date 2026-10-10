@@ -305,7 +305,7 @@ public sealed class MainWindowViewModelTests
     }
 
     [Fact]
-    public async Task RejectedSavedCredentialRequiresRetypeWithoutDeletingVaultEntry()
+    public async Task RejectedSavedCredentialRequiresRetypeWithoutOpeningTheEditorOrDeletingVaultEntry()
     {
         AccountProfile profile = AppTestData.Profile("player@example.test", null, "100");
         var directory = new StubServerDirectory((_, _, _) =>
@@ -327,7 +327,9 @@ public sealed class MainWindowViewModelTests
 
         Assert.False(viewModel.HasSavedCredential);
         Assert.False(viewModel.CanStartGame);
-        Assert.True(viewModel.IsProfileEditorVisible);
+        // wrong password stays on the main screen: the inline password field is the way to retype it
+        Assert.False(viewModel.IsProfileEditorVisible);
+        Assert.True(viewModel.ShowInlinePassword);
         Assert.True(viewModel.HasStatusError);
         Assert.Equal("Digite sua senha", viewModel.PasswordPlaceholderText);
         Assert.Contains("Digite-a novamente", viewModel.StatusMessage, StringComparison.Ordinal);
@@ -659,6 +661,149 @@ public sealed class MainWindowViewModelTests
         Assert.Same(selected, viewModel.SelectedProfile);
     }
 
+    [Fact]
+    public async Task PasswordlessPlatformUnlocksTheGameWithoutAnyCredential()
+    {
+        AccountProfile profile = AppTestData.Profile("localtest", 900001, "1") with
+        {
+            PlatformId = PasswordlessTestPlatform.Platform.Id,
+        };
+        var directory = new StubServerDirectory((_, _, _) =>
+            Task.FromResult(AppTestData.Catalog([AppTestData.Server("100")])));
+        var vault = new InMemoryCredentialVault();
+        using MainWindowViewModel viewModel = CreateViewModel(
+            directory,
+            new InMemoryProfileStore(profile),
+            vault,
+            platforms: [PasswordlessTestPlatform.Platform]);
+        await viewModel.InitializeAsync();
+        await Task.Yield();
+
+        viewModel.SelectedPlatform = Assert.Single(viewModel.Platforms);
+        viewModel.SelectedProfile = viewModel.Profiles.Single();
+        await Task.Yield();
+
+        Assert.False(viewModel.HasSavedCredential);
+        Assert.Equal(string.Empty, viewModel.PendingPassword);
+        Assert.True(viewModel.CanStartGame);
+    }
+
+    [Fact]
+    public async Task ProfileWithoutASavedPassword_ShowsTheInlinePasswordAndUnlocksPlayOnceItIsTyped()
+    {
+        AccountProfile profile = AppTestData.Profile("heroi", 1, "100");
+        var vault = new InMemoryCredentialVault();
+        using MainWindowViewModel viewModel = CreateViewModel(
+            new StubServerDirectory((_, _, _) => Task.FromResult(AppTestData.Catalog([AppTestData.Server("100")]))),
+            new InMemoryProfileStore(profile),
+            vault);
+        await viewModel.InitializeAsync();
+        await Task.Yield();
+        viewModel.SelectedProfile = viewModel.Profiles.Single();
+        await Task.Yield();
+
+        Assert.False(viewModel.HasSavedCredential);
+        Assert.True(viewModel.ShowInlinePassword);
+        Assert.False(viewModel.CanStartGame);
+
+        viewModel.PendingPassword = "Senha12345";
+
+        Assert.True(viewModel.CanStartGame);
+    }
+
+    [Fact]
+    public async Task ProfileWithASavedPassword_HidesTheInlinePassword()
+    {
+        AccountProfile profile = AppTestData.Profile("heroi", 1, "100");
+        var vault = new InMemoryCredentialVault();
+        vault.Seed(profile.CredentialKey, new CredentialSecret("heroi", "Senha12345"));
+        using MainWindowViewModel viewModel = CreateViewModel(
+            new StubServerDirectory((_, _, _) => Task.FromResult(AppTestData.Catalog([AppTestData.Server("100")]))),
+            new InMemoryProfileStore(profile),
+            vault);
+        await viewModel.InitializeAsync();
+        await Task.Delay(50);
+        await Task.Yield();
+
+        Assert.True(viewModel.HasSavedCredential);
+        Assert.False(viewModel.ShowInlinePassword);
+        Assert.True(viewModel.CanStartGame);
+    }
+
+    [Fact]
+    public async Task PasswordlessPlatform_NeverShowsTheInlinePassword()
+    {
+        AccountProfile profile = AppTestData.Profile("heroi", 1, "1") with
+        {
+            PlatformId = PasswordlessTestPlatform.Platform.Id,
+        };
+        using MainWindowViewModel viewModel = CreateViewModel(
+            new StubServerDirectory((_, _, _) => Task.FromResult(AppTestData.Catalog([AppTestData.Server("100")]))),
+            new InMemoryProfileStore(profile),
+            new InMemoryCredentialVault(),
+            platforms: [PasswordlessTestPlatform.Platform]);
+        await viewModel.InitializeAsync();
+        await Task.Yield();
+
+        Assert.False(viewModel.ShowInlinePassword);
+    }
+
+    [Fact]
+    public async Task Opening_WithAHotPlatformAndOnlyOtherProfiles_SelectsTheHotPlatformKeepsTheLastProfileAndOpensNoForm()
+    {
+        PlatformDefinition hot = PasswordlessTestPlatform.Platform with { Id = "hot-test", IsHot = true };
+        AccountProfile other = AppTestData.Profile("guerreiro", 1, "3");
+        using MainWindowViewModel viewModel = CreateViewModel(
+            new StubServerDirectory((_, _, _) => Task.FromResult(AppTestData.Catalog([AppTestData.Server("100")]))),
+            new InMemoryProfileStore(other),
+            new InMemoryCredentialVault(),
+            platforms: [hot, .. OasPlatformCatalog.All]);
+
+        await viewModel.InitializeAsync();
+        await Task.Yield();
+
+        Assert.Equal("hot-test", viewModel.SelectedPlatform.Id);
+        Assert.Equal(other.Id, viewModel.SelectedProfile!.Model.Id);
+        Assert.False(viewModel.IsProfileEditorVisible);
+        Assert.Single(viewModel.Profiles);
+    }
+
+    [Fact]
+    public async Task Opening_WithAHotPlatform_PrefersItsMostRecentProfileOverTheLastUsedOne()
+    {
+        PlatformDefinition hot = PasswordlessTestPlatform.Platform with { Id = "hot-test", IsHot = true };
+        AccountProfile other = AppTestData.Profile("guerreiro", 1, "3", updatedOffset: 50);
+        AccountProfile mine = AppTestData.Profile("heroi", 2, "1", updatedOffset: 10) with { PlatformId = "hot-test" };
+        using MainWindowViewModel viewModel = CreateViewModel(
+            new StubServerDirectory((_, _, _) => Task.FromResult(AppTestData.Catalog([AppTestData.Server("100")]))),
+            new InMemoryProfileStore(other, mine),
+            new InMemoryCredentialVault(),
+            platforms: [hot, .. OasPlatformCatalog.All]);
+
+        await viewModel.InitializeAsync();
+        await Task.Yield();
+
+        Assert.Equal("hot-test", viewModel.SelectedPlatform.Id);
+        Assert.Equal(mine.Id, viewModel.SelectedProfile!.Model.Id);
+    }
+
+    [Fact]
+    public async Task Opening_WithoutAHotPlatform_KeepsTheMostRecentProfile()
+    {
+        AccountProfile older = AppTestData.Profile("antigo", 1, "3", updatedOffset: 1);
+        AccountProfile newer = AppTestData.Profile("novo", 2, "3", updatedOffset: 9);
+        using MainWindowViewModel viewModel = CreateViewModel(
+            new StubServerDirectory((_, _, _) => Task.FromResult(AppTestData.Catalog([AppTestData.Server("100")]))),
+            new InMemoryProfileStore(older, newer),
+            new InMemoryCredentialVault());
+
+        await viewModel.InitializeAsync();
+        await Task.Yield();
+
+        Assert.Equal(newer.Id, viewModel.SelectedProfile!.Model.Id);
+        Assert.False(viewModel.IsProfileEditorVisible);
+    }
+
     private static MainWindowViewModel CreateViewModel(
         StubServerDirectory directory,
         InMemoryProfileStore profiles,
@@ -666,7 +811,8 @@ public sealed class MainWindowViewModelTests
         StubAuthenticationService? authentication = null,
         Action<int>? terminateUnadoptedProcess = null,
         LauncherSettingsService? settingsService = null,
-        Version? currentVersion = null)
+        Version? currentVersion = null,
+        IReadOnlyList<PlatformDefinition>? platforms = null)
     {
         var profileStorage = new ProfileStorageCoordinator(profiles, vault);
         authentication ??= new StubAuthenticationService((_, _) =>
@@ -683,7 +829,7 @@ public sealed class MainWindowViewModelTests
             profileStorage,
             sessionLauncher,
             AppTestData.UsableRuntime(),
-            OasPlatformCatalog.All,
+            platforms ?? OasPlatformCatalog.All,
             new FixedTimeProvider(AppTestData.Now),
             settingsService: settingsService,
             terminateUnadoptedProcess: terminateUnadoptedProcess,

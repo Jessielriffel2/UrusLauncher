@@ -5,6 +5,23 @@ using LegendLauncher.Providers.Oas;
 
 namespace LegendLauncher.Tests.App;
 
+/// <summary>
+/// A platform that needs no password, used to test the provider-independent
+/// "RequiresPassword = false" behaviour without depending on any shipped provider.
+/// </summary>
+internal static class PasswordlessTestPlatform
+{
+    public static Uri MovieUri { get; } = new("http://127.0.0.1:8081/Loading.swf", UriKind.Absolute);
+
+    public static PlatformDefinition Platform { get; } = new(
+        "passwordless-test",
+        "Passwordless Test",
+        "tst",
+        new Uri("http://127.0.0.1:8081/config.xml", UriKind.Absolute),
+        "pt-BR",
+        RequiresPassword: false);
+}
+
 internal sealed class InMemoryProfileStore : IProfileStore
 {
     private readonly Dictionary<Guid, AccountProfile> _profiles = [];
@@ -132,12 +149,16 @@ internal sealed class StubGameRuntime : IGameRuntime
 {
     public List<LaunchSession> Sessions { get; } = [];
 
+    public List<string> PlatformIds { get; } = [];
+
     public Task<GameSession> LaunchAsync(
+        PlatformDefinition platform,
         LaunchSession session,
         GameRuntimeOptions options,
         CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
+        PlatformIds.Add(platform.Id);
         Sessions.Add(session);
         return Task.FromResult(new GameSession(4242, new nint(0x1234), DateTimeOffset.UnixEpoch));
     }

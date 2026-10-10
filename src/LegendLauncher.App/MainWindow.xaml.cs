@@ -93,9 +93,52 @@ public partial class MainWindow : Window
             : Visibility.Collapsed;
     }
 
+    private void RegistrationPasswordInput_OnPasswordChanged(object sender, RoutedEventArgs eventArgs)
+    {
+        _viewModel.RegistrationPassword = RegistrationPasswordInput.Password;
+    }
+
+    private void RegistrationConfirmInput_OnPasswordChanged(object sender, RoutedEventArgs eventArgs)
+    {
+        _viewModel.RegistrationPasswordConfirm = RegistrationConfirmInput.Password;
+    }
+
+    private void SessionPasswordInput_OnPasswordChanged(object sender, RoutedEventArgs eventArgs)
+    {
+        _viewModel.PendingPassword = SessionPasswordInput.Password;
+        SessionPasswordPlaceholder.Visibility = SessionPasswordInput.Password.Length == 0
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+    }
+
+    private void SessionPasswordInput_OnPreviewKeyDown(object sender, KeyEventArgs eventArgs)
+    {
+        if (eventArgs.Key != Key.Enter)
+        {
+            return;
+        }
+
+        if (PasswordSelection.FromBoxes(SessionPasswordInput.Password, PasswordInput.Password) is { } typed)
+        {
+            _viewModel.PendingPassword = typed;
+        }
+
+        if (_viewModel.PlayCommand.CanExecute(null))
+        {
+            _viewModel.PlayCommand.Execute(null);
+        }
+
+        eventArgs.Handled = true;
+    }
+
     private void PlayButton_OnClick(object sender, RoutedEventArgs eventArgs)
     {
-        _viewModel.PendingPassword = PasswordInput.Password;
+        // Click runs before the command. Only copy a password that was really typed: assigning the
+        // (empty) editor box would erase the one typed in the session card and cancel the launch.
+        if (PasswordSelection.FromBoxes(SessionPasswordInput.Password, PasswordInput.Password) is { } typed)
+        {
+            _viewModel.PendingPassword = typed;
+        }
     }
 
     private void ProfileList_OnSelectionChanged(object sender, SelectionChangedEventArgs eventArgs)
@@ -319,12 +362,41 @@ public partial class MainWindow : Window
 
     private void ViewModelOnPropertyChanged(object? sender, PropertyChangedEventArgs eventArgs)
     {
+        if (eventArgs.PropertyName == nameof(MainWindowViewModel.RegistrationPassword) &&
+            string.IsNullOrEmpty(_viewModel.RegistrationPassword) &&
+            RegistrationPasswordInput.Password.Length > 0)
+        {
+            RegistrationPasswordInput.Clear();
+        }
+
+        if (eventArgs.PropertyName == nameof(MainWindowViewModel.RegistrationPasswordConfirm) &&
+            string.IsNullOrEmpty(_viewModel.RegistrationPasswordConfirm) &&
+            RegistrationConfirmInput.Password.Length > 0)
+        {
+            RegistrationConfirmInput.Clear();
+        }
+
+        if (eventArgs.PropertyName == nameof(MainWindowViewModel.IsRegistrationVisible) &&
+            _viewModel.IsRegistrationVisible)
+        {
+            Dispatcher.BeginInvoke(
+                () => RegistrationLoginInput.Focus(),
+                System.Windows.Threading.DispatcherPriority.Input);
+        }
+
         if ((eventArgs.PropertyName is nameof(MainWindowViewModel.SelectedProfile) or nameof(MainWindowViewModel.PendingPassword)) &&
             string.IsNullOrEmpty(_viewModel.PendingPassword) &&
             (PasswordInput.Password.Length > 0 || PasswordRevealInput.Text.Length > 0))
         {
             PasswordInput.Clear();
             PasswordRevealInput.Clear();
+        }
+
+        if ((eventArgs.PropertyName is nameof(MainWindowViewModel.SelectedProfile) or nameof(MainWindowViewModel.PendingPassword)) &&
+            string.IsNullOrEmpty(_viewModel.PendingPassword) &&
+            SessionPasswordInput.Password.Length > 0)
+        {
+            SessionPasswordInput.Clear();
         }
     }
 

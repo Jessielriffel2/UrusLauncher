@@ -97,6 +97,10 @@ internal sealed partial class MainWindowViewModel
         OnPropertyChanged(nameof(RuntimeStatusShort));
         OnPropertyChanged(nameof(RuntimeStatusDetail));
         OnPropertyChanged(nameof(SelectedServerDisplayName));
+        OnPropertyChanged(nameof(CreateAccountLinkText));
+        OnPropertyChanged(nameof(RegistrationTitle));
+        OnPropertyChanged(nameof(RegistrationSubmitLabel));
+        OnPropertyChanged(nameof(RegistrationMessage));
         foreach (ServerRowViewModel server in _allServers)
         {
             server.RefreshLocalization();

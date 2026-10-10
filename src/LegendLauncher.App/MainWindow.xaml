@@ -563,7 +563,39 @@
                                               AutomationProperties.Name="{loc:Localize Platforms_SelectVersionAutomation}">
                                         <ComboBox.ItemTemplate>
                                             <DataTemplate>
-                                                <TextBlock Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis" />
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis"
+                                                               VerticalAlignment="Center" />
+                                                    <!-- Animated red "HOT" badge: pulsing glow + colour, forever. -->
+                                                    <TextBlock x:Name="HotBadge" Text="HOT" Margin="8,0,0,0"
+                                                               FontSize="10" FontWeight="ExtraBold"
+                                                               VerticalAlignment="Center" AutomationProperties.Name="HOT"
+                                                               Visibility="{Binding IsHot, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                        <TextBlock.Foreground>
+                                                            <SolidColorBrush Color="#FF2A2A" />
+                                                        </TextBlock.Foreground>
+                                                        <TextBlock.Effect>
+                                                            <DropShadowEffect Color="#FF1F1F" ShadowDepth="0" BlurRadius="4" Opacity="0.9" />
+                                                        </TextBlock.Effect>
+                                                        <TextBlock.Triggers>
+                                                            <EventTrigger RoutedEvent="FrameworkElement.Loaded">
+                                                                <BeginStoryboard>
+                                                                    <Storyboard RepeatBehavior="Forever" AutoReverse="True">
+                                                                        <DoubleAnimation Storyboard.TargetName="HotBadge"
+                                                                                         Storyboard.TargetProperty="(UIElement.Effect).(DropShadowEffect.BlurRadius)"
+                                                                                         From="3" To="15" Duration="0:0:0.75" />
+                                                                        <ColorAnimation Storyboard.TargetName="HotBadge"
+                                                                                        Storyboard.TargetProperty="(TextBlock.Foreground).(SolidColorBrush.Color)"
+                                                                                        From="#FF2A2A" To="#FF8A80" Duration="0:0:0.75" />
+                                                                        <DoubleAnimation Storyboard.TargetName="HotBadge"
+                                                                                         Storyboard.TargetProperty="Opacity"
+                                                                                         From="0.78" To="1" Duration="0:0:0.75" />
+                                                                    </Storyboard>
+                                                                </BeginStoryboard>
+                                                            </EventTrigger>
+                                                        </TextBlock.Triggers>
+                                                    </TextBlock>
+                                                </StackPanel>
                                             </DataTemplate>
                                         </ComboBox.ItemTemplate>
                                     </ComboBox>
@@ -791,6 +823,27 @@
                                                        Foreground="{StaticResource TextSecondaryBrush}" />
                                         </StackPanel>
                                     </Border>
+                                    <!-- Senha embutida: aparece quando a conta nao tem senha salva no Cofre. -->
+                                    <StackPanel Margin="0,12,0,0"
+                                                Visibility="{Binding ShowInlinePassword, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                        <Grid>
+                                            <PasswordBox x:Name="SessionPasswordInput"
+                                                         Style="{StaticResource PasswordInputStyle}"
+                                                         Padding="13,0,13,0"
+                                                         PasswordChanged="SessionPasswordInput_OnPasswordChanged"
+                                                         PreviewKeyDown="SessionPasswordInput_OnPreviewKeyDown"
+                                                         AutomationProperties.Name="{loc:Localize Profiles_PasswordLabel}" />
+                                            <TextBlock x:Name="SessionPasswordPlaceholder"
+                                                       Text="{loc:Localize Profiles_PasswordLabel}"
+                                                       FontSize="12" Margin="14,0,0,0" VerticalAlignment="Center"
+                                                       Foreground="{StaticResource TextMutedBrush}"
+                                                       IsHitTestVisible="False" />
+                                        </Grid>
+                                        <CheckBox Content="{loc:Localize Credentials_RememberPassword}"
+                                                  IsChecked="{Binding RememberPassword}"
+                                                  Style="{StaticResource ModernCheckBoxStyle}"
+                                                  Margin="0,10,0,0" />
+                                    </StackPanel>
                                     <Button Content="{loc:Localize Accounts_Edit}"
                                             Style="{StaticResource SecondaryButtonStyle}"
                                             Command="{Binding EditProfileCommand}"
@@ -955,6 +1008,14 @@
                                     AutomationProperties.Name="{loc:Localize Window_Close}" />
                         </Grid>
 
+                        <Button x:Name="CreateAccountLinkButton"
+                                Margin="0,12,0,0"
+                                Command="{Binding OpenRegistrationCommand}"
+                                Content="{Binding CreateAccountLinkText}"
+                                Style="{StaticResource SecondaryButtonStyle}"
+                                Visibility="{Binding CanCreateAccount, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                AutomationProperties.Name="{Binding CreateAccountLinkText}" />
+
                         <TextBlock Text="{loc:Localize Profiles_NameLabel}" Style="{StaticResource FieldLabelStyle}" Margin="0,14,0,7" />
                         <Grid>
                             <TextBox x:Name="ProfileNameInput" Style="{StaticResource InputStyle}"
@@ -1086,6 +1147,133 @@
                                     Content="{loc:Localize Common_Cancel}"
                                     Style="{StaticResource SecondaryButtonStyle}"
                                     Command="{Binding CancelProfileEditCommand}" />
+                        </Grid>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <Grid x:Name="RegistrationOverlay"
+                  Panel.ZIndex="450"
+                  Background="#F0020A14"
+                  KeyboardNavigation.TabNavigation="Cycle"
+                  AutomationProperties.Name="{Binding RegistrationTitle}"
+                  Visibility="{Binding IsRegistrationVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <Grid.InputBindings>
+                    <KeyBinding Key="Escape" Command="{Binding CancelRegistrationCommand}" />
+                    <KeyBinding Key="Return" Command="{Binding SubmitRegistrationCommand}" />
+                </Grid.InputBindings>
+                <Border MaxWidth="520"
+                        Margin="36"
+                        Padding="30"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Background="#0A1928"
+                        BorderBrush="#3D6682"
+                        BorderThickness="1"
+                        CornerRadius="24"
+                        Focusable="True">
+                    <Border.Effect>
+                        <DropShadowEffect Color="#35E5D8"
+                                          BlurRadius="34"
+                                          ShadowDepth="0"
+                                          Opacity="0.20" />
+                    </Border.Effect>
+                    <StackPanel>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{Binding RegistrationTitle}"
+                                       FontFamily="Segoe UI Variable Display, Segoe UI"
+                                       FontSize="24"
+                                       FontWeight="SemiBold"
+                                       VerticalAlignment="Center" />
+                            <Button Grid.Column="1"
+                                    Width="34"
+                                    Height="34"
+                                    Padding="0"
+                                    Command="{Binding CancelRegistrationCommand}"
+                                    Content="&#xE8BB;"
+                                    FontFamily="Segoe Fluent Icons"
+                                    FontSize="13"
+                                    Style="{StaticResource SecondaryButtonStyle}"
+                                    ToolTip="{loc:Localize Window_Close}"
+                                    AutomationProperties.Name="{loc:Localize Window_Close}" />
+                        </Grid>
+
+                        <TextBlock Text="{loc:Localize Registration_Intro}"
+                                   Margin="0,10,0,0"
+                                   FontSize="12"
+                                   TextWrapping="Wrap"
+                                   Foreground="{StaticResource TextSecondaryBrush}" />
+
+                        <TextBlock Text="{loc:Localize Registration_LoginLabel}" Style="{StaticResource FieldLabelStyle}" Margin="0,16,0,7" />
+                        <TextBox x:Name="RegistrationLoginInput"
+                                 Style="{StaticResource InputStyle}"
+                                 MaxLength="16"
+                                 Text="{Binding RegistrationLogin, UpdateSourceTrigger=PropertyChanged}"
+                                 AutomationProperties.Name="{loc:Localize Registration_LoginLabel}" />
+                        <TextBlock Text="{loc:Localize Registration_LoginHelp}"
+                                   Margin="2,5,0,0"
+                                   FontSize="11"
+                                   TextWrapping="Wrap"
+                                   Foreground="{StaticResource TextMutedBrush}" />
+
+                        <TextBlock Text="{loc:Localize Registration_PasswordLabel}" Style="{StaticResource FieldLabelStyle}" Margin="0,14,0,7" />
+                        <PasswordBox x:Name="RegistrationPasswordInput"
+                                     Style="{StaticResource PasswordInputStyle}"
+                                     MaxLength="64"
+                                     PasswordChanged="RegistrationPasswordInput_OnPasswordChanged"
+                                     AutomationProperties.Name="{loc:Localize Registration_PasswordLabel}" />
+                        <TextBlock Text="{loc:Localize Registration_PasswordHelp}"
+                                   Margin="2,5,0,0"
+                                   FontSize="11"
+                                   TextWrapping="Wrap"
+                                   Foreground="{StaticResource TextMutedBrush}" />
+
+                        <TextBlock Text="{loc:Localize Registration_ConfirmLabel}" Style="{StaticResource FieldLabelStyle}" Margin="0,14,0,7" />
+                        <PasswordBox x:Name="RegistrationConfirmInput"
+                                     Style="{StaticResource PasswordInputStyle}"
+                                     MaxLength="64"
+                                     PasswordChanged="RegistrationConfirmInput_OnPasswordChanged"
+                                     AutomationProperties.Name="{loc:Localize Registration_ConfirmLabel}" />
+
+                        <TextBlock Text="{loc:Localize Registration_EmailLabel}" Style="{StaticResource FieldLabelStyle}" Margin="0,14,0,7" />
+                        <TextBox x:Name="RegistrationEmailInput"
+                                 Style="{StaticResource InputStyle}"
+                                 MaxLength="120"
+                                 Text="{Binding RegistrationEmail, UpdateSourceTrigger=PropertyChanged}"
+                                 AutomationProperties.Name="{loc:Localize Registration_EmailLabel}" />
+                        <TextBlock Text="{loc:Localize Registration_EmailHelp}"
+                                   Margin="2,5,0,0"
+                                   FontSize="11"
+                                   TextWrapping="Wrap"
+                                   Foreground="{StaticResource TextMutedBrush}" />
+
+                        <TextBlock x:Name="RegistrationMessageText"
+                                   Text="{Binding RegistrationMessage}"
+                                   Margin="0,14,0,0"
+                                   FontSize="12"
+                                   TextWrapping="Wrap"
+                                   Foreground="{StaticResource DangerBrush}"
+                                   Visibility="{Binding HasRegistrationMessage, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                   AutomationProperties.LiveSetting="Assertive" />
+
+                        <Grid Margin="0,20,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="12" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Button x:Name="RegistrationSubmitButton"
+                                    Content="{Binding RegistrationSubmitLabel}"
+                                    Style="{StaticResource PrimaryButtonStyle}"
+                                    Command="{Binding SubmitRegistrationCommand}" />
+                            <Button Grid.Column="2"
+                                    Content="{loc:Localize Registration_Back}"
+                                    Style="{StaticResource SecondaryButtonStyle}"
+                                    Command="{Binding CancelRegistrationCommand}" />
                         </Grid>
                     </StackPanel>
                 </Border>

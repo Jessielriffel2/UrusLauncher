@@ -365,6 +365,39 @@ function Copy-LegacyRuntimePayload {
     }
 }
 
+# After the startup smoke test the Windows loader/antivirus can keep a few payload DLLs open for a
+# moment, and Compress-Archive then fails with "the process cannot access the file" (seen on
+# clretwrc.dll). Wait until every payload file can be opened exclusively before zipping.
+function Wait-PayloadUnlocked {
+    param(
+        [Parameter(Mandatory)]
+        [string]$Directory,
+
+        [int]$TimeoutSeconds = 90
+    )
+
+    $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
+    do {
+        $locked = @(Get-ChildItem -LiteralPath $Directory -Recurse -File | Where-Object {
+            try {
+                $stream = [System.IO.File]::Open($_.FullName, 'Open', 'Read', 'None')
+                $stream.Dispose()
+                $false
+            }
+            catch {
+                $true
+            }
+        })
+        if ($locked.Count -eq 0) {
+            return
+        }
+
+        Start-Sleep -Milliseconds 500
+    } while ((Get-Date) -lt $deadline)
+
+    throw "Payload files are still locked after $TimeoutSeconds seconds (for example '$($locked[0].FullName)')."
+}
+
 function Test-PortableLauncherStartup {
     param(
         [Parameter(Mandatory)]
@@ -553,7 +586,10 @@ try {
         '-p:DebugSymbols=false',
         '-p:DebugType=None',
         '-p:PublishTrimmed=false',
-        '-p:UseAppHost=true'
+        '-p:UseAppHost=true',
+        # The Local (developer-only) provider must never ship. A global property beats the
+        # git-ignored Directory.Build.local.props that enables it on the maintainer's machine.
+        '-p:IncludeLocalProvider=false'
     ) + $releaseVersionProperties
 
     Write-Host 'Publishing Urus Launcher as self-contained win-x64...'
@@ -601,6 +637,13 @@ $bundledLegacyRuntime = Copy-LegacyRuntimePayload `
     $payloadDirectory
 Remove-Item -LiteralPath $stagingRoot -Recurse -Force
 
+# The developer-only Local provider must be absent from every public payload.
+$localProviderArtifacts = @(Get-ChildItem -LiteralPath $payloadDirectory -Recurse -File -ErrorAction Stop |
+    Where-Object { $_.Name -like 'LegendLauncher.Providers.Local*' })
+if ($localProviderArtifacts.Count -gt 0) {
+    throw "The release payload contains the developer-only Local provider ($($localProviderArtifacts[0].Name)). Build with -p:IncludeLocalProvider=false."
+}
+
 $mainExecutable = Join-Path $payloadDirectory 'UrusLauncher.App.exe'
 $gameHostExecutable = Join-Path $payloadDirectory 'LegendLauncher.GameHost.Legacy.exe'
 Assert-FileExists $mainExecutable 'Main Urus Launcher executable'
@@ -643,12 +686,20 @@ $installerPath = Join-Path $distributionRoot "UrusLauncher-Setup-$Version-win-x6
 Assert-FileExists $installerPath 'Compiled Urus Launcher installer'
 
 $portableZipPath = Join-Path $distributionRoot "UrusLauncher-$Version-portable-win-x64.zip"
+Wait-PayloadUnlocked $payloadDirectory
 Write-Host 'Creating the portable ZIP...'
-Compress-Archive `
-    -LiteralPath $payloadDirectory `
-    -DestinationPath $portableZipPath `
-    -CompressionLevel Optimal `
-    -Force
+# Compress-Archive (Windows PowerShell 5.1) fails intermittently with "the file is being used by
+# another process" on freshly written payload files (seen on clretwrc.dll and the Flash OCX). The .NET
+# ZipFile API does not, and keeps the same layout: a single top-level 'UrusLauncher' folder.
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+if (Test-Path -LiteralPath $portableZipPath) {
+    Remove-Item -LiteralPath $portableZipPath -Force
+}
+[System.IO.Compression.ZipFile]::CreateFromDirectory(
+    $payloadDirectory,
+    $portableZipPath,
+    [System.IO.Compression.CompressionLevel]::Optimal,
+    $true)
 Assert-FileExists $portableZipPath 'Portable Urus Launcher ZIP'
 
 $payloadFiles = @(Get-ChildItem -LiteralPath $payloadDirectory -File -Recurse)

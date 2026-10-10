@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "version": "1.1.16",
+  "title": {
+    "pt-BR": "SwordOnline: o novo servidor, direto no launcher",
+    "en-US": "SwordOnline: the new server, right in the launcher",
+    "es-ES": "SwordOnline: el nuevo servidor, directo en el launcher"
+  },
+  "notes": {
+    "pt-BR": [
+      "Novo: provedor SwordOnline (swordonline.tech). Entre aqui com login e senha e jogue.",
+      "Novo: crie sua conta SwordOnline sem sair do launcher. Em Nova conta, escolha “Ainda não tem conta?”, defina login e senha; o perfil já fica salvo e é só jogar.",
+      "O SwordOnline agora é o primeiro da lista, vem selecionado ao abrir e tem o selo HOT animado.",
+      "A conexão com o SwordOnline usa HTTPS; a senha nunca é gravada em log nem exibida em mensagens de erro.",
+      "Corrigido: o botão ENTRAR E JOGAR ficava desativado em contas sem senha salva. Agora a senha é digitada no próprio cartão da conta."
+    ],
+    "en-US": [
+      "New: SwordOnline provider (swordonline.tech). Sign in here with your login and password, and play.",
+      "New: create your SwordOnline account without leaving the launcher. In New account, choose “No account yet?”, set a login and password; the profile is saved and you can play right away.",
+      "SwordOnline is now first in the list, selected on startup, and carries an animated HOT badge.",
+      "The SwordOnline connection uses HTTPS; the password is never written to a log or shown in error messages.",
+      "Fixed: the ENTER AND PLAY button stayed disabled for accounts without a saved password. The password is now typed on the account card itself."
+    ],
+    "es-ES": [
+      "Nuevo: proveedor SwordOnline (swordonline.tech). Entra aquí con tu usuario y contraseña y juega.",
+      "Nuevo: crea tu cuenta de SwordOnline sin salir del launcher. En Nueva cuenta, elige “¿Aún no tienes cuenta?”, define usuario y contraseña; el perfil queda guardado y ya puedes jugar.",
+      "SwordOnline ahora es el primero de la lista, viene seleccionado al abrir y tiene la etiqueta HOT animada.",
+      "La conexión con SwordOnline usa HTTPS; la contraseña nunca se guarda en un registro ni se muestra en los mensajes de error.",
+      "Corregido: el botón ENTRAR Y JUGAR quedaba desactivado en cuentas sin contraseña guardada. Ahora la contraseña se escribe en la propia tarjeta de la cuenta."
+    ]
+  }
+}

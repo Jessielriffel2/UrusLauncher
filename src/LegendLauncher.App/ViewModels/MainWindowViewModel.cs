@@ -72,7 +72,8 @@ internal sealed partial class MainWindowViewModel : ObservableObject, IDisposabl
         Version? currentVersion = null,
         IDiagnosticLog? diagnosticLog = null,
         ProfilePreferencesStore? profilePreferences = null,
-        ProfileAvatarStore? avatarStore = null)
+        ProfileAvatarStore? avatarStore = null,
+        IAccountRegistrationService? accountRegistration = null)
     {
         _serverDirectory = serverDirectory;
         _profileStorage = profileStorage;
@@ -97,6 +98,7 @@ internal sealed partial class MainWindowViewModel : ObservableObject, IDisposabl
         InitializeLocalization();
         InitializeUpdater(updateService, currentVersion);
         InitializeFeatureCatalog();
+        InitializeRegistration(accountRegistration);
 
         OpenDonationPromptCommand = new AsyncRelayCommand(OpenDonationPromptAsync);
         CloseDonationPromptCommand = new RelayCommand(CloseDonationPrompt);
@@ -184,6 +186,7 @@ internal sealed partial class MainWindowViewModel : ObservableObject, IDisposabl
             }
 
             _serverIdBeforeFilter = null;
+            NotifyRegistrationAvailability();
             RecentServers = [];
             _pendingServerId = ServerCatalogPresentation.ResolveLastPlayedServerId(
                 SelectedProfile?.Model,
@@ -247,6 +250,7 @@ internal sealed partial class MainWindowViewModel : ObservableObject, IDisposabl
 
             DeleteProfileCommand.NotifyCanExecuteChanged();
             EditProfileCommand.NotifyCanExecuteChanged();
+            NotifyRegistrationAvailability();
             NotifyGameReadiness();
             if (!_suppressProfileCatalogReload && ReferenceEquals(previousPlatform, SelectedPlatform))
             {
@@ -440,6 +444,8 @@ internal sealed partial class MainWindowViewModel : ObservableObject, IDisposabl
             if (SetProperty(ref _isProfileEditorVisible, value))
             {
                 OnPropertyChanged(nameof(IsProfileReadyVisible));
+                OnPropertyChanged(nameof(ShowInlinePassword));
+                NotifyRegistrationAvailability();
             }
         }
     }
@@ -554,7 +560,28 @@ internal sealed partial class MainWindowViewModel : ObservableObject, IDisposabl
         !string.IsNullOrWhiteSpace(_runtimeProbe.RuntimeDirectory) &&
         SelectedServer?.CanLaunch == true &&
         !string.IsNullOrWhiteSpace(LoginHint) &&
-        (PendingPassword.Length > 0 || HasSavedCredential)));
+        (IsPasswordOptional || PendingPassword.Length > 0 || HasSavedCredential)));
+
+    /// <summary>
+    /// Whether the session card shows its own password box: the selected profile needs a password,
+    /// none is saved in the Windows vault, and no session is already running. Without this the play
+    /// button stays disabled and the only password field is hidden inside the account editor.
+    /// </summary>
+    public bool ShowInlinePassword =>
+        !_disposed &&
+        SelectedProfile is not null &&
+        !IsProfileEditorVisible &&
+        !IsPasswordOptional &&
+        !HasSavedCredential &&
+        !_isCredentialStateLoading &&
+        !HasActiveSelectedSession;
+
+    /// <summary>
+    /// Indicates that the selected platform launches without a password, so the
+    /// play button is not gated by an empty or unsaved credential.
+    /// </summary>
+    private bool IsPasswordOptional =>
+        SelectedPlatform?.Model?.RequiresPassword == false;
 
     private bool HasActiveSelectedSession =>
         SelectedProfile?.Model is { } selectedProfile &&
@@ -592,7 +619,7 @@ internal sealed partial class MainWindowViewModel : ObservableObject, IDisposabl
 
         try
         {
-            await LoadProfilesAsync(settings.LastSelectedProfileId).ConfigureAwait(true);
+            await LoadProfilesAsync(settings.LastSelectedProfileId, preferHotPlatform: true).ConfigureAwait(true);
         }
         catch (Exception exception)
         {
@@ -615,6 +642,7 @@ internal sealed partial class MainWindowViewModel : ObservableObject, IDisposabl
         _catalogCancellation?.Dispose();
         _launchCancellation?.Cancel();
         _launchCancellation?.Dispose();
+        DisposeRegistration();
         Workspace.SessionRemoved -= WorkspaceOnSessionRemoved;
         Workspace.RelogRequested -= WorkspaceOnRelogRequested;
         DisposeUpdater();
@@ -656,6 +684,7 @@ internal sealed partial class MainWindowViewModel : ObservableObject, IDisposabl
         OnPropertyChanged(nameof(CanStartGame));
         OnPropertyChanged(nameof(PrimaryActionLabel));
         OnPropertyChanged(nameof(CredentialStatusText));
+        OnPropertyChanged(nameof(ShowInlinePassword));
         PlayCommand.NotifyCanExecuteChanged();
     }
 

@@ -28,6 +28,15 @@
     <ProjectReference Include="..\..\src\LegendLauncher.Providers.Oas\LegendLauncher.Providers.Oas.csproj" />
     <ProjectReference Include="..\..\src\LegendLauncher.Providers.SevenWan\LegendLauncher.Providers.SevenWan.csproj" />
     <ProjectReference Include="..\..\src\LegendLauncher.Providers.Elarionis\LegendLauncher.Providers.Elarionis.csproj" />
+    <ProjectReference Include="..\..\src\LegendLauncher.Providers.SwordOnline\LegendLauncher.Providers.SwordOnline.csproj" />
+  </ItemGroup>
+
+  <!-- Developer-only provider and its tests: compiled only when IncludeLocalProvider=true. -->
+  <ItemGroup Condition="'$(IncludeLocalProvider)' == 'true'">
+    <ProjectReference Include="..\..\src\LegendLauncher.Providers.Local\LegendLauncher.Providers.Local.csproj" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(IncludeLocalProvider)' != 'true'">
+    <Compile Remove="Local\**" />
   </ItemGroup>
 
 </Project>

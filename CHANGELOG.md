@@ -2,6 +2,28 @@
 
 As mudanças relevantes do Urus Launcher são registradas aqui. As versões públicas seguem versionamento semântico e são publicadas em `vMAJOR.MINOR.PATCH`.
 
+## 1.1.16 — 08/10/2026
+
+### Adicionado
+
+- Novo provedor **SwordOnline** (`LegendLauncher.Providers.SwordOnline`): servidor próprio em `https://swordonline.tech`. A conta é criada no site; o launcher troca login e senha por uma ficha de jogo (`POST /api/launcher`) e abre o `Loading.swf` no Flash interno com `http=https:`. Detalhes em [providers-swordonline.md](docs/modulos/providers-swordonline.md).
+- O SwordOnline é o **primeiro** da lista de plataformas e leva um selo **HOT** vermelho, com brilho pulsante, ao lado do nome (`PlatformDefinition.IsHot`; animação por `Storyboard` no item do combo, sem texto a traduzir).
+- Abertura na plataforma em destaque: ao abrir, o launcher seleciona a plataforma HOT e um perfil dela (ou o último perfil usado, se nenhum for dessa plataforma), **sem abrir nenhum formulário sozinho**. Sem plataforma HOT o comportamento é o de sempre (`LoadProfilesAsync(preferHotPlatform)`).
+- Campo de **senha embutido** no cartão da conta (painel direito): aparece quando o perfil exige senha e não há senha salva no Cofre do Windows, com a opção "Manter/salvar senha"; Enter joga (`ShowInlinePassword`).
+- `swordonline.tech` entrou nas listas de permissão de host (`BridgeSecurityPolicy`, `ServerRowViewModel`), só em HTTPS/443.
+- **Criar conta SwordOnline dentro do app**: no editor de conta (perfil novo), o botão "Ainda não tem conta? Criar conta no SwordOnline" abre um painel com login, senha, confirmação e e-mail opcional. O launcher envia `POST /api/conta/criar` (mesmo endpoint da página do site) e, se der certo, salva o perfil com a senha no Cofre do Windows, pronto para jogar. As regras do site (login 4–16 com letras, números e `_`; senha 8–64 com letra e número) são conferidas antes de ir à rede. Contrato novo `IAccountRegistrationService` no Core, `SwordOnlineAccountRegistrationService` no provedor, `PlatformDefinition.SupportsAccountCreation` e `MainWindowViewModel.Registration.cs` no app. Só o SwordOnline oferece o botão. Detalhes em [providers-swordonline.md](docs/modulos/providers-swordonline.md).
+
+### Corrigido
+
+- **ENTRAR E JOGAR ficava desabilitado** para conta sem senha salva: o único campo de senha ficava dentro de "Editar conta" e salvar o perfil zerava a senha digitada (`MainWindowViewModel.Profiles.cs`, `PendingPassword = string.Empty`), então não havia como habilitar o botão sem marcar "salvar senha". Agora a senha pode ser digitada no próprio cartão.
+- **O clique em ENTRAR E JOGAR apagava a senha digitada no cartão**: `PlayButton_OnClick` copiava o `PasswordBox` do editor (vazio) para `PendingPassword` antes de o comando rodar. Agora só copia senha realmente digitada (`PasswordSelection.FromBoxes`).
+
+### Alterado
+
+- `scripts/build-urus-distribution.ps1`: o ZIP portátil passa a usar `[ZipFile]::CreateFromDirectory` (o `Compress-Archive` do PowerShell 5.1 falhava de forma intermitente com "arquivo em uso" em `clretwrc.dll`/OCX) e há uma espera até o payload ficar destravado antes de zipar.
+- `scripts/build-urus-distribution.ps1` valida que o payload do release contém somente provedores públicos e aborta caso contrário.
+- `FeatureCatalogTests`: a última release esperada passou de v1.1.15 para v1.1.16 (`docs/releases/v1.1.16.json`).
+
 ## 1.1.15 — 26/09/2026
 
 ### Adicionado

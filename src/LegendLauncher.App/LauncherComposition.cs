@@ -1,10 +1,12 @@
 using System.Net;
 using System.Net.Http;
 using System.IO;
+using LegendLauncher.App.GameHosting;
 using LegendLauncher.App.Services;
 using LegendLauncher.App.ViewModels;
 using LegendLauncher.App.Localization;
 using LegendLauncher.App.Updates;
+using LegendLauncher.Core.Contracts;
 using LegendLauncher.GameHost.Legacy;
 using LegendLauncher.Infrastructure.Logging;
 using LegendLauncher.Infrastructure.Paths;
@@ -14,6 +16,10 @@ using LegendLauncher.Infrastructure.Security;
 using LegendLauncher.Providers.Oas;
 using LegendLauncher.Providers.SevenWan;
 using LegendLauncher.Providers.Elarionis;
+using LegendLauncher.Providers.SwordOnline;
+#if LOREBORN_LOCAL
+using LegendLauncher.Providers.Local;
+#endif
 
 namespace LegendLauncher.App;
 
@@ -62,11 +68,19 @@ internal static class LauncherComposition
             cache,
             onRecoverableFailure: onCatalogFailure);
         var elarionisAuthentication = new ElarionisAuthenticationService();
-        var adapters = OasPlatformCatalog.All
+        var swordOnlineServerDirectory = new SwordOnlineServerDirectory(httpClient);
+        var swordOnlineAuthentication = new SwordOnlineAuthenticationService(httpClient);
+        // SwordOnline is listed first: PlatformAdapterRegistry keeps this order and the launcher
+        // opens with the first platform selected.
+        var adapters = SwordOnlinePlatformCatalog.All
             .Select(platform => new PlatformAdapter(
                 platform,
+                swordOnlineServerDirectory,
+                swordOnlineAuthentication))
+            .Concat(OasPlatformCatalog.All.Select(platform => new PlatformAdapter(
+                platform,
                 oasServerDirectory,
-                oasAuthentication))
+                oasAuthentication)))
             .Concat(SevenWanPlatformCatalog.All.Select(platform => new PlatformAdapter(
                 platform,
                 sevenWanServerDirectory,
@@ -75,8 +89,22 @@ internal static class LauncherComposition
                 platform,
                 elarionisServerDirectory,
                 elarionisAuthentication)));
+#if LOREBORN_LOCAL
+        // Developer-only: LOReborn running on this machine. Compiled out of public releases
+        // (IncludeLocalProvider=false), so it cannot be enabled by an end user.
+        adapters = adapters.Concat(LocalPlatformCatalog.All.Select(platform => new PlatformAdapter(
+            platform,
+            new LocalServerDirectory(httpClient),
+            new SwordOnlineAuthenticationService(httpClient, LocalPlatformCatalog.Portal))));
+#endif
         var platformRegistry = new PlatformAdapterRegistry(adapters);
-        var gameRuntime = new LegacyGameRuntime();
+
+        string? configuredRuntime = FindLegacyRuntimeCandidate();
+        LegacyRuntimeProbeResult runtime = new LegacyRuntimeProbe().Probe(
+            configuredPath: configuredRuntime,
+            startDirectory: AppContext.BaseDirectory);
+
+        var gameRuntime = BuildGameRuntime(runtime.RuntimeDirectory);
         var profileStorage = new ProfileStorageCoordinator(
             profiles,
             credentialVault,
@@ -90,10 +118,6 @@ internal static class LauncherComposition
             localization: localization,
             avatarStore: avatarStore);
 
-        string? configuredRuntime = FindLegacyRuntimeCandidate();
-        LegacyRuntimeProbeResult runtime = new LegacyRuntimeProbe().Probe(
-            configuredPath: configuredRuntime,
-            startDirectory: AppContext.BaseDirectory);
         var sessionLauncher = new SessionLaunchCoordinator(
             credentialVault,
             platformRegistry,
@@ -113,7 +137,8 @@ internal static class LauncherComposition
             updateService: updateService,
             diagnosticLog: DiagnosticLog.Current,
             profilePreferences: profilePreferences,
-            avatarStore: avatarStore);
+            avatarStore: avatarStore,
+            accountRegistration: new SwordOnlineAccountRegistrationService(httpClient));
     }
 
     public static HttpClient CreateHttpClient()
@@ -134,6 +159,27 @@ internal static class LauncherComposition
         client.DefaultRequestHeaders.UserAgent.ParseAdd(
             $"UrusLauncher/{version.ToString(3)}");
         return client;
+    }
+
+    /// <summary>
+    /// Builds the game runtime. Every provider runs on the legacy Flash ActiveX hosted by
+    /// <c>LegacyGameRuntime</c>; the platform router only exists for the developer-only local build.
+    /// </summary>
+    private static IGameRuntime BuildGameRuntime(string? legacyRuntimeDirectory)
+    {
+        var legacy = new LegacyGameRuntime();
+#if LOREBORN_LOCAL
+        string[] localPlatformIds = LocalPlatformCatalog.All
+            .Select(static platform => platform.Id)
+            .ToArray();
+
+        return new PlatformRoutingGameRuntime(
+            legacy,
+            legacy,
+            localPlatformIds);
+#else
+        return legacy;
+#endif
     }
 
     private static string? FindLegacyRuntimeCandidate() => FindLegacyRuntimeCandidate(

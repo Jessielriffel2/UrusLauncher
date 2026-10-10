@@ -23,3 +23,12 @@ profiles.json
 credentials.json
 settings.json
 server-catalogs.json
+
+Directory.Build.local.props
+
+# Provedor de desenvolvimento (servidor na propria maquina): nunca vai para o repositorio publico.
+src/LegendLauncher.Providers.Local/
+src/LegendLauncher.Providers/
+src/LegendLauncher.App/GameHosting/PlatformRoutingGameRuntime.cs
+tests/LegendLauncher.Tests/Local/
+docs/modulos/providers-local.md

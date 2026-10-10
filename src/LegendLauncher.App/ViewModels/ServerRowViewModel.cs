@@ -107,8 +107,21 @@ internal sealed class ServerRowViewModel(
     {
         if (uri is null ||
             !uri.IsAbsoluteUri ||
-            !string.Equals(uri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase) ||
-            !string.IsNullOrEmpty(uri.UserInfo) ||
+            !string.IsNullOrEmpty(uri.UserInfo))
+        {
+            return false;
+        }
+
+#if LOREBORN_LOCAL
+        // Local provider: the game is served by the user's own machine on loopback.
+        if (uri.IsLoopback ||
+            string.Equals(uri.IdnHost.TrimEnd('.'), "localhost", StringComparison.OrdinalIgnoreCase))
+        {
+            return string.Equals(uri.Scheme, Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase);
+        }
+#endif
+
+        if (!string.Equals(uri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase) ||
             (!uri.IsDefaultPort && uri.Port != 443))
         {
             return false;
@@ -116,7 +129,8 @@ internal sealed class ServerRowViewModel(
 
         string host = uri.IdnHost.TrimEnd('.');
         return IsAllowedLaunchSuffix(host, "creaction-network.com") ||
-            IsAllowedLaunchSuffix(host, "elarionis.online");
+            IsAllowedLaunchSuffix(host, "elarionis.online") ||
+            IsAllowedLaunchSuffix(host, "swordonline.tech");
     }
 
     private static bool IsAllowedLaunchSuffix(string host, string suffix) =>

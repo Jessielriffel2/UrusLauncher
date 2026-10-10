@@ -75,7 +75,7 @@ internal sealed class SessionLaunchCoordinator
         }
 
         GameSession gameSession = await _gameRuntime
-            .LaunchAsync(authentication.Session, _runtimeOptions, cancellationToken)
+            .LaunchAsync(input.Platform, authentication.Session, _runtimeOptions, cancellationToken)
             .ConfigureAwait(false);
         try
         {
@@ -101,6 +101,15 @@ internal sealed class SessionLaunchCoordinator
         SessionLaunchInput input,
         CancellationToken cancellationToken)
     {
+        // Platforms served from the user's own machine (local provider) launch with
+        // an empty secret: the gateway does not authenticate a credential.
+        if (!input.Platform.RequiresPassword)
+        {
+            return new ResolvedCredential(
+                new CredentialSecret(input.Login, string.Empty),
+                SessionCredentialSource.Typed);
+        }
+
         if (input.TypedPassword.Length > 0)
         {
             return new ResolvedCredential(

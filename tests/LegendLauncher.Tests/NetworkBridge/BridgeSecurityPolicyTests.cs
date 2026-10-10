@@ -14,6 +14,17 @@ public sealed class BridgeSecurityPolicyTests
         _policy.EnsureLoopback(new IPEndPoint(IPAddress.IPv6Loopback, 0));
     }
 
+#if !LOREBORN_LOCAL
+    [Theory]
+    [InlineData("http://127.0.0.1:8081/Loading.swf")]
+    [InlineData("http://localhost:8081/Loading.swf")]
+    [InlineData("ws://127.0.0.1:9200/")]
+    public void ValidateUpstream_PublicBuildRejectsPlainHttpAndLoopback(string address)
+    {
+        Assert.False(_policy.ValidateUpstream(new Uri(address)).IsAllowed);
+    }
+
+#endif
     [Fact]
     public void EnsureLoopback_RejectsLanBinding()
     {
@@ -31,6 +42,8 @@ public sealed class BridgeSecurityPolicyTests
     [InlineData("https://elarionis.online/api/shards")]
     [InlineData("https://elarionis.online/s7/play?site=s7")]
     [InlineData("https://elarionis.online/client/Loading.swf?token=test")]
+    [InlineData("https://swordonline.tech/api/launcher")]
+    [InlineData("https://swordonline.tech/config.xml")]
     public void ValidateUpstream_AllowsKnownGameDomains(string address)
     {
         BridgeValidationResult result = _policy.ValidateUpstream(new Uri(address));

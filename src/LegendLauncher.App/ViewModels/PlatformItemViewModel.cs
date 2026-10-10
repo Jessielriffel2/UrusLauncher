@@ -9,4 +9,7 @@ internal sealed class PlatformItemViewModel(PlatformDefinition model)
     public string Id => Model.Id;
 
     public string DisplayName => Model.DisplayName;
+
+    /// <summary>Whether the animated HOT badge is shown next to the platform name.</summary>
+    public bool IsHot => Model.IsHot;
 }

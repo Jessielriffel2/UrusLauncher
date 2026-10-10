@@ -12,7 +12,21 @@ internal static class LegacyLaunchUriPolicy
         if (launchUri is null ||
             !launchUri.IsAbsoluteUri ||
             launchUri.AbsoluteUri.Length > MaxUriLength ||
-            !string.Equals(launchUri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase) ||
+            !string.IsNullOrEmpty(launchUri.UserInfo))
+        {
+            return false;
+        }
+
+#if LOREBORN_LOCAL
+        // The local provider serves the game from the user's own machine over
+        // plain HTTP on loopback; remote providers stay HTTPS-only on 443.
+        if (IsLoopback(launchUri))
+        {
+            return string.Equals(launchUri.Scheme, Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase);
+        }
+#endif
+
+        if (!string.Equals(launchUri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase) ||
             (!launchUri.IsDefaultPort && launchUri.Port != 443))
         {
             return false;
@@ -21,6 +35,12 @@ internal static class LegacyLaunchUriPolicy
         return BridgePolicy.ValidateUpstream(launchUri).IsAllowed;
     }
 
+#if LOREBORN_LOCAL
+    private static bool IsLoopback(Uri uri) =>
+        uri.IsLoopback ||
+        string.Equals(uri.IdnHost.TrimEnd('.'), "localhost", StringComparison.OrdinalIgnoreCase);
+
+#endif
     public static void EnsureAllowed(Uri? launchUri)
     {
         if (!IsAllowed(launchUri))

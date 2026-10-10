@@ -12,6 +12,7 @@ public sealed class BridgeSecurityPolicy
         "oasgames.com",
         "creaction-network.com",
         "elarionis.online",
+        "swordonline.tech",
     ];
 
     private readonly HashSet<string> _allowedHostSuffixes;
@@ -48,7 +49,7 @@ public sealed class BridgeSecurityPolicy
             return BridgeValidationResult.Deny("Only absolute upstream addresses are accepted.");
         }
 
-        if (uri.Scheme is not ("https" or "wss"))
+        if (uri.Scheme is not ("https" or "wss") && !IsLoopbackHttp(uri))
         {
             return BridgeValidationResult.Deny("The upstream connection must use HTTPS or WSS.");
         }
@@ -58,9 +59,14 @@ public sealed class BridgeSecurityPolicy
             return BridgeValidationResult.Deny("Credentials cannot be embedded in an upstream address.");
         }
 
-        if (IPAddress.TryParse(uri.Host, out _))
+        if (IPAddress.TryParse(uri.Host, out _) && !IsLoopbackHttp(uri))
         {
             return BridgeValidationResult.Deny("Literal upstream IP addresses are not allowed.");
+        }
+
+        if (IsLoopbackHttp(uri))
+        {
+            return BridgeValidationResult.Allow();
         }
 
         string host = uri.IdnHost.TrimEnd('.');
@@ -71,6 +77,31 @@ public sealed class BridgeSecurityPolicy
         return isAllowed
             ? BridgeValidationResult.Allow()
             : BridgeValidationResult.Deny("The upstream host is outside the game allowlist.");
+    }
+
+    /// <summary>
+    /// Identifies the user's own machine, used by the local provider to serve the
+    /// game from loopback without HTTPS.
+    /// </summary>
+    private static bool IsLoopbackHttp(Uri uri)
+    {
+#if LOREBORN_LOCAL
+        if (!string.Equals(uri.Scheme, Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        if (uri.IsLoopback)
+        {
+            return true;
+        }
+
+        return string.Equals(uri.IdnHost.TrimEnd('.'), "localhost", StringComparison.OrdinalIgnoreCase);
+#else
+        // Public builds never accept plain HTTP or loopback upstreams.
+        _ = uri;
+        return false;
+#endif
     }
 
     private static string NormalizeSuffix(string value)

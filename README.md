@@ -13,6 +13,7 @@ Launcher Windows para Legend Online, escrito do zero em C#/.NET 10 e distribuíd
 | Idiomas da interface | Português brasileiro, inglês e espanhol implementados; troca dinâmica, persistida e compartilhada com novas instâncias do GameHost |
 | Apoio voluntário | Modal PayPal/PIX localizado, abertura manual e lembrete avaliado somente ao abrir, com intervalo de cinco horas |
 | Catálogo oficial OAS e fallback em cache | Implementado |
+| Provedor SwordOnline (`swordonline.tech`) | Implementado: login e senha, com criação de conta dentro do próprio launcher, ficha de jogo por `/api/launcher`, HTTPS; ver [providers-swordonline.md](docs/modulos/providers-swordonline.md) |
 | Busca, disponibilidade e selos do catálogo | Implementado; último servidor do perfil fica no topo como recomendado, lançamento mais recente recebe selo próprio e os demais formam uma seção separada |
 | Múltiplos perfis/contas | Implementado; o mesmo login OAS pode alternar entre Brasil, Classic, Reborn e demais variantes sem perder a senha, mantendo UID/histórico separados por versão |
 | Workspace multissessão com abas | Implementado; barra única de 44 px, controles/abas de 34 px, abas roláveis e `+ CONTA` sempre visível; um GameHost isolado por perfil + versão + servidor |
@@ -31,7 +32,7 @@ Launcher Windows para Legend Online, escrito do zero em C#/.NET 10 e distribuíd
 | Execução direta sem `H2Proxy.exe` | Implementada |
 | Distribuição Windows | Pipeline self-contained `win-x64`, runtime registration-free fornecido pelo mantenedor, instalador Inno Setup por usuário, ZIP portátil, manifesto e SHA-256 implementados; a [v1.1.15](https://github.com/Jessielriffel2/UrusLauncher/releases/tag/v1.1.15) está publicada |
 | Atualizações públicas | Consulta antecipada por GitHub Releases ao abrir, download/validação automática por usuário, cache verificado e instalação somente após clique explícito |
-| Ruffle | Avaliação futura |
+| Ruffle | Removido; todas as plataformas, incluindo a local, usam o ActiveX interno |
 | Favoritos/múltiplos servidores fixados por conta | Melhoria futura |
 | Login social | Melhoria futura |
 

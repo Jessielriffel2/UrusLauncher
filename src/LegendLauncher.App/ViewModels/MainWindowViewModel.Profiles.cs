@@ -7,7 +7,7 @@ namespace LegendLauncher.App.ViewModels;
 
 internal sealed partial class MainWindowViewModel
 {
-    private async Task LoadProfilesAsync(Guid? selectProfileId = null)
+    private async Task LoadProfilesAsync(Guid? selectProfileId = null, bool preferHotPlatform = false)
     {
         IReadOnlyList<AccountProfile> stored = await _profileStorage.GetAllAsync().ConfigureAwait(true);
         Profiles.Clear();
@@ -19,12 +19,43 @@ internal sealed partial class MainWindowViewModel
         }
 
         Guid? desiredId = selectProfileId ?? SelectedProfile?.Model.Id;
+
+        // Opening the launcher: land on the highlighted (HOT) platform instead of whatever the last
+        // profile used. Prefer a profile that already belongs to that platform; with none, keep the
+        // last profile (a profile is a login that can play on any platform) and only force the
+        // platform. It never opens the account form by itself.
+        PlatformItemViewModel? hotPlatform = preferHotPlatform
+            ? Platforms.FirstOrDefault(static platform => platform.IsHot)
+            : null;
+        if (hotPlatform is not null)
+        {
+            bool BelongsToHotPlatform(ProfileItemViewModel profile) =>
+                string.Equals(profile.Model.PlatformId, hotPlatform.Id, StringComparison.OrdinalIgnoreCase);
+
+            ProfileItemViewModel? current = Profiles.FirstOrDefault(profile => profile.Model.Id == desiredId);
+            if (current is null || !BelongsToHotPlatform(current))
+            {
+                ProfileItemViewModel? onHotPlatform = Profiles.FirstOrDefault(BelongsToHotPlatform);
+                if (onHotPlatform is not null)
+                {
+                    desiredId = onHotPlatform.Model.Id;
+                }
+            }
+        }
+
         _suppressProfileCatalogReload = true;
         try
         {
             SelectedProfile = desiredId is null
                 ? Profiles.FirstOrDefault()
                 : Profiles.FirstOrDefault(profile => profile.Model.Id == desiredId) ?? Profiles.FirstOrDefault();
+
+            // Selecting a profile switches to the platform it last used; the highlighted platform wins
+            // when the launcher opens.
+            if (hotPlatform is not null && !ReferenceEquals(SelectedPlatform, hotPlatform))
+            {
+                SelectedPlatform = hotPlatform;
+            }
         }
         finally
         {

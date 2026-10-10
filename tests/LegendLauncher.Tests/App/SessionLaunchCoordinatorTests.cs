@@ -296,6 +296,78 @@ public sealed class SessionLaunchCoordinatorTests
         Assert.Equal([4242], terminatedProcessIds);
     }
 
+    /// <summary>
+    /// The local server id is not numeric, so the shared numeric factory cannot build it.
+    /// </summary>
+    private static GameServer LocalServer() =>
+        new(
+            "local",
+            1L,
+            "lreb",
+            "Passwordless test server",
+            "Passwordless test server (loopback)",
+            PasswordlessTestPlatform.MovieUri,
+            IsRecommended: true,
+            IsValid: true,
+            Merger: null,
+            StartTimeUtc: null);
+
+    [Fact]
+    public async Task LaunchAsync_OnAPasswordlessPlatformLaunchesWithAnEmptySecretAndNoSavedCredential()
+    {
+        AccountProfile profile = AppTestData.Profile("localtest", 900001, "1") with
+        {
+            PlatformId = PasswordlessTestPlatform.Platform.Id,
+        };
+        var store = new InMemoryProfileStore(profile);
+        var vault = new InMemoryCredentialVault();
+        var runtime = new StubGameRuntime();
+        var authentication = SuccessfulAuthentication(providerUserId: 900001);
+        SessionLaunchCoordinator coordinator = CreateCoordinator(store, vault, authentication, runtime);
+        var input = Input(
+            profile,
+            typedPassword: "",
+            rememberPassword: false,
+            platform: PasswordlessTestPlatform.Platform,
+            server: LocalServer());
+
+        SessionLaunchOutcome outcome = await coordinator.LaunchAsync(input);
+
+        Assert.Equal(SessionLaunchState.Success, outcome.State);
+        AuthenticationRequest request = Assert.Single(authentication.Requests);
+        Assert.Equal(string.Empty, request.Secret.Password);
+        Assert.Equal("localtest", request.Secret.UserName);
+        Assert.Single(runtime.Sessions);
+
+        // A passwordless platform must never push an empty secret into the vault:
+        // the coordinator clears any stale entry instead.
+        Assert.Equal(0, vault.SetCount);
+        Assert.False(vault.Contains(profile.CredentialKey));
+    }
+
+    [Fact]
+    public async Task LaunchAsync_OnAPasswordlessPlatformLaunchesWithoutAnyStoredCredential()
+    {
+        var store = new InMemoryProfileStore();
+        var vault = new InMemoryCredentialVault();
+        var runtime = new StubGameRuntime();
+        var authentication = SuccessfulAuthentication(providerUserId: 900001);
+        SessionLaunchCoordinator coordinator = CreateCoordinator(store, vault, authentication, runtime);
+        var input = Input(
+            profile: null,
+            typedPassword: "",
+            rememberPassword: false,
+            platform: PasswordlessTestPlatform.Platform,
+            server: LocalServer());
+
+        SessionLaunchOutcome outcome = await coordinator.LaunchAsync(input);
+
+        Assert.Equal(SessionLaunchState.Success, outcome.State);
+        Assert.Equal(string.Empty, Assert.Single(authentication.Requests).Secret.Password);
+        Assert.Single(runtime.Sessions);
+        Assert.Equal(0, vault.SetCount);
+    }
+
     private static SessionLaunchCoordinator CreateCoordinator(
         InMemoryProfileStore store,
         InMemoryCredentialVault vault,
@@ -327,11 +399,12 @@ public sealed class SessionLaunchCoordinatorTests
         bool rememberPassword,
         string serverId = "3257",
         string profileDisplayName = "Conta",
-        PlatformDefinition? platform = null) =>
+        PlatformDefinition? platform = null,
+        GameServer? server = null) =>
         new(
             profile,
             platform ?? OasPlatformCatalog.Brazil,
-            AppTestData.Server(serverId),
+            server ?? AppTestData.Server(serverId),
             profileDisplayName,
             profile?.UserName ?? "new@example.test",
             typedPassword,
