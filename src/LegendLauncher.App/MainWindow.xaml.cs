@@ -362,6 +362,14 @@ public partial class MainWindow : Window
 
     private void ViewModelOnPropertyChanged(object? sender, PropertyChangedEventArgs eventArgs)
     {
+        if (eventArgs.PropertyName == nameof(MainWindowViewModel.PendingPassword) &&
+            !string.IsNullOrEmpty(_viewModel.PendingPassword) &&
+            !string.Equals(SessionPasswordInput.Password, _viewModel.PendingPassword, StringComparison.Ordinal))
+        {
+            // The password was kept after saving the profile: show it on the card as typed.
+            SessionPasswordInput.Password = _viewModel.PendingPassword;
+        }
+
         if (eventArgs.PropertyName == nameof(MainWindowViewModel.RegistrationPassword) &&
             string.IsNullOrEmpty(_viewModel.RegistrationPassword) &&
             RegistrationPasswordInput.Password.Length > 0)

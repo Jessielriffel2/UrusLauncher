@@ -68,7 +68,7 @@ internal static class LauncherComposition
             cache,
             onRecoverableFailure: onCatalogFailure);
         var elarionisAuthentication = new ElarionisAuthenticationService();
-        var swordOnlineServerDirectory = new SwordOnlineServerDirectory(httpClient);
+        var swordOnlineServerDirectory = new SwordOnlineServerDirectory();
         var swordOnlineAuthentication = new SwordOnlineAuthenticationService(httpClient);
         // SwordOnline is listed first: PlatformAdapterRegistry keeps this order and the launcher
         // opens with the first platform selected.

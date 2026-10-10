@@ -66,6 +66,7 @@ internal sealed partial class MainWindowViewModel
 
         if (SelectedProfile is null)
         {
+            RememberPassword = true;
             IsProfileEditorVisible = true;
         }
     }
@@ -195,6 +196,7 @@ internal sealed partial class MainWindowViewModel
                 RememberPassword,
                 avatarFileName,
                 _removePendingAvatar);
+            string typedPassword = PendingPassword;
             ProfileSaveOutcome outcome = await _profileStorage
                 .SaveAsync(input)
                 .ConfigureAwait(true);
@@ -203,6 +205,18 @@ internal sealed partial class MainWindowViewModel
             await LoadProfilesAsync(outcome.Profile.Id).ConfigureAwait(true);
             await LoadServersAsync(forceRefresh: false).ConfigureAwait(true);
             IsProfileEditorVisible = false;
+
+            // Not stored in the vault: keep what was typed in memory for this session, so saving a
+            // profile never leaves the play button disabled with the password already filled in.
+            bool storedInVault = input.RememberPassword &&
+                typedPassword.Length > 0 &&
+                outcome.WasCredentialPersisted;
+            if (!storedInVault &&
+                typedPassword.Length > 0 &&
+                SelectedProfile?.Model.Id == outcome.Profile.Id)
+            {
+                PendingPassword = typedPassword;
+            }
             SetStatusMessage(outcome.WasCredentialPersisted
                 ? "Profile_SavedWithCredential"
                 : "Profile_SavedWithoutCredential");
@@ -274,7 +288,9 @@ internal sealed partial class MainWindowViewModel
         ProfileLabel = string.Empty;
         LoginHint = string.Empty;
         PendingPassword = string.Empty;
-        RememberPassword = false;
+        // Saving to the Windows vault is what the player nearly always wants, and forgetting the
+        // tick used to leave the play button disabled after saving.
+        RememberPassword = true;
         ResetPendingAvatarSelection();
         _pendingServerId = null;
         SelectedServer = null;

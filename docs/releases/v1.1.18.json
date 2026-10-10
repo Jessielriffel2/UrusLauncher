@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "version": "1.1.18",
+  "title": {
+    "pt-BR": "Criar o perfil e jogar ficou direto",
+    "en-US": "Creating a profile and playing is now straightforward",
+    "es-ES": "Crear el perfil y jugar ahora es directo"
+  },
+  "notes": {
+    "pt-BR": [
+      "Corrigido: depois de criar o perfil com login e senha, o botão ENTRAR E JOGAR libera na hora. Não precisa mais voltar em Editar conta.",
+      "“Manter/salvar senha no Cofre do Windows” já vem marcado em conta nova. Se você desmarcar, a senha digitada continua valendo nesta sessão.",
+      "Corrigido: em PCs lentos ou com internet ruim, o botão do SwordOnline podia ficar desativado esperando uma verificação do servidor. Essa espera foi removida; se o servidor estiver fora do ar, o login avisa com uma mensagem clara."
+    ],
+    "en-US": [
+      "Fixed: after creating a profile with a login and password, the ENTER AND PLAY button is enabled right away. No more going back to Edit account.",
+      "“Keep/save password in Windows Credential Manager” is now ticked by default on a new account. If you untick it, the typed password still works for this session.",
+      "Fixed: on slow PCs or poor connections, the SwordOnline button could stay disabled waiting for a server check. That wait is gone; if the server is down, the login tells you with a clear message."
+    ],
+    "es-ES": [
+      "Corregido: tras crear el perfil con usuario y contraseña, el botón ENTRAR Y JUGAR se habilita al instante. Ya no hay que volver a Editar cuenta.",
+      "“Mantener/guardar la contraseña en el Administrador de credenciales de Windows” viene marcado por defecto en una cuenta nueva. Si lo desmarcas, la contraseña escrita sigue valiendo en esta sesión.",
+      "Corregido: en PC lentos o con mala conexión, el botón de SwordOnline podía quedar desactivado esperando una comprobación del servidor. Esa espera se eliminó; si el servidor está caído, el inicio de sesión lo avisa con un mensaje claro."
+    ]
+  }
+}

@@ -1,7 +1,5 @@
-using System.Net;
 using LegendLauncher.Core.Models;
 using LegendLauncher.Providers.SwordOnline;
-using LegendLauncher.Tests.Oas;
 
 namespace LegendLauncher.Tests.SwordOnline;
 
@@ -22,58 +20,46 @@ public sealed class SwordOnlineServerDirectoryTests
     }
 
     [Fact]
-    public async Task GetServersAsync_ReturnsTheOnlyServerAsValidWhenConfigIsServed()
+    public async Task GetServersAsync_ReturnsTheOnlyServerAlwaysLaunchable()
     {
-        Uri? probed = null;
-        var handler = new StubHttpMessageHandler((request, _) =>
-        {
-            probed = request.RequestUri;
-            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK));
-        });
-
-        ServerCatalog catalog = await new SwordOnlineServerDirectory(new HttpClient(handler))
+        ServerCatalog catalog = await new SwordOnlineServerDirectory()
             .GetServersAsync(SwordOnlinePlatformCatalog.SwordOnline);
 
         GameServer server = Assert.Single(catalog.All);
         Assert.True(server.IsValid);
         Assert.True(server.IsRecommended);
         Assert.Equal("https://swordonline.tech/Loading.swf", server.LaunchUri!.AbsoluteUri);
-        Assert.Equal("https://swordonline.tech/config.xml", probed!.AbsoluteUri);
-    }
-
-    [Theory]
-    [InlineData(HttpStatusCode.NotFound)]
-    [InlineData(HttpStatusCode.BadGateway)]
-    public async Task GetServersAsync_MarksTheServerInvalidWhenThePortalFails(HttpStatusCode status)
-    {
-        var handler = new StubHttpMessageHandler((_, _) => Task.FromResult(new HttpResponseMessage(status)));
-
-        ServerCatalog catalog = await new SwordOnlineServerDirectory(new HttpClient(handler))
-            .GetServersAsync(SwordOnlinePlatformCatalog.SwordOnline);
-
-        Assert.False(Assert.Single(catalog.All).IsValid);
+        Assert.Same(server, catalog.Current);
     }
 
     [Fact]
-    public async Task GetServersAsync_MarksTheServerInvalidWhenThePortalIsUnreachable()
+    public async Task GetServersAsync_NeverNeedsTheNetwork_SoASlowOrOfflinePcStillGetsAPlayableServer()
     {
-        var handler = new StubHttpMessageHandler((_, _) => throw new HttpRequestException("offline"));
-
-        ServerCatalog catalog = await new SwordOnlineServerDirectory(new HttpClient(handler))
+        // No HttpClient is even constructed: the answer is immediate and cannot time out.
+        Task<ServerCatalog> pending = new SwordOnlineServerDirectory()
             .GetServersAsync(SwordOnlinePlatformCatalog.SwordOnline);
 
-        Assert.False(Assert.Single(catalog.All).IsValid);
+        Assert.True(pending.IsCompletedSuccessfully);
+        Assert.True(Assert.Single((await pending).All).IsValid);
     }
 
     [Fact]
-    public async Task GetServersAsync_ForAnotherPlatformReturnsNothingWithoutTouchingTheNetwork()
+    public async Task GetServersAsync_HonoursCancellation()
     {
-        var handler = new StubHttpMessageHandler((_, _) => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)));
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => new SwordOnlineServerDirectory()
+            .GetServersAsync(SwordOnlinePlatformCatalog.SwordOnline, cancellationToken: cts.Token));
+    }
+
+    [Fact]
+    public async Task GetServersAsync_ForAnotherPlatformReturnsNothing()
+    {
         PlatformDefinition other = SwordOnlinePlatformCatalog.SwordOnline with { Id = "other" };
 
-        ServerCatalog catalog = await new SwordOnlineServerDirectory(new HttpClient(handler)).GetServersAsync(other);
+        ServerCatalog catalog = await new SwordOnlineServerDirectory().GetServersAsync(other);
 
         Assert.Empty(catalog.All);
-        Assert.Equal(0, handler.CallCount);
     }
 }

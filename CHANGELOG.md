@@ -2,6 +2,13 @@
 
 As mudanças relevantes do Urus Launcher são registradas aqui. As versões públicas seguem versionamento semântico e são publicadas em `vMAJOR.MINOR.PATCH`.
 
+## 1.1.18 — 10/10/2026
+
+### Corrigido
+
+- **Criar o perfil e jogar ficava complicado**: depois de salvar um perfil novo, o ENTRAR E JOGAR só liberava se a opção de salvar a senha no Cofre estivesse marcada, porque salvar zerava a senha digitada. Agora "Manter/salvar senha no Cofre do Windows" já vem marcado em conta nova (`NewProfile`, e ao abrir sem perfis) e, se o jogador desmarcar ou o Cofre falhar, a senha digitada é mantida em memória para a sessão (`SaveProfileAsync`) e espelhada no campo de senha do cartão (`MainWindow.xaml.cs`).
+- **Botão do SwordOnline desativado em PC lento ou com internet ruim**: o catálogo sondava `config.xml` por até 5 s e, se a sondagem falhava, marcava o servidor como inválido, desativando o botão sem explicação. O servidor do SwordOnline agora é sempre jogável e o catálogo não usa mais a rede (`SwordOnlineServerDirectory`); se o portal estiver fora do ar, o login mostra a mensagem de rede.
+
 ## 1.1.16 — 08/10/2026
 
 ### Adicionado
