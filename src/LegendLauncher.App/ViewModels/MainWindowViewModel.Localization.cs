@@ -99,6 +99,7 @@ internal sealed partial class MainWindowViewModel
         OnPropertyChanged(nameof(SelectedServerDisplayName));
         OnPropertyChanged(nameof(CreateAccountLinkText));
         OnPropertyChanged(nameof(CreateAccountButtonText));
+        OnPropertyChanged(nameof(AppVersionText));
         OnPropertyChanged(nameof(PlatformSearchPlaceholder));
         OnPropertyChanged(nameof(PlatformSearchEmptyText));
         OnPropertyChanged(nameof(RegistrationTitle));

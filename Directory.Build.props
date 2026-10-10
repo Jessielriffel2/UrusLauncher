@@ -15,6 +15,17 @@
   <PropertyGroup Condition="'$(IncludeLocalProvider)' == 'true'">
     <DefineConstants>$(DefineConstants);LOREBORN_LOCAL</DefineConstants>
   </PropertyGroup>
+  <!--
+    Every assembly records the mode it was compiled in. A stale developer build (compiled with the
+    local provider) can never be mistaken for a public one: the attribute changes with the property,
+    which forces a recompile, and the release script refuses any assembly that is not "False".
+  -->
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>IncludeLocalProvider</_Parameter1>
+      <_Parameter2>$(IncludeLocalProvider)</_Parameter2>
+    </AssemblyAttribute>
+  </ItemGroup>
   <PropertyGroup>
     <LangVersion>latest</LangVersion>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>

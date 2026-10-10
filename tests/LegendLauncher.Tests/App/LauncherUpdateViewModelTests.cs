@@ -45,6 +45,20 @@ public sealed class LauncherUpdateViewModelTests
     }
 
     [Fact]
+    public void RunningVersionIsShownUnderTheProtectedDataBox()
+    {
+        using MainWindowViewModel portuguese = CreateViewModel(
+            new StubLauncherUpdateService(release: null),
+            new LocalizationService("pt-BR"));
+        using MainWindowViewModel english = CreateViewModel(
+            new StubLauncherUpdateService(release: null),
+            new LocalizationService("en-US"));
+
+        Assert.Equal("Versão 1.0.1", portuguese.AppVersionText);
+        Assert.Equal("Version 1.0.1", english.AppVersionText);
+    }
+
+    [Fact]
     public async Task SameOrOlderReleaseLeavesLauncherInCurrentState()
     {
         var updates = new StubLauncherUpdateService(release: null);

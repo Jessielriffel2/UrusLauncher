@@ -17,6 +17,7 @@ As mudanças relevantes do Urus Launcher são registradas aqui. As versões púb
 - **Painel do Macro Assistant** redesenhado: mais largo, campos numéricos com setas dentro de uma moldura arredondada (não são mais cortados), botões Play/Parar arredondados e iguais, divisor e texto maior.
 - **Seletor de provedores**: caixa de busca no topo do dropdown (filtra ignorando maiúsculas e acentos; "Nenhum provedor encontrado" quando vazio; fechar o dropdown limpa a busca) e o provedor em destaque (SwordOnline) fica maior, em negrito e com faixa lateral.
 - **Só o SwordOnline é oferecido**: o launcher público lista apenas o SwordOnline. Elarionis, OAS e 7wan saíram de `LauncherComposition` porque não funcionavam (catálogo OAS responde 403 da Cloudflare, login OAS recusado com 403, todos os servidores do 7wan encerrados). Os projetos e os testes continuam no repositório, desligados; o App deixou de referenciar Elarionis e 7wan.
+- **Versão visível na tela**: a versão em execução aparece embaixo de "Dados protegidos" (`AppVersionText`, chave `App_VersionLabel`), para nunca haver dúvida sobre qual launcher está aberto.
 - **Perfis de provedores que não existem mais** (ou do provedor de desenvolvimento) deixam de ser listados, mas continuam no disco sem alteração (`LoadProfilesAsync`).
 
 ## 1.1.18 — 10/10/2026

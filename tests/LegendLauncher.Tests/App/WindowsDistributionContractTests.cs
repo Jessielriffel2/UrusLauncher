@@ -245,6 +245,23 @@ public sealed class WindowsDistributionContractTests
         return count;
     }
 
+    [Fact]
+    public void ReleaseScriptRefusesAssembliesNotCompiledInPublicMode()
+    {
+        string props = File.ReadAllText(FindRepositoryFile("Directory.Build.props"));
+        string script = File.ReadAllText(FindRepositoryFile("scripts", "build-urus-distribution.ps1"));
+
+        // every assembly carries the mode it was compiled in...
+        Assert.Contains("System.Reflection.AssemblyMetadataAttribute", props, StringComparison.Ordinal);
+        Assert.Contains("<_Parameter1>IncludeLocalProvider</_Parameter1>", props, StringComparison.Ordinal);
+        Assert.Contains("<_Parameter2>$(IncludeLocalProvider)</_Parameter2>", props, StringComparison.Ordinal);
+
+        // ...and the release script rejects any payload assembly that is not a public build.
+        Assert.Contains("IncludeLocalProvider.False", script, StringComparison.Ordinal);
+        Assert.Contains("was not compiled in public mode", script, StringComparison.Ordinal);
+        Assert.Contains("-p:IncludeLocalProvider=false", script, StringComparison.Ordinal);
+    }
+
     private static string FindRepositoryFile(params string[] relativeSegments) =>
         Path.Combine([FindRepositoryRoot(), .. relativeSegments]);
 

@@ -644,6 +644,23 @@ if ($localProviderArtifacts.Count -gt 0) {
     throw "The release payload contains the developer-only Local provider ($($localProviderArtifacts[0].Name)). Build with -p:IncludeLocalProvider=false."
 }
 
+# Every own assembly records the mode it was compiled in (Directory.Build.props). A stale developer
+# build would carry "True" (or no marker at all): refuse it, loopback/localhost allowances included.
+$ownAssemblies = @(Get-ChildItem -LiteralPath $payloadDirectory -File -ErrorAction Stop |
+    Where-Object { $_.Name -like 'LegendLauncher*.dll' -or $_.Name -like 'UrusLauncher*.dll' })
+if ($ownAssemblies.Count -eq 0) {
+    throw 'The release payload contains no Urus assemblies to verify.'
+}
+
+foreach ($assembly in $ownAssemblies) {
+    $text = [System.Text.Encoding]::GetEncoding(28591).GetString([System.IO.File]::ReadAllBytes($assembly.FullName))
+    if ($text -notmatch 'IncludeLocalProvider.False') {
+        throw "$($assembly.Name) was not compiled in public mode (IncludeLocalProvider=False marker missing). Clean bin/obj or build in a fresh worktree."
+    }
+}
+
+Write-Host "Verified $($ownAssemblies.Count) assemblies were compiled in public mode."
+
 $mainExecutable = Join-Path $payloadDirectory 'UrusLauncher.App.exe'
 $gameHostExecutable = Join-Path $payloadDirectory 'LegendLauncher.GameHost.Legacy.exe'
 Assert-FileExists $mainExecutable 'Main Urus Launcher executable'

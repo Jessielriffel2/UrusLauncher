@@ -285,5 +285,6 @@
   "Registration_CreatedNotSaved": "Account {0} was created, but the profile was not saved. Save a profile with that login and password to play.",
   "Platforms_SearchPlaceholder": "Search provider...",
   "Platforms_SearchEmpty": "No provider found.",
-  "Macro_DragPanel": "Drag to move the panel"
+  "Macro_DragPanel": "Drag to move the panel",
+  "App_VersionLabel": "Version {0}"
 }

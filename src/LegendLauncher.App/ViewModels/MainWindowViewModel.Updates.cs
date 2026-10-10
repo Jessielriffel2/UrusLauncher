@@ -90,6 +90,9 @@ internal sealed partial class MainWindowViewModel
         _ => MutedBrush,
     };
 
+    /// <summary>The version this launcher is running, shown under "Dados protegidos".</summary>
+    public string AppVersionText => _localization.Format("App_VersionLabel", _currentVersion.ToString(3));
+
     public string UpdateEyebrowText => _localization.Get("Update_Eyebrow");
 
     public string UpdateTitleText => _updateState switch

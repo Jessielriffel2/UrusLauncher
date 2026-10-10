@@ -285,5 +285,6 @@
   "Registration_CreatedNotSaved": "La cuenta {0} se creó, pero el perfil no se guardó. Guarda un perfil con ese usuario y contraseña para jugar.",
   "Platforms_SearchPlaceholder": "Buscar proveedor...",
   "Platforms_SearchEmpty": "No se encontró ningún proveedor.",
-  "Macro_DragPanel": "Arrastra para mover el panel"
+  "Macro_DragPanel": "Arrastra para mover el panel",
+  "App_VersionLabel": "Versión {0}"
 }
