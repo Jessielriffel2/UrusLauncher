@@ -32,3 +32,6 @@ src/LegendLauncher.Providers/
 src/LegendLauncher.App/GameHosting/PlatformRoutingGameRuntime.cs
 tests/LegendLauncher.Tests/Local/
 docs/modulos/providers-local.md
+
+# Regras para agentes (citam o provedor de desenvolvimento): ficam so na maquina do mantenedor.
+AGENTS.md

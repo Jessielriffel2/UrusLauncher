@@ -12,7 +12,7 @@ Launcher Windows para Legend Online, escrito do zero em C#/.NET 10 e distribuíd
 | Interface WPF moderna x64 | Launcher e workspace implementados a partir dos mocks aprovados; comparação visual final aprovada |
 | Idiomas da interface | Português brasileiro, inglês e espanhol implementados; troca dinâmica, persistida e compartilhada com novas instâncias do GameHost |
 | Apoio voluntário | Modal PayPal/PIX localizado, abertura manual e lembrete avaliado somente ao abrir, com intervalo de cinco horas |
-| Catálogo oficial OAS e fallback em cache | Implementado no código, **desligado na 1.1.19**: a borda da OAS responde 403 e o 7wan está encerrado; o launcher público oferece só o SwordOnline |
+| Catálogo oficial OAS e fallback em cache | Implementado; o launcher público oferece SwordOnline e OAS (7wan e Elarionis ficam desligados desde a 1.1.19) |
 | Provedor SwordOnline (`swordonline.tech`) | Implementado: login e senha, com criação de conta dentro do próprio launcher, ficha de jogo por `/api/launcher`, HTTPS; ver [providers-swordonline.md](docs/modulos/providers-swordonline.md) |
 | Busca, disponibilidade e selos do catálogo | Implementado; último servidor do perfil fica no topo como recomendado, lançamento mais recente recebe selo próprio e os demais formam uma seção separada |
 | Múltiplos perfis/contas | Implementado; o mesmo login OAS pode alternar entre Brasil, Classic, Reborn e demais variantes sem perder a senha, mantendo UID/histórico separados por versão |

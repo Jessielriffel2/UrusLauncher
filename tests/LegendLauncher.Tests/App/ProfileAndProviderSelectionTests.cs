@@ -23,7 +23,7 @@ public sealed class ProfileAndProviderSelectionTests
     [Fact]
     public async Task ProfilesOfAProviderThatIsNoLongerOffered_AreNotListedButStayOnDisk()
     {
-        AccountProfile removedProvider = AppTestData.Profile("antigo", 7, "7") with { PlatformId = "oas-lobr" };
+        AccountProfile removedProvider = AppTestData.Profile("antigo", 7, "7") with { PlatformId = "sevenwan-wt7wan-1" };
         AccountProfile localOnly = AppTestData.Profile("local", 8, "8") with { PlatformId = "local-loreborn" };
         var store = new InMemoryProfileStore(Profile("atual", "1"), removedProvider, localOnly);
         using MainWindowViewModel viewModel = await OpenWithStoreAsync(store);

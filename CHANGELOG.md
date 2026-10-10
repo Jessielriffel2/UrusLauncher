@@ -2,6 +2,12 @@
 
 As mudanças relevantes do Urus Launcher são registradas aqui. As versões públicas seguem versionamento semântico e são publicadas em `vMAJOR.MINOR.PATCH`.
 
+## 1.1.20 — 10/10/2026
+
+### Alterado
+
+- **O OAS volta à lista pública**: o launcher público lista SwordOnline em primeiro e as variantes do OAS (`LauncherComposition`). O OAS responde em outras redes e só é bloqueado (403 da Cloudflare) em algumas, como a da máquina do mantenedor; 7wan (todos os servidores encerrados) e Elarionis seguem fora. O build de desenvolvimento (`IncludeLocalProvider=true`) lista só SwordOnline e o provedor local, e mostra "(dev)" ao lado da versão.
+
 ## 1.1.19 — 10/10/2026
 
 ### Corrigido

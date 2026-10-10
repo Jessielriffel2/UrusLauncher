@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "version": "1.1.20",
+  "title": {
+    "pt-BR": "O OAS volta para a lista",
+    "en-US": "OAS is back on the list",
+    "es-ES": "OAS vuelve a la lista"
+  },
+  "notes": {
+    "pt-BR": [
+      "Os servidores do OAS voltam para a lista de provedores, logo depois do SwordOnline. Em alguns computadores o OAS não responde por causa de bloqueio da rede da própria plataforma; em outros funciona normalmente.",
+      "O 7wan e o Elarionis continuam fora da lista, por não estarem funcionando."
+    ],
+    "en-US": [
+      "The OAS servers are back on the provider list, right after SwordOnline. On some computers OAS does not answer because of the platform's own network block; on others it works normally.",
+      "7wan and Elarionis stay off the list because they are not working."
+    ],
+    "es-ES": [
+      "Los servidores de OAS vuelven a la lista de proveedores, justo después de SwordOnline. En algunos equipos OAS no responde por un bloqueo de red de la propia plataforma; en otros funciona con normalidad.",
+      "7wan y Elarionis siguen fuera de la lista porque no funcionan."
+    ]
+  }
+}

@@ -13,6 +13,7 @@ using LegendLauncher.Infrastructure.Paths;
 using LegendLauncher.Infrastructure.Persistence;
 using LegendLauncher.Infrastructure.Runtime;
 using LegendLauncher.Infrastructure.Security;
+using LegendLauncher.Providers.Oas;
 using LegendLauncher.Providers.SwordOnline;
 #if LOREBORN_LOCAL
 using LegendLauncher.Providers.Local;
@@ -43,20 +44,40 @@ internal static class LauncherComposition
         LocalizationService localization = LocalizationService.Current;
         var swordOnlineServerDirectory = new SwordOnlineServerDirectory();
         var swordOnlineAuthentication = new SwordOnlineAuthenticationService(httpClient);
-        // SwordOnline is the only public provider: the OAS and 7wan catalogs stopped answering (the
-        // OAS edge answers 403 and every 7wan server is closed), so they are no longer offered.
+        // SwordOnline is always listed first: PlatformAdapterRegistry keeps this order and the
+        // launcher opens with the first platform selected.
         var adapters = SwordOnlinePlatformCatalog.All
             .Select(platform => new PlatformAdapter(
                 platform,
                 swordOnlineServerDirectory,
                 swordOnlineAuthentication));
 #if LOREBORN_LOCAL
-        // Developer-only: LOReborn running on this machine. Compiled out of public releases
-        // (IncludeLocalProvider=false), so it cannot be enabled by an end user.
+        // Developer build only (IncludeLocalProvider=true): compiled out of public releases, so an
+        // end user can never get it. The maintainer's PC runs SwordOnline plus LOReborn running on
+        // this machine, nothing else.
         adapters = adapters.Concat(LocalPlatformCatalog.All.Select(platform => new PlatformAdapter(
             platform,
             new LocalServerDirectory(httpClient),
             new SwordOnlineAuthenticationService(httpClient, LocalPlatformCatalog.Portal))));
+#else
+        // Public build: SwordOnline first, then the OAS variants (they answer on other networks; the
+        // OAS edge only blocks some of them). 7wan (every server closed) and Elarionis are not offered.
+        var cache = new JsonServerCatalogCache(paths.CatalogCacheFile);
+        Action<Exception, string> onCatalogFailure = (exception, platformId) =>
+            DiagnosticLog.Current.WriteFailure(
+                "catalog.remote",
+                "The remote server catalog failed; a local cache will be used if one exists.",
+                exception,
+                ("platformId", platformId));
+        var oasServerDirectory = new OasServerDirectory(
+            httpClient,
+            cache,
+            onRecoverableFailure: onCatalogFailure);
+        var oasAuthentication = new OasAuthenticationService();
+        adapters = adapters.Concat(OasPlatformCatalog.All.Select(platform => new PlatformAdapter(
+            platform,
+            oasServerDirectory,
+            oasAuthentication)));
 #endif
         var platformRegistry = new PlatformAdapterRegistry(adapters);
 
