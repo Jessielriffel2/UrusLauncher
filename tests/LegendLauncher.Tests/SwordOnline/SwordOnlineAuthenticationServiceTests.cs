@@ -57,7 +57,7 @@ public sealed class SwordOnlineAuthenticationServiceTests
     [Theory]
     [InlineData(HttpStatusCode.Unauthorized, "invalid_credentials")]
     [InlineData(HttpStatusCode.BadRequest, "authentication_rejected")]
-    [InlineData(HttpStatusCode.TooManyRequests, "http_error")]
+    [InlineData(HttpStatusCode.TooManyRequests, "too_many_attempts")]
     [InlineData(HttpStatusCode.InternalServerError, "http_error")]
     public async Task AuthenticateAsync_MapsHttpFailuresToStableCodes(HttpStatusCode status, string expectedCode)
     {
@@ -69,6 +69,32 @@ public sealed class SwordOnlineAuthenticationServiceTests
         Assert.False(result.IsSuccess);
         Assert.Equal(expectedCode, result.ErrorCode);
         Assert.Equal("Login ou senha incorretos.", result.ErrorMessage);
+    }
+
+    [Theory]
+    [InlineData("jogador@gmail.com")]
+    [InlineData(" Jogador@Hotmail.com ")]
+    public async Task AuthenticateAsync_RefusesAnEmailLocallyWithoutSpendingAServerAttempt(string typed)
+    {
+        int calls = 0;
+        var handler = new StubHttpMessageHandler((_, _) =>
+        {
+            calls++;
+            return Task.FromResult(Json(HttpStatusCode.OK, SuccessBody("Heroi")));
+        });
+
+        AuthenticationResult result = await Create(handler).AuthenticateAsync(Request(typed, "Senha12345"));
+
+        // The portal only knows the login: an e-mail always fails there and burns the attempt lock.
+        Assert.False(result.IsSuccess);
+        Assert.Equal("email_instead_of_login", result.ErrorCode);
+        Assert.Equal(0, calls);
+    }
+
+    [Fact]
+    public void SwordOnline_DoesNotOfferTheEmailAsALogin()
+    {
+        Assert.False(SwordOnlinePlatformCatalog.SwordOnline.AcceptsEmailLogin);
     }
 
     [Theory]

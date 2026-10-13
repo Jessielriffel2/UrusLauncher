@@ -16,4 +16,10 @@ public static class SwordOnlineAuthenticationErrorCodes
     public const string RequestTimeout = "request_timeout";
     public const string ResponseTooLarge = "response_too_large";
     public const string InvalidAuthenticationResponse = "invalid_authentication_response";
+
+    /// <summary>The e-mail was typed in the login field; the portal only accepts the account login.</summary>
+    public const string EmailInsteadOfLogin = "email_instead_of_login";
+
+    /// <summary>The portal is refusing attempts for a while (HTTP 429) after too many tries.</summary>
+    public const string TooManyAttempts = "too_many_attempts";
 }

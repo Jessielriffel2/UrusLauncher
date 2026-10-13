@@ -51,6 +51,16 @@ internal sealed partial class MainWindowViewModel
     public string CreateAccountButtonText =>
         _localization.Format("Registration_Button", SelectedPlatform.DisplayName);
 
+    /// <summary>
+    /// SwordOnline only accepts the account login: saying "e-mail ou login" there made players who
+    /// signed up on the website type their e-mail, which the portal always refuses.
+    /// </summary>
+    public string LoginLabelText => _localization.Get(
+        SelectedPlatform.Model.AcceptsEmailLogin ? "Profiles_LoginLabel" : "Profiles_LoginLabelAccountOnly");
+
+    public string LoginPlaceholderText => _localization.Get(
+        SelectedPlatform.Model.AcceptsEmailLogin ? "Profiles_LoginPlaceholder" : "Profiles_LoginPlaceholderAccountOnly");
+
     public string CreateAccountLinkText =>
         _localization.Format("Registration_OpenLink", SelectedPlatform.DisplayName);
 
@@ -149,6 +159,8 @@ internal sealed partial class MainWindowViewModel
         OnPropertyChanged(nameof(ShowCreateAccountInEditor));
         OnPropertyChanged(nameof(CreateAccountButtonText));
         OnPropertyChanged(nameof(CreateAccountLinkText));
+        OnPropertyChanged(nameof(LoginLabelText));
+        OnPropertyChanged(nameof(LoginPlaceholderText));
         OnPropertyChanged(nameof(RegistrationTitle));
         OpenRegistrationCommand.NotifyCanExecuteChanged();
     }

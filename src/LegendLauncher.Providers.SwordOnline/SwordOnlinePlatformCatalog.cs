@@ -42,7 +42,8 @@ public static class SwordOnlinePlatformCatalog
         ConfigUri,
         "pt-BR",
         IsHot: true,
-        SupportsAccountCreation: true);
+        SupportsAccountCreation: true,
+        AcceptsEmailLogin: false);
 
     /// <summary>Production portal description used by <see cref="SwordOnlineAuthenticationService"/>.</summary>
     public static SwordOnlinePortal Portal { get; } = new(

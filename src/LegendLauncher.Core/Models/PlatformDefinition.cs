@@ -13,6 +13,10 @@ namespace LegendLauncher.Core.Models;
 /// <param name="SupportsAccountCreation">
 /// Indicates whether the launcher can create a new account on this platform from its own UI.
 /// </param>
+/// <param name="AcceptsEmailLogin">
+/// Indicates whether the account e-mail may be typed in the login field. SwordOnline only accepts the
+/// account login (the name chosen at sign-up): an e-mail there is always refused by the server.
+/// </param>
 public sealed record PlatformDefinition(
     string Id,
     string DisplayName,
@@ -21,4 +25,5 @@ public sealed record PlatformDefinition(
     string Locale,
     bool RequiresPassword = true,
     bool IsHot = false,
-    bool SupportsAccountCreation = false);
+    bool SupportsAccountCreation = false,
+    bool AcceptsEmailLogin = true);
