@@ -29,6 +29,38 @@ public sealed class MacroAssistantContractTests
     }
 
     [Fact]
+    public void FlashNeverTakesThePlayersMouseForAMacroClick()
+    {
+        string isolation = File.ReadAllText(FindRepositoryFile(
+            "src",
+            "LegendLauncher.GameHost.Legacy",
+            "FlashPointerIsolation.cs"));
+        string flash = File.ReadAllText(FindRepositoryFile(
+            "src",
+            "LegendLauncher.GameHost.Legacy",
+            "FlashActiveXControl.cs"));
+        string form = File.ReadAllText(FindRepositoryFile(
+            "src",
+            "LegendLauncher.GameHost.Legacy",
+            "LegacyGameHostForm.cs"));
+
+        // The embedded game shares the launcher's input state: Flash's cursor and capture calls are
+        // filtered so a posted (virtual) click never grabs the player's mouse or flickers the cursor.
+        foreach (string function in new[] { "\"SetCursor\"", "\"SetCapture\"", "\"ReleaseCapture\"", "\"SetCursorPos\"" })
+        {
+            Assert.Contains(function, isolation, StringComparison.Ordinal);
+        }
+
+        Assert.Contains("IsPhysicalButtonDown() && PointerBelongsToThisSession()", isolation, StringComparison.Ordinal);
+        Assert.Contains("FlashPointerIsolation.Install(flashOcxPath)", flash, StringComparison.Ordinal);
+        Assert.True(
+            flash.IndexOf("FlashPointerIsolation.Install", StringComparison.Ordinal) <
+            flash.IndexOf("LoadMovie", StringComparison.Ordinal),
+            "The isolation must be installed before the movie starts handling the mouse.");
+        Assert.Contains("_assets.FlashOcxPath)", form, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void DirectInput_PacksCoordinatesInMouseMessagePosition()
     {
         long packed = DirectGameInput.MakePosition(3, 4).ToInt64();
@@ -181,7 +213,7 @@ public sealed class MacroAssistantContractTests
     }
 
     [Fact]
-    public void MacroAssistant_StopsWhenTheLauncherOrTheGameSurfaceIsUnavailable()
+    public void MacroAssistant_KeepsRunningWhileTheLauncherIsMinimizedAndStopsOnlyWithTheSession()
     {
         string controller = File.ReadAllText(FindRepositoryFile(
             "src",
@@ -203,9 +235,12 @@ public sealed class MacroAssistantContractTests
         Assert.Contains("IsOwnerAvailable", controller, StringComparison.Ordinal);
         Assert.Contains("NativeWindowMethods.IsWindowVisible", controller, StringComparison.Ordinal);
         Assert.Contains("NativeWindowMethods.IsWindowMinimized", controller, StringComparison.Ordinal);
-        Assert.Contains("StopIfOwnerUnavailable", coordinator, StringComparison.Ordinal);
-        Assert.Contains("OwnerOnStateChanged", coordinator, StringComparison.Ordinal);
-        Assert.Contains("OwnerOnIsVisibleChanged", coordinator, StringComparison.Ordinal);
+        // Minimizing the launcher must never stop a macro (the player leaves it running): only a closed
+        // session window stops it, and the vision modes pause while the picture is frozen.
+        Assert.DoesNotContain("StopIfOwnerUnavailable", coordinator, StringComparison.Ordinal);
+        Assert.DoesNotContain("StateChanged", coordinator, StringComparison.Ordinal);
+        Assert.Contains("IsSessionWindowAlive", controller, StringComparison.Ordinal);
+        Assert.Contains("PausedStatus", controller, StringComparison.Ordinal);
         Assert.Contains("IsWindowVisible", nativeMethods, StringComparison.Ordinal);
         Assert.Contains("IsWindowMinimized", nativeMethods, StringComparison.Ordinal);
     }

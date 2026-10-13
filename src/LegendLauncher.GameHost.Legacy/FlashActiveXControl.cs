@@ -16,7 +16,7 @@ internal sealed class FlashActiveXControl : AxHost
         Dock = DockStyle.Fill;
     }
 
-    public void InitializeAndLoad(LaunchSession session, GameRuntimeOptions options)
+    public void InitializeAndLoad(LaunchSession session, GameRuntimeOptions options, string? flashOcxPath = null)
     {
         ArgumentNullException.ThrowIfNull(session);
         ArgumentNullException.ThrowIfNull(options);
@@ -27,6 +27,14 @@ internal sealed class FlashActiveXControl : AxHost
         initializer.EndInit();
         dynamic flash = GetOcx() ??
             throw new InvalidOperationException("Flash ActiveX initialization returned no COM object.");
+
+        // The OCX is loaded now: keep its cursor/capture calls from leaking into the launcher before the
+        // movie starts handling the mouse.
+        if (flashOcxPath is not null)
+        {
+            FlashPointerIsolation.Install(flashOcxPath);
+        }
+
         FlashRuntimeConfiguration configuration = FlashRuntimeConfiguration.From(options);
 
         configuration.ApplyTo(flash);

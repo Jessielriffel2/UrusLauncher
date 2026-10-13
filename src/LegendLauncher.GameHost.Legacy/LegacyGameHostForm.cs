@@ -80,7 +80,7 @@ internal sealed class LegacyGameHostForm : Form
             var flashControl = new FlashActiveXControl();
             Controls.Clear();
             Controls.Add(flashControl);
-            flashControl.InitializeAndLoad(_pendingSession, _runtimeOptions);
+            flashControl.InitializeAndLoad(_pendingSession, _runtimeOptions, _assets.FlashOcxPath);
             CompleteHandshake(isLoaded: true, nativeWindowHandle: Handle);
         }
         catch (Exception exception)

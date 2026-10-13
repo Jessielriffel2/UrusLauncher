@@ -663,6 +663,11 @@ internal sealed class MacroSetupWindow : Window
         var presenter = new FrameworkElementFactory(typeof(ContentPresenter));
         presenter.SetValue(FrameworkElement.HorizontalAlignmentProperty, HorizontalAlignment.Center);
         presenter.SetValue(FrameworkElement.VerticalAlignmentProperty, VerticalAlignment.Center);
+        // The button Padding reaches the content: the text never touches the borders.
+        presenter.SetBinding(FrameworkElement.MarginProperty, new System.Windows.Data.Binding("Padding")
+        {
+            RelativeSource = new System.Windows.Data.RelativeSource(System.Windows.Data.RelativeSourceMode.TemplatedParent),
+        });
         border.AppendChild(presenter);
         template.VisualTree = border;
 
@@ -695,20 +700,27 @@ internal sealed class MacroSetupWindow : Window
         input.Focus();
     }
 
+    /// <summary>Play/Parar: full width of its column, compact height and real inner padding.</summary>
     private static Button CreateButton(string text, Color background)
     {
         var button = new Button
         {
             Content = text,
-            Height = 40,
+            Height = 34,
+            MinWidth = 0,
+            MinHeight = 0,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            VerticalAlignment = VerticalAlignment.Center,
+            HorizontalContentAlignment = HorizontalAlignment.Center,
+            Padding = new Thickness(16, 0, 16, 1),
             Background = new SolidColorBrush(background),
             Foreground = Brushes.White,
-            BorderBrush = new SolidColorBrush(Color.FromArgb(120, 255, 255, 255)),
+            BorderBrush = new SolidColorBrush(Color.FromArgb(60, 255, 255, 255)),
             BorderThickness = new Thickness(1),
-            FontSize = 13.5,
+            FontSize = 13,
             FontWeight = FontWeights.SemiBold,
             Cursor = Cursors.Hand,
-            Template = CreateFlatButtonTemplate(10),
+            Template = CreateFlatButtonTemplate(8),
         };
         AutomationProperties.SetName(button, text);
         return button;

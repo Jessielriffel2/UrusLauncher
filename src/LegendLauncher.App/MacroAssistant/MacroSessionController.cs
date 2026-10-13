@@ -15,6 +15,8 @@ internal sealed class MacroSessionController : ObservableObject, IMacroSession
     private static readonly TimeSpan CosmoScanInterval = TimeSpan.FromMilliseconds(320);
     private static readonly TimeSpan BoardChangeGrace = TimeSpan.FromMilliseconds(1000);
     private static readonly TimeSpan SetupRefreshInterval = TimeSpan.FromMilliseconds(120);
+    private static readonly TimeSpan HiddenRetryInterval = TimeSpan.FromMilliseconds(400);
+    private const string PausedStatus = "Em pausa: o jogo está fora da tela. Volta sozinho ao reaparecer.";
 
     private readonly GameSessionViewModel _session;
     private readonly Window _uiOwner;
@@ -493,9 +495,16 @@ internal sealed class MacroSessionController : ObservableObject, IMacroSession
             return;
         }
 
-        if (!IsExecutionSurfaceAvailable(attachment))
+        if (!IsSessionWindowAlive(attachment))
         {
             Stop();
+            return;
+        }
+
+        if (!IsExecutionSurfaceAvailable(attachment))
+        {
+            // Minimized or out of sight: the panel went away with the window that owns it and comes
+            // back with it. Nothing is cancelled.
             return;
         }
 
@@ -605,7 +614,9 @@ internal sealed class MacroSessionController : ObservableObject, IMacroSession
                 throw new InvalidOperationException("A sessão não possui uma superfície anexada.");
             }
 
-            if (!IsExecutionSurfaceAvailable(attachment))
+            // Minimizing the launcher or looking at another session does not stop the macro: the clicks
+            // are posted to the game window, so they keep going until the player presses Parar.
+            if (!IsSessionWindowAlive(attachment))
             {
                 RequestStopFromWorker();
                 return;
@@ -614,8 +625,9 @@ internal sealed class MacroSessionController : ObservableObject, IMacroSession
             SurfaceGeometry geometry = _capture.GetGeometry(attachment.GameWindow);
             if (!geometry.HasArea)
             {
-                RequestStopFromWorker();
-                return;
+                SetStatus(PausedStatus);
+                await Task.Delay(HiddenRetryInterval, cancellationToken).ConfigureAwait(false);
+                continue;
             }
 
             SurfaceRegion frame = ToRegion(_preferences, geometry);
@@ -659,7 +671,7 @@ internal sealed class MacroSessionController : ObservableObject, IMacroSession
                 Confidence: 1);
             Publish(geometry, visualResult);
 
-            if (!IsExecutionSurfaceAvailable(attachment))
+            if (!IsSessionWindowAlive(attachment))
             {
                 RequestStopFromWorker();
                 return;
@@ -703,6 +715,7 @@ internal sealed class MacroSessionController : ObservableObject, IMacroSession
             await using var bridge = new GemMacroBridgeClient(_bridgeOptions);
             string? awaitingSignature = null;
             DateTimeOffset nextActionAt = DateTimeOffset.MinValue;
+            byte[]? previousFrame = null;
 
             while (!cancellationToken.IsCancellationRequested && _session.IsRunning)
             {
@@ -713,7 +726,9 @@ internal sealed class MacroSessionController : ObservableObject, IMacroSession
                     throw new InvalidOperationException("A sessão não possui uma superfície anexada.");
                 }
 
-                if (!IsExecutionSurfaceAvailable(attachment))
+                // Only a closed session stops the macro; minimizing the launcher just pauses what needs
+                // to see the game.
+                if (!IsSessionWindowAlive(attachment))
                 {
                     RequestStopFromWorker();
                     return;
@@ -729,15 +744,22 @@ internal sealed class MacroSessionController : ObservableObject, IMacroSession
                     IOException or
                     System.ComponentModel.Win32Exception)
                 {
-                    SetStatus("Aguardando a superfície da sessão...");
-                    await Task.Delay(250, cancellationToken).ConfigureAwait(false);
+                    SetStatus(IsExecutionSurfaceAvailable(attachment)
+                        ? "Aguardando a superfície da sessão..."
+                        : PausedStatus);
+                    await Task.Delay(HiddenRetryInterval, cancellationToken).ConfigureAwait(false);
                     continue;
                 }
 
-                if (!IsExecutionSurfaceAvailable(attachment))
+                // Out of sight, Windows may hand back a frozen (or black) picture: acting on it would click
+                // on a board that is no longer there. Keep going only while the picture still changes.
+                bool frozen = previousFrame is not null && previousFrame.AsSpan().SequenceEqual(surface.JpegBytes);
+                previousFrame = surface.JpegBytes;
+                if (frozen && !IsExecutionSurfaceAvailable(attachment))
                 {
-                    RequestStopFromWorker();
-                    return;
+                    SetStatus(PausedStatus);
+                    await Task.Delay(HiddenRetryInterval, cancellationToken).ConfigureAwait(false);
+                    continue;
                 }
 
                 SurfaceRegion frame = ToRegion(_preferences, surface.Geometry);
@@ -751,7 +773,7 @@ internal sealed class MacroSessionController : ObservableObject, IMacroSession
                     _mode,
                     frame,
                     cancellationToken).ConfigureAwait(false);
-                if (!IsExecutionSurfaceAvailable(attachment))
+                if (!IsSessionWindowAlive(attachment))
                 {
                     RequestStopFromWorker();
                     return;
@@ -779,7 +801,7 @@ internal sealed class MacroSessionController : ObservableObject, IMacroSession
                         awaitingSignature is null &&
                         now >= nextActionAt)
                     {
-                        if (!IsExecutionSurfaceAvailable(attachment))
+                        if (!IsSessionWindowAlive(attachment))
                         {
                             RequestStopFromWorker();
                             return;
@@ -798,7 +820,7 @@ internal sealed class MacroSessionController : ObservableObject, IMacroSession
                 }
                 else if (result.Action is { } action && now >= nextActionAt)
                 {
-                    if (!IsExecutionSurfaceAvailable(attachment))
+                    if (!IsSessionWindowAlive(attachment))
                     {
                         RequestStopFromWorker();
                         return;
@@ -876,17 +898,18 @@ internal sealed class MacroSessionController : ObservableObject, IMacroSession
                 return;
             }
 
-            // Focus changes must NOT stop the macro or hide the crosshair: the user is
-            // expected to leave the launcher working in the background. Only a hidden or
-            // minimized launcher invalidates the click coordinates.
+            SetState(MacroSessionState.Running);
+            SetStatus(result.Status);
+
+            // Focus changes must NOT stop the macro or hide the crosshair: the user is expected to
+            // leave the launcher working in the background. A minimized launcher only hides the
+            // frame and the aim; the macro itself keeps running.
             if (!IsOwnerAvailable())
             {
                 _overlay.HideOverlay();
                 return;
             }
 
-            SetState(MacroSessionState.Running);
-            SetStatus(result.Status);
             try
             {
                 FollowGameHost();
@@ -958,6 +981,13 @@ internal sealed class MacroSessionController : ObservableObject, IMacroSession
                // a surface inside a minimized launcher / detached window still reports itself visible
                NativeWindowMethods.IsHostWindowShowing(gameWindow);
     }
+
+    /// <summary>
+    /// The game window still exists. Minimizing the launcher, detaching or looking at another session
+    /// never stops a running macro; only closing the session (or pressing Parar) does.
+    /// </summary>
+    private bool IsSessionWindowAlive(GameWindowAttachment? attachment) =>
+        !_disposed && attachment is not null && NativeWindowMethods.IsWindowHandle(attachment.GameWindow);
 
     private bool IsOwnerAvailable()
     {
