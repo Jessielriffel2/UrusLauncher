@@ -65,14 +65,6 @@ public sealed partial class SwordOnlineAuthenticationService : IGameAuthenticati
             return AuthenticationResult.Failure(SwordOnlineAuthenticationErrorCodes.InvalidCredentials);
         }
 
-        // The portal only knows the account login. An e-mail is always refused (401) and every refusal
-        // counts toward its "too many attempts" lock, which then blocks even the right login for minutes.
-        // Answer locally instead of spending the player's attempts.
-        if (login.Contains('@', StringComparison.Ordinal))
-        {
-            return AuthenticationResult.Failure(SwordOnlineAuthenticationErrorCodes.EmailInsteadOfLogin);
-        }
-
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         timeout.CancelAfter(RequestTimeout);
 

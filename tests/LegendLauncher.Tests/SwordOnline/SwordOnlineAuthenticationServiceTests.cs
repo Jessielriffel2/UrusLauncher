@@ -71,30 +71,23 @@ public sealed class SwordOnlineAuthenticationServiceTests
         Assert.Equal("Login ou senha incorretos.", result.ErrorMessage);
     }
 
-    [Theory]
-    [InlineData("jogador@gmail.com")]
-    [InlineData(" Jogador@Hotmail.com ")]
-    public async Task AuthenticateAsync_RefusesAnEmailLocallyWithoutSpendingAServerAttempt(string typed)
+    [Fact]
+    public async Task AuthenticateAsync_SendsAnEmailAndPlaysWithTheCanonicalLogin()
     {
-        int calls = 0;
-        var handler = new StubHttpMessageHandler((_, _) =>
+        string? sentLogin = null;
+        var handler = new StubHttpMessageHandler(async (request, _) =>
         {
-            calls++;
-            return Task.FromResult(Json(HttpStatusCode.OK, SuccessBody("Heroi")));
+            using JsonDocument sent = JsonDocument.Parse(await request.Content!.ReadAsStringAsync());
+            sentLogin = sent.RootElement.GetProperty("login").GetString();
+            return Json(HttpStatusCode.OK, SuccessBody("GrocH"));
         });
 
-        AuthenticationResult result = await Create(handler).AuthenticateAsync(Request(typed, "Senha12345"));
+        // The portal accepts the e-mail OR the login and answers with the account login.
+        AuthenticationResult result = await Create(handler).AuthenticateAsync(Request("groch@gmail.com", "Senha12345"));
 
-        // The portal only knows the login: an e-mail always fails there and burns the attempt lock.
-        Assert.False(result.IsSuccess);
-        Assert.Equal("email_instead_of_login", result.ErrorCode);
-        Assert.Equal(0, calls);
-    }
-
-    [Fact]
-    public void SwordOnline_DoesNotOfferTheEmailAsALogin()
-    {
-        Assert.False(SwordOnlinePlatformCatalog.SwordOnline.AcceptsEmailLogin);
+        Assert.True(result.IsSuccess);
+        Assert.Equal("groch@gmail.com", sentLogin);
+        Assert.Equal("GrocH", result.Session!.Parameters["user"]);
     }
 
     [Theory]

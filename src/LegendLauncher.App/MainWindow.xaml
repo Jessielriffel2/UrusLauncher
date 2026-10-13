@@ -1077,12 +1077,12 @@
                             </TextBlock>
                         </Grid>
 
-                        <TextBlock Text="{Binding LoginLabelText}" Style="{StaticResource FieldLabelStyle}" Margin="0,14,0,7" />
+                        <TextBlock Text="{loc:Localize Profiles_LoginLabel}" Style="{StaticResource FieldLabelStyle}" Margin="0,14,0,7" />
                         <Grid>
                             <TextBox x:Name="LoginInput" Style="{StaticResource InputStyle}"
                                      Text="{Binding LoginHint, UpdateSourceTrigger=PropertyChanged}"
-                                     AutomationProperties.Name="{Binding LoginLabelText}" />
-                            <TextBlock Text="{Binding LoginPlaceholderText}" Foreground="{StaticResource TextMutedBrush}"
+                                     AutomationProperties.Name="{loc:Localize Profiles_LoginLabel}" />
+                            <TextBlock Text="{loc:Localize Profiles_LoginPlaceholder}" Foreground="{StaticResource TextMutedBrush}"
                                        FontSize="12" Margin="14,0,0,0" VerticalAlignment="Center" IsHitTestVisible="False">
                                 <TextBlock.Style>
                                     <Style TargetType="TextBlock">

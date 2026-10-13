@@ -676,7 +676,6 @@ internal sealed partial class MainWindowViewModel : ObservableObject, IDisposabl
             "unsupported_platform" => "Auth_UnsupportedPlatform",
             "invalid_server" => "Auth_InvalidServer",
             "http_error" => "Auth_HttpError",
-            "email_instead_of_login" => "Auth_EmailInsteadOfLogin",
             "too_many_attempts" => "Auth_TooManyAttempts",
             "network_error" => "Auth_NetworkError",
             "request_timeout" => "Auth_Timeout",
