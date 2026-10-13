@@ -2,6 +2,18 @@
 
 As mudanças relevantes do Urus Launcher são registradas aqui. As versões públicas seguem versionamento semântico e são publicadas em `vMAJOR.MINOR.PATCH`.
 
+## 1.1.21 — 13/10/2026
+
+### Corrigido
+
+- **Macro usava o mouse do jogador**: a janela do jogo embutida divide o estado de entrada com o launcher, e o Flash chamava `SetCursor`/`SetCapture`/`ReleaseCapture`/`SetCursorPos` a cada clique postado pelo macro, piscando o cursor e engolindo o clique no PARAR (também com duas sessões lado a lado). O GameHost redireciona essas importações do OCX (`FlashPointerIsolation`): só valem para o mouse real do jogador sobre a sessão, e a captura só com botão físico pressionado.
+- **Macro parava ao minimizar**: o `MacroAssistantCoordinator` parava todos os macros quando o launcher minimizava. Agora só PARAR ou fechar a sessão param; Cliques continuam, Gemas/Cosmo pausam enquanto a imagem está congelada e retomam sozinhos.
+- **SwordOnline, HTTP 429**: o bloqueio por tentativas erradas aparecia como "a plataforma recusou"; agora é `too_many_attempts` com a orientação de aguardar 5 minutos. (O portal passou a aceitar e-mail ou login, então o campo continua "E-mail ou login".)
+
+### Alterado
+
+- **Botões Play/Parar do painel do macro**: largura da coluna, altura 34 e `Padding` repassado ao conteúdo.
+
 ## 1.1.20 — 10/10/2026
 
 ### Alterado

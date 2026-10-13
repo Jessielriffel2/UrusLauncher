@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "version": "1.1.21",
+  "title": {
+    "pt-BR": "Login mais claro e macro de verdade em segundo plano",
+    "en-US": "Clearer sign-in and a macro that really runs in the background",
+    "es-ES": "Inicio de sesión más claro y macro que de verdad funciona en segundo plano"
+  },
+  "notes": {
+    "pt-BR": [
+      "SwordOnline: depois de muitas tentativas erradas seguidas, o launcher agora diz para aguardar 5 minutos, em vez do genérico \"a plataforma recusou\".",
+      "Macro: o clique do macro não mexe mais no seu mouse. O PARAR funciona no primeiro clique e o cursor não fica piscando, nem com duas contas lado a lado.",
+      "Macro: minimizar o launcher não para mais o macro. O modo Cliques continua clicando; Gemas e Cosmo pausam enquanto o jogo está fora da tela e voltam sozinhos.",
+      "Macro: botões Play e Parar mais baixos, com espaço até a borda."
+    ],
+    "en-US": [
+      "SwordOnline: after too many wrong attempts in a row, the launcher now tells you to wait 5 minutes instead of the generic \"the platform rejected\".",
+      "Macro: macro clicks no longer touch your mouse. STOP works on the first click and the cursor no longer flickers, even with two accounts side by side.",
+      "Macro: minimizing the launcher no longer stops the macro. Clicks mode keeps clicking; Gems and Cosmo pause while the game is out of sight and resume on their own.",
+      "Macro: lower Play and Stop buttons with room around the text."
+    ],
+    "es-ES": [
+      "SwordOnline: tras demasiados intentos fallidos seguidos, el launcher ahora indica esperar 5 minutos en lugar del genérico \"la plataforma rechazó\".",
+      "Macro: los clics del macro ya no tocan tu ratón. DETENER funciona al primer clic y el cursor no parpadea, ni con dos cuentas lado a lado.",
+      "Macro: minimizar el launcher ya no detiene el macro. El modo Clics sigue haciendo clic; Gemas y Cosmo se pausan mientras el juego no está a la vista y vuelven solos.",
+      "Macro: botones Play y Detener más bajos, con espacio alrededor del texto."
+    ]
+  }
+}
