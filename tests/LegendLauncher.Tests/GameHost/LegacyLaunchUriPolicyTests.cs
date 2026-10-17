@@ -34,6 +34,8 @@ public sealed class LegacyLaunchUriPolicyTests
         Assert.Equal("ShowAll", flash.Scale);
         Assert.Equal("high", flash.Quality2);
         Assert.Equal("opaque", flash.WMode);
+        // the stage area the movie does not paint is black (no brown band around the loading screen on wide windows)
+        Assert.Equal("000000", flash.BGColor);
     }
 
     [Theory]
@@ -91,5 +93,7 @@ public sealed class LegacyLaunchUriPolicyTests
         public string? Quality2 { get; set; }
 
         public string? WMode { get; set; }
+
+        public string? BGColor { get; set; }
     }
 }

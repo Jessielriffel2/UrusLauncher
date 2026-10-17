@@ -8,8 +8,15 @@ internal sealed record FlashRuntimeConfiguration(
     string AllowFullScreenInteractive,
     string Scale,
     string Quality,
-    string WindowMode)
+    string WindowMode,
+    string BackgroundColor = FlashRuntimeConfiguration.Black)
 {
+    /// <summary>
+    /// Color of the stage area the movie does not paint. The game SWFs declare a dark brown that showed around the loading screen
+    /// next to its own black background on wide windows; black makes the whole area uniform.
+    /// </summary>
+    public const string Black = "000000";
+
     public void ApplyTo(object flashControl)
     {
         ArgumentNullException.ThrowIfNull(flashControl);
@@ -20,6 +27,7 @@ internal sealed record FlashRuntimeConfiguration(
         flash.Scale = Scale;
         flash.Quality2 = Quality;
         flash.WMode = WindowMode;
+        flash.BGColor = BackgroundColor;
     }
 
     public static FlashRuntimeConfiguration From(GameRuntimeOptions options)
