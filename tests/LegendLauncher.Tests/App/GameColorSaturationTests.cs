@@ -109,7 +109,7 @@ public sealed class GameColorSaturationTests
         string flash = File.ReadAllText(FindRepositoryFile("src", "LegendLauncher.GameHost.Legacy", "FlashActiveXControl.cs"));
 
         Assert.Contains("FlashColorFilter.Install(flashOcxPath)", flash, StringComparison.Ordinal);
-        foreach (string import in new[] { "\"BitBlt\"", "\"StretchBlt\"", "\"StretchDIBits\"" })
+        foreach (string import in new[] { "\"BitBlt\"", "\"StretchBlt\"", "\"StretchDIBits\"", "\"AlphaBlend\"", "\"GdiAlphaBlend\"" })
         {
             Assert.Contains(import, filter, StringComparison.Ordinal);
         }

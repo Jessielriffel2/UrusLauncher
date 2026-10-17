@@ -6,7 +6,8 @@ namespace LegendLauncher.GameHost.Legacy;
 
 /// <summary>
 /// Color saturation slider of the launcher, applied to what the Flash OCX shows (some players found the game too colorful).
-/// Flash presents its frames with GDI (BitBlt / StretchBlt / StretchDIBits, imported directly by the OCX). Those three imports of
+/// Flash presents its frames with GDI (BitBlt / StretchBlt / StretchDIBits, plus AlphaBlend / GdiAlphaBlend for content drawn with
+/// transparency, such as the animated mascot of the loading screen; all imported directly by the OCX). Those imports of
 /// the OCX ONLY are redirected: when the destination is a window (the frame the player sees) and the slider is below 100, the frame
 /// is copied to a private 32-bit bitmap, desaturated there and then shown. Flash's own buffers are never modified (no cumulative
 /// graying), internal memory-to-memory copies and PrintWindow captures (the macro's eyes) keep the original colors, and at 100 the
@@ -24,6 +25,8 @@ internal static class FlashColorFilter
     private static BitBltProc? s_bitBlt;
     private static StretchBltProc? s_stretchBlt;
     private static StretchDIBitsProc? s_stretchDIBits;
+    private static AlphaBlendProc? s_alphaBlend;
+    private static AlphaBlendProc? s_gdiAlphaBlend;
     private static int s_installed;
 
     private static nint s_scratchDc;
@@ -50,7 +53,12 @@ internal static class FlashColorFilter
         nint hdc, int xDest, int yDest, int destWidth, int destHeight, int xSrc, int ySrc, int srcWidth, int srcHeight,
         nint bits, nint bitmapInfo, uint usage, uint rop);
 
-    /// <summary>How many of the three drawing imports were redirected (diagnostics/tests).</summary>
+    [UnmanagedFunctionPointer(CallingConvention.Winapi)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private delegate bool AlphaBlendProc(
+        nint hdcDest, int xDest, int yDest, int wDest, int hDest, nint hdcSrc, int xSrc, int ySrc, int wSrc, int hSrc, uint blend);
+
+    /// <summary>How many of the five drawing imports were redirected (diagnostics/tests).</summary>
     internal static int PatchedImports { get; private set; }
 
     public static void Install(string flashOcxPath)
@@ -72,10 +80,14 @@ internal static class FlashColorFilter
             s_bitBlt = BitBltHook;
             s_stretchBlt = StretchBltHook;
             s_stretchDIBits = StretchDIBitsHook;
+            s_alphaBlend = AlphaBlendHook;
+            s_gdiAlphaBlend = GdiAlphaBlendHook;
             int patched = 0;
             patched += ImportTablePatcher.Patch(module, "gdi32.dll", "BitBlt", Marshal.GetFunctionPointerForDelegate(s_bitBlt));
             patched += ImportTablePatcher.Patch(module, "gdi32.dll", "StretchBlt", Marshal.GetFunctionPointerForDelegate(s_stretchBlt));
             patched += ImportTablePatcher.Patch(module, "gdi32.dll", "StretchDIBits", Marshal.GetFunctionPointerForDelegate(s_stretchDIBits));
+            patched += ImportTablePatcher.Patch(module, "msimg32.dll", "AlphaBlend", Marshal.GetFunctionPointerForDelegate(s_alphaBlend));
+            patched += ImportTablePatcher.Patch(module, "gdi32.dll", "GdiAlphaBlend", Marshal.GetFunctionPointerForDelegate(s_gdiAlphaBlend));
             PatchedImports = patched;
         }
         catch (Exception exception) when (
@@ -178,6 +190,40 @@ internal static class FlashColorFilter
         }
     }
 
+    private static bool AlphaBlendHook(
+        nint hdcDest, int xDest, int yDest, int wDest, int hDest, nint hdcSrc, int xSrc, int ySrc, int wSrc, int hSrc, uint blend) =>
+        BlendFiltered(hdcDest, xDest, yDest, wDest, hDest, hdcSrc, xSrc, ySrc, wSrc, hSrc, blend, AlphaBlend);
+
+    private static bool GdiAlphaBlendHook(
+        nint hdcDest, int xDest, int yDest, int wDest, int hDest, nint hdcSrc, int xSrc, int ySrc, int wSrc, int hSrc, uint blend) =>
+        BlendFiltered(hdcDest, xDest, yDest, wDest, hDest, hdcSrc, xSrc, ySrc, wSrc, hSrc, blend, GdiAlphaBlend);
+
+    /// <summary>
+    /// Content blended with transparency straight onto the window: the source is copied (alpha included: both are 32-bit), its
+    /// colors lose saturation (alpha untouched, so premultiplied pixels stay valid) and it is blended from the copy.
+    /// </summary>
+    private static bool BlendFiltered(
+        nint hdcDest, int xDest, int yDest, int wDest, int hDest, nint hdcSrc, int xSrc, int ySrc, int wSrc, int hSrc, uint blend,
+        AlphaBlendProc original)
+    {
+        // AlphaBlend has no raster operation: pass SRCCOPY so only the "is it a window?" and slider checks apply.
+        if (wSrc <= 0 || hSrc <= 0 || hdcSrc == nint.Zero || !ShouldFilter(hdcDest, SourceCopy, out int saturation))
+        {
+            return original(hdcDest, xDest, yDest, wDest, hDest, hdcSrc, xSrc, ySrc, wSrc, hSrc, blend);
+        }
+
+        lock (s_gate)
+        {
+            if (!EnsureScratch(wSrc, hSrc) || !BitBlt(s_scratchDc, 0, 0, wSrc, hSrc, hdcSrc, xSrc, ySrc, SourceCopy))
+            {
+                return original(hdcDest, xDest, yDest, wDest, hDest, hdcSrc, xSrc, ySrc, wSrc, hSrc, blend);
+            }
+
+            Desaturate(wSrc, hSrc, saturation);
+            return original(hdcDest, xDest, yDest, wDest, hDest, s_scratchDc, 0, 0, wSrc, hSrc, blend);
+        }
+    }
+
     private static void Desaturate(int width, int height, int saturation)
     {
         GdiFlush();
@@ -277,6 +323,16 @@ internal static class FlashColorFilter
     private static extern int StretchDIBits(
         nint hdc, int xDest, int yDest, int destWidth, int destHeight, int xSrc, int ySrc, int srcWidth, int srcHeight,
         nint bits, nint bitmapInfo, uint usage, uint rop);
+
+    [DllImport("msimg32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool AlphaBlend(
+        nint hdcDest, int xDest, int yDest, int wDest, int hDest, nint hdcSrc, int xSrc, int ySrc, int wSrc, int hSrc, uint blend);
+
+    [DllImport("gdi32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool GdiAlphaBlend(
+        nint hdcDest, int xDest, int yDest, int wDest, int hDest, nint hdcSrc, int xSrc, int ySrc, int wSrc, int hSrc, uint blend);
 
     [DllImport("gdi32.dll")]
     private static extern nint CreateCompatibleDC(nint hdc);
