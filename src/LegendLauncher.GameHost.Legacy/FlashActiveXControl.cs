@@ -33,6 +33,8 @@ internal sealed class FlashActiveXControl : AxHost
         if (flashOcxPath is not null)
         {
             FlashPointerIsolation.Install(flashOcxPath);
+            // the launcher's color saturation slider (frames shown on the window only)
+            FlashColorFilter.Install(flashOcxPath);
         }
 
         FlashRuntimeConfiguration configuration = FlashRuntimeConfiguration.From(options);

@@ -1,3 +1,4 @@
+using LegendLauncher.Core.GameColor;
 using LegendLauncher.Infrastructure.Persistence;
 using LegendLauncher.App.Localization;
 using System.Text.Json;
@@ -10,7 +11,8 @@ internal sealed record LauncherSettingsSnapshot(
     Guid? LastSelectedProfileId,
     string LanguageCode,
     DateTimeOffset? LastDonationPromptUtc,
-    string? LastSeenFeatureCatalogVersion)
+    string? LastSeenFeatureCatalogVersion,
+    int ColorSaturation = GameColorChannel.Original)
 {
     public static LauncherSettingsSnapshot Default { get; } =
         new(
@@ -64,7 +66,9 @@ internal sealed class LauncherSettingsService
             document.LastSelectedProfileId,
             LocalizationService.NormalizeLanguageCode(document.LanguageCode),
             document.LastDonationPromptUtc,
-            document.LastSeenFeatureCatalogVersion);
+            document.LastSeenFeatureCatalogVersion,
+            // missing in files written before 1.1.22: original colors, never black and white
+            GameColorChannel.Clamp(document.ColorSaturation ?? GameColorChannel.Original));
     }
 
     public Task SaveLastSelectedProfileAsync(
@@ -77,12 +81,16 @@ internal sealed class LauncherSettingsService
     public Task SaveGamePreferencesAsync(
         bool isMuted,
         GameLayoutMode layoutMode,
+        int? colorSaturation = null,
         CancellationToken cancellationToken = default) =>
         UpdateAsync(
             current => current with
             {
                 IsGameMuted = isMuted,
                 LayoutMode = (int)layoutMode,
+                ColorSaturation = colorSaturation is { } saturation
+                    ? GameColorChannel.Clamp(saturation)
+                    : current.ColorSaturation,
             },
             cancellationToken);
 
@@ -148,7 +156,8 @@ internal sealed class LauncherSettingsService
         Guid? LastSelectedProfileId,
         string? LanguageCode,
         DateTimeOffset? LastDonationPromptUtc,
-        string? LastSeenFeatureCatalogVersion)
+        string? LastSeenFeatureCatalogVersion,
+        int? ColorSaturation = null)
     {
         public static LauncherSettingsDocument Default { get; } =
             new(

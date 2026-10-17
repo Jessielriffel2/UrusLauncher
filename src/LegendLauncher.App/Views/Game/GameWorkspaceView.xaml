@@ -238,6 +238,32 @@
                           ToolTip="{loc:Localize Language_Select}"
                           AutomationProperties.Name="{loc:Localize Language_SelectAutomation}"
                           shell:WindowChrome.IsHitTestVisibleInChrome="True" />
+                <!-- Saturacao das cores do jogo: um valor para todas as contas (filtro aplicado no GameHost). -->
+                <Border x:Name="ColorSaturationControl"
+                        Margin="0,0,8,0"
+                        Padding="10,0,12,0"
+                        Height="34"
+                        CornerRadius="8"
+                        Background="#7A0B1A26"
+                        BorderBrush="#33FFFFFF"
+                        BorderThickness="1"
+                        ToolTip="{loc:Localize Workspace_ColorSaturationTooltip}"
+                        MouseLeftButtonDown="ColorSaturationControl_OnMouseLeftButtonDown"
+                        shell:WindowChrome.IsHitTestVisibleInChrome="True">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="&#xE790;" FontFamily="Segoe Fluent Icons" FontSize="14"
+                                   Foreground="{StaticResource AccentBrush}" VerticalAlignment="Center" Margin="0,0,7,0" />
+                        <TextBlock Text="{loc:Localize Workspace_ColorSaturationLabel}" VerticalAlignment="Center" Margin="0,0,10,0" />
+                        <Slider x:Name="ColorSaturationSlider"
+                                Width="110"
+                                VerticalAlignment="Center"
+                                Style="{StaticResource ColorSaturationSliderStyle}"
+                                Value="{Binding Workspace.ColorSaturation, Mode=TwoWay}"
+                                AutomationProperties.Name="{loc:Localize Workspace_ColorSaturationAutomation}" />
+                        <TextBlock Text="{Binding Workspace.ColorSaturationText}" Width="36" TextAlignment="Right"
+                                   VerticalAlignment="Center" Margin="8,0,0,0" Foreground="{StaticResource TextMutedBrush}" />
+                    </StackPanel>
+                </Border>
                 <Button Command="{Binding Workspace.ToggleMuteCommand}"
                         Style="{StaticResource WorkspaceToolbarButtonStyle}"
                         Margin="0,0,8,0"

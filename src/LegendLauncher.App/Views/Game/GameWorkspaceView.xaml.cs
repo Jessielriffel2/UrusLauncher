@@ -12,6 +12,18 @@ public partial class GameWorkspaceView : UserControl
         InitializeComponent();
     }
 
+    /// <summary>Double-click on the color control returns the game to its original colors.</summary>
+    private void ColorSaturationControl_OnMouseLeftButtonDown(object sender, MouseButtonEventArgs eventArgs)
+    {
+        if (eventArgs.ClickCount == 2 &&
+            DataContext is MainWindowViewModel { Workspace: { } workspace } &&
+            workspace.ResetColorSaturationCommand.CanExecute(null))
+        {
+            workspace.ResetColorSaturationCommand.Execute(null);
+            eventArgs.Handled = true;
+        }
+    }
+
     private void CompactGameToolbar_OnMouseLeftButtonDown(
         object sender,
         MouseButtonEventArgs eventArgs)

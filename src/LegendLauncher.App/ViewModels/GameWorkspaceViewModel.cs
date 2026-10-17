@@ -6,6 +6,7 @@ using LegendLauncher.App.GameHosting;
 using LegendLauncher.App.Localization;
 using LegendLauncher.App.MacroAssistant;
 using LegendLauncher.App.Services;
+using LegendLauncher.Core.GameColor;
 using LegendLauncher.Core.Models;
 
 namespace LegendLauncher.App.ViewModels;
@@ -26,6 +27,10 @@ internal sealed class GameWorkspaceViewModel : ObservableObject, IDisposable
     private GameLayoutMode _layoutMode = GameLayoutMode.GridFour;
     private bool _isMuted = true;
     private bool _disposed;
+    // Color saturation slider (1.1.22): one value for every open session, read by each GameHost on every frame.
+    private readonly GameColorChannel.Writer _colorChannel = new();
+    private int _colorSaturation = GameColorChannel.Original;
+    private CancellationTokenSource? _colorSaveDelay;
 
     public GameWorkspaceViewModel(
         GameAudioService audioService,
@@ -63,7 +68,37 @@ internal sealed class GameWorkspaceViewModel : ObservableObject, IDisposable
         SingleLayoutCommand = new RelayCommand(() => LayoutMode = GameLayoutMode.Single);
         SplitTwoLayoutCommand = new RelayCommand(() => LayoutMode = GameLayoutMode.SplitTwo);
         GridFourLayoutCommand = new RelayCommand(() => LayoutMode = GameLayoutMode.GridFour);
+        ResetColorSaturationCommand = new RelayCommand(() => ColorSaturation = GameColorChannel.Original);
+        _colorChannel.Publish(_colorSaturation);
     }
+
+    public RelayCommand ResetColorSaturationCommand { get; }
+
+    /// <summary>
+    /// Saturation of the game colors, 0 (black and white) to 100 (original). Applied live by the GameHosts (filter on the frames
+    /// Flash shows); saved a moment after the slider stops moving.
+    /// </summary>
+    public int ColorSaturation
+    {
+        get => _colorSaturation;
+        set
+        {
+            int clamped = GameColorChannel.Clamp(value);
+            if (!SetProperty(ref _colorSaturation, clamped))
+            {
+                return;
+            }
+
+            _colorChannel.Publish(clamped);
+            OnPropertyChanged(nameof(ColorSaturationText));
+            OnPropertyChanged(nameof(IsColorFilterActive));
+            _ = PersistColorSaturationSoonAsync();
+        }
+    }
+
+    public string ColorSaturationText => _localization.Format("Workspace_ColorSaturationValue", _colorSaturation);
+
+    public bool IsColorFilterActive => _colorSaturation < GameColorChannel.Original;
 
     public event EventHandler<GameSessionViewModel>? DetachRequested;
 
@@ -214,6 +249,11 @@ internal sealed class GameWorkspaceViewModel : ObservableObject, IDisposable
         _layoutMode = settings.LayoutMode;
         _isMuted = settings.IsGameMuted;
         _audioService.SetMuted(_isMuted);
+        _colorSaturation = GameColorChannel.Clamp(settings.ColorSaturation);
+        _colorChannel.Publish(_colorSaturation);
+        OnPropertyChanged(nameof(ColorSaturation));
+        OnPropertyChanged(nameof(ColorSaturationText));
+        OnPropertyChanged(nameof(IsColorFilterActive));
         OnPropertyChanged(nameof(LayoutMode));
         OnPropertyChanged(nameof(LayoutRows));
         OnPropertyChanged(nameof(LayoutColumns));
@@ -327,6 +367,9 @@ internal sealed class GameWorkspaceViewModel : ObservableObject, IDisposable
 
         _disposed = true;
         _localization.LanguageChanged -= LocalizationOnLanguageChanged;
+        _colorSaveDelay?.Cancel();
+        _colorSaveDelay?.Dispose();
+        _colorChannel.Dispose();
         MacroAssistant.Dispose();
         foreach (GameSessionViewModel session in Sessions.ToArray())
         {
@@ -419,6 +462,7 @@ internal sealed class GameWorkspaceViewModel : ObservableObject, IDisposable
     {
         OnPropertyChanged(nameof(MuteLabel));
         OnPropertyChanged(nameof(FooterStatus));
+        OnPropertyChanged(nameof(ColorSaturationText));
         RefreshSidebarAvatars();
     }
 
@@ -600,12 +644,31 @@ internal sealed class GameWorkspaceViewModel : ObservableObject, IDisposable
         RelogSessionCommand.NotifyCanExecuteChanged();
     }
 
+    private async Task PersistColorSaturationSoonAsync()
+    {
+        _colorSaveDelay?.Cancel();
+        _colorSaveDelay?.Dispose();
+        var delay = new CancellationTokenSource();
+        _colorSaveDelay = delay;
+        try
+        {
+            // dragging the slider fires dozens of changes: save once it settles
+            await Task.Delay(TimeSpan.FromMilliseconds(500), delay.Token).ConfigureAwait(true);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+
+        await PersistGamePreferencesAsync().ConfigureAwait(false);
+    }
+
     private async Task PersistGamePreferencesAsync()
     {
         try
         {
             await _settingsService
-                .SaveGamePreferencesAsync(IsMuted, LayoutMode)
+                .SaveGamePreferencesAsync(IsMuted, LayoutMode, ColorSaturation)
                 .ConfigureAwait(false);
         }
         catch (IOException)
