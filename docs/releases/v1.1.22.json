@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "version": "1.1.22",
+  "title": {
+    "pt-BR": "Controle de cores do jogo",
+    "en-US": "Game color control",
+    "es-ES": "Control de colores del juego"
+  },
+  "notes": {
+    "pt-BR": [
+      "Novo slider \"Cores\" na barra do jogo: diminui a saturação das cores (de 100%, as cores originais, até 0%, preto e branco). Vale para todas as contas abertas, muda na hora e fica salvo. Clique duplo volta ao original.",
+      "O macro continua enxergando as cores reais, então mexer no slider não atrapalha.",
+      "Em telas largas, a área em volta do jogo agora fica toda preta, sem a faixa marrom."
+    ],
+    "en-US": [
+      "New \"Colors\" slider on the game bar: lowers the color saturation (from 100%, the original colors, down to 0%, black and white). Applies to every open account, changes instantly and is remembered. Double-click resets it.",
+      "The macro still sees the real colors, so the slider does not get in its way.",
+      "On wide screens, the area around the game is now fully black, without the brown band."
+    ],
+    "es-ES": [
+      "Nuevo control deslizante \"Colores\" en la barra del juego: reduce la saturación de los colores (de 100%, los colores originales, hasta 0%, blanco y negro). Vale para todas las cuentas abiertas, cambia al instante y se guarda. Doble clic vuelve al original.",
+      "El macro sigue viendo los colores reales, así que el control no lo estorba.",
+      "En pantallas anchas, el área alrededor del juego ahora queda toda negra, sin la franja marrón."
+    ]
+  }
+}

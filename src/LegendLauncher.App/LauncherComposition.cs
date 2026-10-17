@@ -93,7 +93,13 @@ internal static class LauncherComposition
             avatarStore: avatarStore,
             preferencesStore: profilePreferences);
         var settings = new LauncherSettingsService(paths.SettingsFile);
+#if LOREBORN_LOCAL
+        // Developer build (maintainer's PC, with the local provider): never offers the public update. Installing a public release
+        // over it would remove localhost from the list. Reinstall it with scripts/build-urus-dev.ps1 -Install instead.
+        LauncherUpdateService? updateService = null;
+#else
         var updateService = new LauncherUpdateService(httpClient, paths.UpdatesDirectory);
+#endif
         var workspace = new GameWorkspaceViewModel(
             new GameAudioService(),
             settings,

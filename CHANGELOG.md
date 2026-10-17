@@ -2,6 +2,20 @@
 
 As mudanças relevantes do Urus Launcher são registradas aqui. As versões públicas seguem versionamento semântico e são publicadas em `vMAJOR.MINOR.PATCH`.
 
+## 1.1.22 — 17/10/2026
+
+### Adicionado
+
+- **Slider de saturação das cores** na barra do jogo (`GameWorkspaceViewModel.ColorSaturation`, 0–100, salvo em `settings.json`; arquivo antigo = 100). O launcher publica o valor numa memória compartilhada da sessão (`GameColorChannel`) e cada GameHost redireciona `BitBlt`/`StretchBlt`/`StretchDIBits`/`AlphaBlend`/`GdiAlphaBlend` do OCX do Flash (`FlashColorFilter`): só o que vai para uma janela é copiado para um bitmap próprio, perde saturação e então aparece. Os buffers do Flash e as capturas do macro (`PrintWindow`) mantêm as cores reais; em 100 não há cópia.
+
+### Corrigido
+
+- **Faixa marrom em telas largas**: o fundo do palco do Flash (`BGColor`) passa a ser preto, igual ao fundo que a tela de carregamento desenha.
+
+### Interno
+
+- O build de desenvolvimento (`IncludeLocalProvider=true`) não verifica nem oferece atualização pública (instalar o público por cima tirava o localhost da lista).
+
 ## 1.1.21 — 13/10/2026
 
 ### Corrigido
