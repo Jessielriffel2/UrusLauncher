@@ -105,10 +105,35 @@ internal static class GameHostLocalization
                     "Flash ActiveX al que hace referencia el manifiesto",
                 [GameHostText.ProcessAnchorTitle] = "Urus GameHost",
             },
+            ["tr-TR"] = new Dictionary<GameHostText, string>
+            {
+                [GameHostText.InvalidOptions] =
+                    "Alınan parametreler geçersiz olduğu için GameHost başlatılamadı.",
+                [GameHostText.FlashRuntimeIncomplete] =
+                    "Yerel Flash ortamı eksik. Tanılama modunu çalıştırın.",
+                [GameHostText.LocalSessionInvalid] =
+                    "Yerel oturum doğrulanamadı. Oyunu başlatıcıdan yeniden başlatmayı deneyin.",
+                [GameHostText.CompatibilityProbe] = "Uyumluluk kontrolü",
+                [GameHostText.FlashInitializationFailed] =
+                    "Ayrı Flash ortamı başlatılamadı. Tanılamayı çalıştırın ve yerel bileşenleri kontrol edin.",
+                [GameHostText.PreparingIsolatedEnvironment] = "Ayrı ortam hazırlanıyor…",
+                [GameHostText.IsolatedGameHost] = "Ayrı GameHost",
+                [GameHostText.DiagnosticModeDescription] =
+                    "Tanılama modu: hiçbir adres, belirteç veya şifre alınmadı. ActiveX bu aşamada başlatılmayacak.",
+                [GameHostText.CompatibilityFound] = "Uyumluluk bulundu",
+                [GameHostText.CompatibilityFoundDetail] =
+                    "Manifest ve yerel Flash ActiveX x64 bulundu. Host, korumalı yerel kanal üzerinden oturum almaya hazır.",
+                [GameHostText.CompatibilityIncomplete] = "Uyumluluk eksik",
+                [GameHostText.MissingLabel] = "Eksik",
+                [GameHostText.VerifiedFolderLabel] = "Doğrulanan klasör",
+                [GameHostText.MissingFlashActiveXFromManifest] =
+                    "Manifestin başvurduğu Flash ActiveX",
+                [GameHostText.ProcessAnchorTitle] = "Urus GameHost",
+            },
         };
 
     internal static IReadOnlyList<string> SupportedCultureNames { get; } =
-        ["pt-BR", "en-US", "es-ES"];
+        ["pt-BR", "en-US", "es-ES", "tr-TR"];
 
     internal static string NormalizeCultureName(string? cultureName)
     {
@@ -134,6 +159,12 @@ internal static class GameHostLocalization
             normalized.StartsWith("es-", StringComparison.OrdinalIgnoreCase))
         {
             return "es-ES";
+        }
+
+        if (normalized.Equals("tr", StringComparison.OrdinalIgnoreCase) ||
+            normalized.StartsWith("tr-", StringComparison.OrdinalIgnoreCase))
+        {
+            return "tr-TR";
         }
 
         return DefaultCultureName;

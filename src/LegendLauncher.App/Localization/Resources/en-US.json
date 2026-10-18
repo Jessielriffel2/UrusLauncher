@@ -291,5 +291,9 @@
   "Platforms_SearchPlaceholder": "Search provider...",
   "Platforms_SearchEmpty": "No provider found.",
   "Macro_DragPanel": "Drag to move the panel",
-  "App_VersionLabel": "Version {0}"
+  "App_VersionLabel": "Version {0}",
+  "Recharge_Button": "TOP UP",
+  "Recharge_Tooltip": "Top up diamonds on the SwordOnline website (opens in your browser)",
+  "Recharge_Automation": "Open the SwordOnline top-up page",
+  "Recharge_OpenFailed": "The browser could not be opened. Go to {0} to top up."
 }

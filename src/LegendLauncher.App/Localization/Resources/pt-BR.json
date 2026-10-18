@@ -291,5 +291,9 @@
   "Platforms_SearchPlaceholder": "Buscar provedor...",
   "Platforms_SearchEmpty": "Nenhum provedor encontrado.",
   "Macro_DragPanel": "Arraste para mover o painel",
-  "App_VersionLabel": "Versão {0}"
+  "App_VersionLabel": "Versão {0}",
+  "Recharge_Button": "RECARGA",
+  "Recharge_Tooltip": "Recarregar diamantes no site do SwordOnline (abre no navegador)",
+  "Recharge_Automation": "Abrir a página de recarga do SwordOnline",
+  "Recharge_OpenFailed": "Não foi possível abrir o navegador. Acesse {0} para recarregar."
 }

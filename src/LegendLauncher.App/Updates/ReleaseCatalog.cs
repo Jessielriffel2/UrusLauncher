@@ -27,6 +27,13 @@ internal sealed record ReleaseCatalogEntry(
             return exact;
         }
 
+        // Turkish players read English more easily than Portuguese when a release has no Turkish notes.
+        if (languageCode.StartsWith("tr", StringComparison.OrdinalIgnoreCase) &&
+            values.TryGetValue("en-US", out TValue? english))
+        {
+            return english;
+        }
+
         return values.TryGetValue("pt-BR", out TValue? portuguese)
             ? portuguese
             : fallback;

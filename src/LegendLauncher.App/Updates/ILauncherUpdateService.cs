@@ -29,6 +29,12 @@ internal sealed record LauncherUpdateRelease(
             return exact;
         }
 
+        if (languageCode.StartsWith("tr", StringComparison.OrdinalIgnoreCase) &&
+            LocalizedNotes.TryGetValue("en-US", out string? english))
+        {
+            return english;
+        }
+
         return LocalizedNotes.TryGetValue("pt-BR", out string? fallback)
             ? fallback
             : string.Empty;

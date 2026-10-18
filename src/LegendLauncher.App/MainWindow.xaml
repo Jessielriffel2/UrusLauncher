@@ -135,6 +135,26 @@
                                            VerticalAlignment="Center" />
                             </Grid>
                         </Button>
+                        <!-- RECARGA: abre https://swordonline.tech/recarga no navegador do jogador. -->
+                        <Button x:Name="RechargeHeaderButton"
+                                MinWidth="112"
+                                Height="38"
+                                Margin="10,0,0,0"
+                                Padding="14,0"
+                                BorderBrush="#E8B04B"
+                                Command="{Binding OpenRechargeCommand}"
+                                Style="{StaticResource SecondaryButtonStyle}"
+                                ToolTip="{loc:Localize Recharge_Tooltip}"
+                                AutomationProperties.Name="{loc:Localize Recharge_Automation}"
+                                shell:WindowChrome.IsHitTestVisibleInChrome="True">
+                            <StackPanel Orientation="Horizontal">
+                                <Path Data="M 6,0 L 12,5 L 6,14 L 0,5 Z" Width="12" Height="14" Stretch="Fill"
+                                      Fill="#7FE3F5" Stroke="#E8B04B" StrokeThickness="1"
+                                      VerticalAlignment="Center" Margin="0,0,8,0" />
+                                <TextBlock Text="{loc:Localize Recharge_Button}" VerticalAlignment="Center"
+                                           Foreground="#F3C766" FontWeight="SemiBold" />
+                            </StackPanel>
+                        </Button>
                         <Popup x:Name="FeatureCatalogPopup"
                                PlacementTarget="{Binding ElementName=FeatureCatalogButton}"
                                Placement="Bottom"

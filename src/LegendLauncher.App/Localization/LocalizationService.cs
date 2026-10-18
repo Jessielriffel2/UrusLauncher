@@ -18,12 +18,14 @@ internal sealed class LocalizationService : INotifyPropertyChanged
     internal const string DefaultLanguageCode = "pt-BR";
     internal const string EnglishLanguageCode = "en-US";
     internal const string SpanishLanguageCode = "es-ES";
+    internal const string TurkishLanguageCode = "tr-TR";
 
     private static readonly IReadOnlyList<LanguageOption> LanguageOptions = Array.AsReadOnly(
     [
         new LanguageOption(DefaultLanguageCode, "Português (Brasil)"),
         new LanguageOption(EnglishLanguageCode, "English"),
         new LanguageOption(SpanishLanguageCode, "Español"),
+        new LanguageOption(TurkishLanguageCode, "Türkçe"),
     ]);
 
     private static readonly IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> Catalogs =
@@ -127,6 +129,12 @@ internal sealed class LocalizationService : INotifyPropertyChanged
             return SpanishLanguageCode;
         }
 
+        if (candidate.Equals("tr", StringComparison.OrdinalIgnoreCase) ||
+            candidate.StartsWith("tr-", StringComparison.OrdinalIgnoreCase))
+        {
+            return TurkishLanguageCode;
+        }
+
         return DefaultLanguageCode;
     }
 
@@ -143,7 +151,7 @@ internal sealed class LocalizationService : INotifyPropertyChanged
 
     private static IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> LoadCatalogs()
     {
-        string[] codes = [DefaultLanguageCode, EnglishLanguageCode, SpanishLanguageCode];
+        string[] codes = [DefaultLanguageCode, EnglishLanguageCode, SpanishLanguageCode, TurkishLanguageCode];
         var catalogs = new Dictionary<string, IReadOnlyDictionary<string, string>>(StringComparer.Ordinal);
         Assembly assembly = typeof(LocalizationService).Assembly;
         string assemblyName = assembly.GetName().Name ?? "LegendLauncher.App";

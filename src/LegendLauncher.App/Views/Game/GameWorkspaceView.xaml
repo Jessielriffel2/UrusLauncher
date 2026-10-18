@@ -238,6 +238,22 @@
                           ToolTip="{loc:Localize Language_Select}"
                           AutomationProperties.Name="{loc:Localize Language_SelectAutomation}"
                           shell:WindowChrome.IsHitTestVisibleInChrome="True" />
+                <!-- RECARGA tambem na barra do jogo: o jogador recarrega sem sair da partida. -->
+                <Button Command="{Binding OpenRechargeCommand}"
+                        Style="{StaticResource WorkspaceToolbarButtonStyle}"
+                        Margin="0,0,8,0"
+                        Padding="10,0"
+                        BorderBrush="#E8B04B"
+                        ToolTip="{loc:Localize Recharge_Tooltip}"
+                        AutomationProperties.Name="{loc:Localize Recharge_Automation}"
+                        shell:WindowChrome.IsHitTestVisibleInChrome="True">
+                    <StackPanel Orientation="Horizontal">
+                        <Path Data="M 6,0 L 12,5 L 6,14 L 0,5 Z" Width="11" Height="13" Stretch="Fill"
+                              Fill="#7FE3F5" Stroke="#E8B04B" StrokeThickness="1"
+                              VerticalAlignment="Center" Margin="0,0,7,0" />
+                        <TextBlock Text="{loc:Localize Recharge_Button}" VerticalAlignment="Center" Foreground="#F3C766" />
+                    </StackPanel>
+                </Button>
                 <!-- Saturacao das cores do jogo: um valor para todas as contas (filtro aplicado no GameHost). -->
                 <Border x:Name="ColorSaturationControl"
                         Margin="0,0,8,0"

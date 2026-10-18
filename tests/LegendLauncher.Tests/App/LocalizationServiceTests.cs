@@ -24,13 +24,13 @@ public sealed class LocalizationServiceTests
     public void SupportedLanguages_ExposeStableCodesAndNativeNames()
     {
         Assert.Equal(
-            ["pt-BR", "en-US", "es-ES"],
+            ["pt-BR", "en-US", "es-ES", "tr-TR"],
             LocalizationService.SupportedLanguages.Select(static language => language.Code));
         Assert.Equal(
-            ["Português (Brasil)", "English", "Español"],
+            ["Português (Brasil)", "English", "Español", "Türkçe"],
             LocalizationService.SupportedLanguages.Select(static language => language.DisplayName));
         Assert.Equal(
-            ["Português (Brasil)", "English", "Español"],
+            ["Português (Brasil)", "English", "Español", "Türkçe"],
             LocalizationService.SupportedLanguages.Select(static language => language.ToString()));
     }
 

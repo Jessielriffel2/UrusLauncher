@@ -31,6 +31,11 @@ public static class SwordOnlinePlatformCatalog
 
     public static Uri RegisterUri { get; } = new(PortalBaseUri, RegisterPath);
 
+    /// <summary>Diamond top-up page of the website (opened in the player's browser by the launcher's RECARGA button).</summary>
+    public const string RechargePath = "/recarga";
+
+    public static Uri RechargeUri { get; } = new(PortalBaseUri, RechargePath);
+
     /// <summary>
     /// SwordOnline platform. <c>RequiresPassword</c> keeps its default (<see langword="true"/>):
     /// the account lives on the website, so the launcher always authenticates.
