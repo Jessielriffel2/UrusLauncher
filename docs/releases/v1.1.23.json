@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "version": "1.1.23",
+  "title": {
+    "pt-BR": "Turco e botão de recarga",
+    "en-US": "Turkish and top-up button",
+    "es-ES": "Turco y botón de recarga",
+    "tr-TR": "Türkçe ve yükleme düğmesi"
+  },
+  "notes": {
+    "pt-BR": [
+      "O launcher agora está em turco (Türkçe). Em Windows configurado em turco ele já abre nesse idioma.",
+      "Novo botão RECARGA no topo e na barra do jogo: abre a página de recarga de diamantes do site do SwordOnline no seu navegador."
+    ],
+    "en-US": [
+      "The launcher is now available in Turkish (Türkçe). On Windows set to Turkish it opens in that language.",
+      "New TOP UP button at the top and on the game bar: opens the SwordOnline diamond top-up page in your browser."
+    ],
+    "es-ES": [
+      "El launcher ahora está en turco (Türkçe). En Windows configurado en turco se abre en ese idioma.",
+      "Nuevo botón RECARGA arriba y en la barra del juego: abre la página de recarga de diamantes del sitio de SwordOnline en tu navegador."
+    ],
+    "tr-TR": [
+      "Başlatıcı artık Türkçe. Türkçe ayarlı Windows'ta doğrudan bu dilde açılır.",
+      "Üstte ve oyun çubuğunda yeni YÜKLEME düğmesi: SwordOnline sitesinin elmas yükleme sayfasını tarayıcınızda açar."
+    ]
+  }
+}

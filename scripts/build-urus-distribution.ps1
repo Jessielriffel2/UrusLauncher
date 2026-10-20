@@ -525,6 +525,8 @@ if ($releaseDefinition.schemaVersion -ne 1 -or
 $versionParts = $Version.Split('.')
 $fileVersion = if ($versionParts.Count -eq 3) { "$Version.0" } else { $Version }
 
+# Only these three in update-manifest.json: launchers up to 1.1.22 refuse a manifest with any other language (tr-TR notes live
+# in docs/releases/*.json and are shown by the launcher's release catalog).
 $releaseLanguages = @('pt-BR', 'en-US', 'es-ES')
 $localizedNotes = [ordered]@{}
 foreach ($languageCode in $releaseLanguages) {

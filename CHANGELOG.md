@@ -2,6 +2,13 @@
 
 As mudanças relevantes do Urus Launcher são registradas aqui. As versões públicas seguem versionamento semântico e são publicadas em `vMAJOR.MINOR.PATCH`.
 
+## 1.1.23 — 20/10/2026
+
+### Adicionado
+
+- **Idioma turco (`tr-TR`)**: catálogo com todas as chaves e os mesmos marcadores do inglês, detecção de `tr`/`tr-*`, textos do GameHost em turco; notas de versão sem turco caem para o inglês (`ReleaseCatalog`, `LauncherUpdateRelease`).
+- **Botão RECARGA** no topo e na barra do jogo (`OpenRechargeCommand`): abre `https://swordonline.tech/recarga` (`SwordOnlinePlatformCatalog.RechargeUri`) no navegador; só https, e uma falha vira mensagem com o endereço.
+
 ## 1.1.22 — 17/10/2026
 
 ### Adicionado

@@ -58,7 +58,7 @@ internal static class LauncherComposition
         adapters = adapters.Concat(LocalPlatformCatalog.All.Select(platform => new PlatformAdapter(
             platform,
             new LocalServerDirectory(httpClient),
-            new SwordOnlineAuthenticationService(httpClient, LocalPlatformCatalog.Portal))));
+            new SwordOnlineAuthenticationService(httpClient, LocalPlatformCatalog.Portals))));
 #else
         // Public build: SwordOnline first, then the OAS variants (they answer on other networks; the
         // OAS edge only blocks some of them). 7wan (every server closed) and Elarionis are not offered.

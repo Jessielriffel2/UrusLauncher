@@ -56,7 +56,9 @@ internal static class UpdateManifestValidator
     private static IReadOnlyDictionary<string, string> ValidateNotes(
         Dictionary<string, string?>? notes)
     {
-        if (notes is null || notes.Count != RequiredLanguages.Length)
+        // Since 1.1.23 extra languages (tr-TR) are accepted next to the three required ones. Launchers up to 1.1.22 demand EXACTLY
+        // three, so the release script keeps writing only pt-BR/en-US/es-ES until nobody runs those versions anymore.
+        if (notes is null)
         {
             throw new InvalidDataException("The update manifest must contain notes in all supported languages.");
         }
@@ -71,6 +73,15 @@ internal static class UpdateManifestValidator
             }
 
             validated.Add(language, value.Trim());
+        }
+
+        foreach ((string language, string? value) in notes)
+        {
+            if (!validated.ContainsKey(language) && !string.IsNullOrWhiteSpace(value) &&
+                language.Length is >= 2 and <= 10)
+            {
+                validated.Add(language, value.Trim());
+            }
         }
 
         return new ReadOnlyDictionary<string, string>(validated);

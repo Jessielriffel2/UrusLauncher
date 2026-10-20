@@ -2,7 +2,7 @@
 param(
     # Version stamped on the developer build (shown as "Versão X (dev)").
     [ValidatePattern('^\d+\.\d+\.\d+$')]
-    [string]$Version = '1.1.22',
+    [string]$Version = '1.1.23',
 
     # Copies the build over the per-user installation (close every Urus window first).
     [switch]$Install
