@@ -25,7 +25,7 @@ public sealed partial class SwordOnlineAuthenticationService : IGameAuthenticati
     private static readonly TimeSpan RequestTimeout = TimeSpan.FromSeconds(15);
 
     private readonly HttpClient _httpClient;
-    private readonly IReadOnlyList<SwordOnlinePortal> _portals;
+    private readonly SwordOnlinePortal _portal;
 
     public SwordOnlineAuthenticationService(HttpClient httpClient)
         : this(httpClient, SwordOnlinePlatformCatalog.Portal)
@@ -33,26 +33,9 @@ public sealed partial class SwordOnlineAuthenticationService : IGameAuthenticati
     }
 
     public SwordOnlineAuthenticationService(HttpClient httpClient, SwordOnlinePortal portal)
-        : this(httpClient, [portal ?? throw new ArgumentNullException(nameof(portal))])
-    {
-    }
-
-    /// <summary>
-    /// One platform with several servers, one portal each (e.g. the BR and the Turkish server): the server picked in the
-    /// launcher chooses the portal whose ticket, <c>config.xml</c> and <c>Loading.swf</c> are used. All portals must
-    /// belong to the same platform.
-    /// </summary>
-    public SwordOnlineAuthenticationService(HttpClient httpClient, IReadOnlyList<SwordOnlinePortal> portals)
     {
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
-        ArgumentNullException.ThrowIfNull(portals);
-        if (portals.Count == 0 || portals.Any(p => p is null) ||
-            portals.Any(p => !string.Equals(p.PlatformId, portals[0].PlatformId, StringComparison.OrdinalIgnoreCase)))
-        {
-            throw new ArgumentException("Portals must be non-empty and share one platform.", nameof(portals));
-        }
-
-        _portals = portals;
+        _portal = portal ?? throw new ArgumentNullException(nameof(portal));
     }
 
     public async Task<AuthenticationResult> AuthenticateAsync(
@@ -61,16 +44,14 @@ public sealed partial class SwordOnlineAuthenticationService : IGameAuthenticati
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        if (!string.Equals(request.Platform.Id, _portals[0].PlatformId, StringComparison.OrdinalIgnoreCase))
+        if (!string.Equals(request.Platform.Id, _portal.PlatformId, StringComparison.OrdinalIgnoreCase))
         {
             return AuthenticationResult.Failure(
                 SwordOnlineAuthenticationErrorCodes.UnsupportedPlatform,
                 $"'{request.Platform.Id}' is not the SwordOnline platform.");
         }
 
-        SwordOnlinePortal? portal = _portals.FirstOrDefault(p =>
-            string.Equals(request.Server.Id, p.ServerId, StringComparison.OrdinalIgnoreCase));
-        if (portal is null)
+        if (!string.Equals(request.Server.Id, _portal.ServerId, StringComparison.OrdinalIgnoreCase))
         {
             return AuthenticationResult.Failure(
                 SwordOnlineAuthenticationErrorCodes.InvalidServer,
@@ -89,7 +70,7 @@ public sealed partial class SwordOnlineAuthenticationService : IGameAuthenticati
 
         try
         {
-            using var message = new HttpRequestMessage(HttpMethod.Post, portal.LauncherUri)
+            using var message = new HttpRequestMessage(HttpMethod.Post, _portal.LauncherUri)
             {
                 Content = new StringContent(
                     JsonSerializer.Serialize(new { login, senha = password }),
@@ -109,7 +90,7 @@ public sealed partial class SwordOnlineAuthenticationService : IGameAuthenticati
 
             return response.StatusCode switch
             {
-                HttpStatusCode.OK => ParseSuccess(body, login, portal),
+                HttpStatusCode.OK => ParseSuccess(body, login, _portal),
                 HttpStatusCode.Unauthorized => AuthenticationResult.Failure(
                     SwordOnlineAuthenticationErrorCodes.InvalidCredentials,
                     ReadServerMessage(body)),
