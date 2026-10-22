@@ -2,7 +2,7 @@
 
 As mudanças relevantes do Urus Launcher são registradas aqui. As versões públicas seguem versionamento semântico e são publicadas em `vMAJOR.MINOR.PATCH`.
 
-## Não lançado
+## 1.1.24 — 21/10/2026
 
 ### Adicionado
 

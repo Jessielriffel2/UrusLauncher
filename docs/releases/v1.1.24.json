@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "version": "1.1.24",
+  "title": {
+    "pt-BR": "Limpar cache do jogo",
+    "en-US": "Clear game cache",
+    "es-ES": "Borrar caché del juego",
+    "tr-TR": "Oyun önbelleğini temizle"
+  },
+  "notes": {
+    "pt-BR": [
+      "Novo link \"Limpar cache do jogo\", embaixo da versão: se alguma janela do SwordOnline (como Guilda ou Correio) não abre ou o jogo trava, ele apaga os arquivos do jogo guardados no Windows e o jogo baixa tudo de novo na próxima abertura. Feche o jogo antes; o segundo clique confirma."
+    ],
+    "en-US": [
+      "New \"Clear game cache\" link under the version: if a SwordOnline window (like Guild or Mail) will not open or the game freezes, it deletes the game files kept by Windows and the game downloads them again the next time it opens. Close the game first; the second click confirms."
+    ],
+    "es-ES": [
+      "Nuevo enlace \"Borrar caché del juego\", debajo de la versión: si una ventana de SwordOnline (como Gremio o Correo) no abre o el juego se traba, borra los archivos del juego guardados en Windows y el juego los vuelve a descargar al abrirlo. Cierra el juego antes; el segundo clic confirma."
+    ],
+    "tr-TR": [
+      "Sürümün altında yeni \"Oyun önbelleğini temizle\" bağlantısı: SwordOnline'da bir pencere (Birlik ya da Posta gibi) açılmıyorsa veya oyun donuyorsa, Windows'ta saklanan oyun dosyalarını siler ve oyun bir sonraki açılışta hepsini yeniden indirir. Önce oyunu kapat; ikinci tıklama onaylar."
+    ]
+  }
+}
