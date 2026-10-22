@@ -295,5 +295,13 @@
   "Recharge_Button": "RECARGA",
   "Recharge_Tooltip": "Recarregar diamantes no site do SwordOnline (abre no navegador)",
   "Recharge_Automation": "Abrir a página de recarga do SwordOnline",
-  "Recharge_OpenFailed": "Não foi possível abrir o navegador. Acesse {0} para recarregar."
+  "Recharge_OpenFailed": "Não foi possível abrir o navegador. Acesse {0} para recarregar.",
+  "GameCache_Button": "Limpar cache do jogo",
+  "GameCache_Confirm": "Clique de novo para limpar",
+  "GameCache_Clearing": "Limpando o cache...",
+  "GameCache_Tooltip": "Janela do jogo que não abre ou jogo travando? Apaga os arquivos do SwordOnline guardados no Windows; o jogo baixa de novo ao abrir.",
+  "GameCache_CloseGamesFirst": "Feche os jogos abertos antes de limpar o cache do jogo.",
+  "GameCache_Cleared": "Cache do jogo limpo: {0} arquivos ({1} MB). Abra o jogo de novo.",
+  "GameCache_ClearedPartial": "Cache do jogo limpo em parte: {0} arquivos ({1} MB); {2} estavam em uso. Feche os outros programas e tente de novo.",
+  "GameCache_Failed": "Não foi possível limpar o cache do jogo. Tente de novo."
 }

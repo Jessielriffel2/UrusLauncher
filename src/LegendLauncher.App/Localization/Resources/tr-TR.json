@@ -295,5 +295,13 @@
   "Recharge_Button": "YÜKLEME",
   "Recharge_Tooltip": "SwordOnline sitesinde elmas yükle (tarayıcıda açılır)",
   "Recharge_Automation": "SwordOnline yükleme sayfasını aç",
-  "Recharge_OpenFailed": "Tarayıcı açılamadı. Yükleme yapmak için {0} adresine gidin."
+  "Recharge_OpenFailed": "Tarayıcı açılamadı. Yükleme yapmak için {0} adresine gidin.",
+  "GameCache_Button": "Oyun önbelleğini temizle",
+  "GameCache_Confirm": "Temizlemek için tekrar tıkla",
+  "GameCache_Clearing": "Önbellek temizleniyor...",
+  "GameCache_Tooltip": "Bir oyun penceresi açılmıyor ya da oyun mu donuyor? Windows'ta saklanan SwordOnline dosyalarını siler; oyun açılırken onları yeniden indirir.",
+  "GameCache_CloseGamesFirst": "Oyun önbelleğini temizlemeden önce açık oyunları kapat.",
+  "GameCache_Cleared": "Oyun önbelleği temizlendi: {0} dosya ({1} MB). Oyunu yeniden aç.",
+  "GameCache_ClearedPartial": "Oyun önbelleği kısmen temizlendi: {0} dosya ({1} MB); {2} tanesi kullanımdaydı. Diğer programları kapatıp tekrar dene.",
+  "GameCache_Failed": "Oyun önbelleği temizlenemedi. Tekrar dene."
 }

@@ -295,5 +295,13 @@
   "Recharge_Button": "TOP UP",
   "Recharge_Tooltip": "Top up diamonds on the SwordOnline website (opens in your browser)",
   "Recharge_Automation": "Open the SwordOnline top-up page",
-  "Recharge_OpenFailed": "The browser could not be opened. Go to {0} to top up."
+  "Recharge_OpenFailed": "The browser could not be opened. Go to {0} to top up.",
+  "GameCache_Button": "Clear game cache",
+  "GameCache_Confirm": "Click again to clear",
+  "GameCache_Clearing": "Clearing the cache...",
+  "GameCache_Tooltip": "A game window will not open or the game freezes? Deletes the SwordOnline files kept by Windows; the game downloads them again when it opens.",
+  "GameCache_CloseGamesFirst": "Close the open games before clearing the game cache.",
+  "GameCache_Cleared": "Game cache cleared: {0} files ({1} MB). Open the game again.",
+  "GameCache_ClearedPartial": "Game cache partly cleared: {0} files ({1} MB); {2} were in use. Close other programs and try again.",
+  "GameCache_Failed": "The game cache could not be cleared. Try again."
 }

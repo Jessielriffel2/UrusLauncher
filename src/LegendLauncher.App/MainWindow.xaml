@@ -568,13 +568,47 @@
                                     </Grid>
                                 </Border>
 
-                                <TextBlock Grid.Row="7"
-                                           Margin="0,8,0,0"
-                                           HorizontalAlignment="Center"
-                                           Text="{Binding AppVersionText}"
-                                           FontSize="11"
-                                           Foreground="{StaticResource TextMutedBrush}"
-                                           AutomationProperties.Name="{Binding AppVersionText}" />
+                                <StackPanel Grid.Row="7"
+                                            Margin="0,8,0,0"
+                                            HorizontalAlignment="Center">
+                                    <TextBlock Text="{Binding AppVersionText}"
+                                               HorizontalAlignment="Center"
+                                               FontSize="11"
+                                               Foreground="{StaticResource TextMutedBrush}"
+                                               AutomationProperties.Name="{Binding AppVersionText}" />
+                                    <!-- Limpar cache do jogo: apaga do cache do Windows os arquivos do SwordOnline (o 1º clique pede confirmação). -->
+                                    <Button x:Name="ClearGameCacheButton"
+                                            Margin="0,3,0,0"
+                                            HorizontalAlignment="Center"
+                                            Padding="0"
+                                            Cursor="Hand"
+                                            Command="{Binding ClearGameCacheCommand}"
+                                            ToolTip="{loc:Localize GameCache_Tooltip}"
+                                            AutomationProperties.Name="{Binding ClearGameCacheButtonText}">
+                                        <Button.Template>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border Background="Transparent" Padding="{TemplateBinding Padding}">
+                                                    <TextBlock x:Name="LinkText"
+                                                               Text="{Binding ClearGameCacheButtonText}"
+                                                               FontSize="11"
+                                                               VerticalAlignment="Center"
+                                                               Foreground="{StaticResource AccentBrush}" />
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="LinkText" Property="TextDecorations" Value="Underline" />
+                                                    </Trigger>
+                                                    <Trigger Property="IsKeyboardFocused" Value="True">
+                                                        <Setter TargetName="LinkText" Property="TextDecorations" Value="Underline" />
+                                                    </Trigger>
+                                                    <Trigger Property="IsEnabled" Value="False">
+                                                        <Setter TargetName="LinkText" Property="Foreground" Value="{StaticResource TextMutedBrush}" />
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Button.Template>
+                                    </Button>
+                                </StackPanel>
                             </Grid>
                         </Grid>
                     </Border>

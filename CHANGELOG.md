@@ -2,6 +2,12 @@
 
 As mudanças relevantes do Urus Launcher são registradas aqui. As versões públicas seguem versionamento semântico e são publicadas em `vMAJOR.MINOR.PATCH`.
 
+## Não lançado
+
+### Adicionado
+
+- **Limpar cache do jogo** (link abaixo da versão, `ClearGameCacheCommand`): apaga do cache do Windows (WinINet, onde o Flash do GameHost guarda os arquivos) só as entradas de `swordonline.tech`, para o jogador resolver sozinho janelas que não abrem por arquivo velho ou estragado. Pede um segundo clique, recusa com jogo aberto e informa arquivos/MB apagados (`GameCacheCleaner`, textos nos 4 idiomas).
+
 ## 1.1.23 — 20/10/2026
 
 ### Adicionado
