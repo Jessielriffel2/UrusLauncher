@@ -87,6 +87,23 @@ internal static class ImportTablePatcher
         }
     }
 
+    /// <summary>
+    /// Replaces one pointer-sized slot (an entry of a COM vtable of the OCX) and returns the previous value. Used by
+    /// <see cref="FlashDisplayScale"/> for <c>IOleInPlaceObject::SetObjectRects</c>, which the container calls through the vtable.
+    /// </summary>
+    public static nint ReplacePointer(nint slot, nint replacement)
+    {
+        if (!VirtualProtect(slot, (nuint)nint.Size, PageReadWrite, out uint previousProtection))
+        {
+            throw new ExternalException("VirtualProtect failed for a vtable slot.", Marshal.GetLastWin32Error());
+        }
+
+        nint previous = Marshal.ReadIntPtr(slot);
+        Marshal.WriteIntPtr(slot, replacement);
+        _ = VirtualProtect(slot, (nuint)nint.Size, previousProtection, out _);
+        return previous;
+    }
+
     [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
     private static extern nint GetModuleHandleW(string moduleName);
 

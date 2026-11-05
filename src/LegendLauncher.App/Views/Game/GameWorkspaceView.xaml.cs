@@ -24,6 +24,59 @@ public partial class GameWorkspaceView : UserControl
         }
     }
 
+    // Fixed parts of the toolbar besides the Auto columns: the three 8-unit gaps and the space under the window buttons.
+    private const double ToolbarGapsWidth = 3 * 8;
+    private const double CompactColorSliderWidth = 80;
+    private const double FullColorSliderWidth = 110;
+
+    private bool _fittingToolbar;
+
+    private void CompactGameToolbar_OnSizeChanged(object sender, SizeChangedEventArgs eventArgs) => FitToolbarToWidth();
+
+    /// <summary>
+    /// On a narrow toolbar (a small window, or a high Windows scale: a 4K TV at 300% is only 1280 units wide) the optional parts
+    /// give way so the action buttons never slide under the window buttons (a click meant for "Detach" closed the launcher):
+    /// first the language selector (it is also on the launcher screen), then the "Colors" label and part of its slider.
+    /// They come back as soon as there is room again.
+    /// </summary>
+    private void FitToolbarToWidth()
+    {
+        if (_fittingToolbar || CompactGameToolbar.ActualWidth <= 0)
+        {
+            return;
+        }
+
+        _fittingToolbar = true;
+        try
+        {
+            double available = CompactGameToolbar.ActualWidth -
+                CompactGameToolbar.ColumnDefinitions[0].ActualWidth -
+                CompactGameToolbar.ColumnDefinitions[4].ActualWidth -
+                ToolbarGapsWidth -
+                MainWindowCaptionButtonReservedSpace.Width;
+            for (int level = 0; level <= 2; level++)
+            {
+                ApplyToolbarLevel(level);
+                WorkspaceActionGroup.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+                if (WorkspaceActionGroup.DesiredSize.Width <= available)
+                {
+                    break;
+                }
+            }
+        }
+        finally
+        {
+            _fittingToolbar = false;
+        }
+    }
+
+    private void ApplyToolbarLevel(int level)
+    {
+        WorkspaceLanguageSelector.Visibility = level >= 1 ? Visibility.Collapsed : Visibility.Visible;
+        ColorSaturationLabel.Visibility = level >= 2 ? Visibility.Collapsed : Visibility.Visible;
+        ColorSaturationSlider.Width = level >= 2 ? CompactColorSliderWidth : FullColorSliderWidth;
+    }
+
     private void CompactGameToolbar_OnMouseLeftButtonDown(
         object sender,
         MouseButtonEventArgs eventArgs)

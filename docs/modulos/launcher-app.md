@@ -77,7 +77,7 @@ O processo WPF nunca carrega o Adobe Flash ActiveX. Cada conta aberta permanece 
 | `src/LegendLauncher.App/ViewModels/MainWindowViewModel.Updates.cs:167` | `CheckForUpdatesAsync()` | Consulta cedo uma vez por abertura, baixa e valida automaticamente um release superior e chega a `ReadyToInstall` sem executar o setup. |
 | `src/LegendLauncher.App/ViewModels/MainWindowViewModel.Updates.cs:223` | `InstallUpdateAsync()` | Exige setup preparado, nenhuma sessão e clique explícito em **INSTALAR**; então sinaliza à janela para encerrar somente após iniciar o instalador. |
 | `src/LegendLauncher.App/Views/Updates/UpdateStatusView.xaml:19` | Cartão de status | Faixa compacta no canto inferior esquerdo: título e ação na mesma linha, detalhe em uma linha, progresso só quando há download. |
-| `src/LegendLauncher.App/Services/LauncherSettingsService.cs:96` | `SaveDonationPromptShownAsync(...)` | Atualiza atomicamente o instante UTC da última exibição sem apagar idioma, perfil, mudo ou layout. |
+| `src/LegendLauncher.App/Services/LauncherSettingsService.cs:115` | `SaveDonationPromptShownAsync(...)` | Atualiza atomicamente o instante UTC da última exibição sem apagar idioma, perfil, mudo ou layout. |
 | `src/LegendLauncher.App/Localization/LocalizeExtension.cs:7` | `LocalizeExtension` | Liga textos XAML ao indexador observável do serviço global para atualização sem recriar janelas. |
 
 ## Fluxos e dados
@@ -184,3 +184,41 @@ A localização acrescenta contratos de paridade/referências em `LocalizationCa
 - `BorderlessWindowWorkAreaTests.cs:8` cobre work areas em várias origens; os testes a partir da linha 49 cobrem conversão DPI, clamp do tamanho normal/restaurado e restauração dos mínimos em monitor maior, e o teste da linha 90 fixa as mensagens que exigem refresh dinâmico.
 
 A execução anterior confirmou duas sessões Reborn turco S115 simultâneas; a build compacta final revalidou uma sessão jogável, minimização/restauração, detach/maximize/reattach e a maximização em 3440×1392 dentro do monitor de 3440×1440. A comparação da barra compacta e da janela desacoplada está aprovada em [`design-qa.md`](../../design-qa.md).
+
+## Seletor Zoom na barra do jogo (1.1.25)
+
+O seletor **Zoom** fica na barra do jogo, ao lado do controle de **Cores**. A escolha vale para todas as contas abertas: o view model a publica no canal de memória compartilhada (`GameZoom.Writer`, [Core](core.md)) e cada GameHost a aplica ao vivo, sem reabrir o jogo ([GameHost Legacy](game-host-legacy.md)).
+
+**View model** — `src/LegendLauncher.App/ViewModels/GameWorkspaceViewModel.cs`
+
+- `_zoomChannel` (o `Writer`), `_gameZoom` (começa em `GameZoom.Automatic`) e `_zoomOptions` ficam em `:36-38`. O construtor publica o valor inicial e monta as opções em `:78-79`.
+- `ZoomOptions` (`:83`) traz as opções de `GameZoom.Choices`, cada uma como `GameZoomOption` (`BuildZoomOptions`, `:520-527`).
+- `GameZoomChoice` (`:89-104`) normaliza o valor (`:94`), publica no canal (`:100`), notifica a seleção (`:101`) e salva em seguida (`PersistGamePreferencesAsync`, `:102`).
+- `SelectedZoomOption` (`:106-116`) é o item marcado no ComboBox e repassa a escolha a `GameZoomChoice`.
+- Ao trocar o idioma, as opções são refeitas em `LocalizationOnLanguageChanged` (`:514-516`), para mostrar "Automático" ou "Zoom: X%".
+- `ApplySettings` (`:289-300`) lê `settings.GameZoomChoice` (`:297`), normaliza e publica no canal (`:298`), sem salvar de novo.
+- `PersistGamePreferencesAsync` (`:726-742`) envia `GameZoomChoice` ao serviço (`:731`); falha de E/S é ignorada para não interromper o jogo (`:734-741`).
+- `GameZoomOption` (`:769-773`) é um record com `Value` e `DisplayName`; `ToString` devolve o nome (`:772`), porque a caixa fechada do ComboBox mostra o próprio item.
+
+**Configurações** — `src/LegendLauncher.App/Services/LauncherSettingsService.cs`
+
+- `LauncherSettingsSnapshot.GameZoomChoice` (`:17`) começa em `GameZoom.Automatic`.
+- `LoadAsync` (`:43-76`) lê o campo `GameZoom` do documento e aplica `Normalize` (`:74-75`). Arquivo anterior à 1.1.25, sem o campo, fica em Automático.
+- `SaveGamePreferencesAsync` (`:85-103`) recebe `gameZoom` (`:89`) e normaliza (`:99-101`); sem valor, mantém o atual.
+- `LauncherSettingsDocument.GameZoom` (`:169`) é `int?`. A chave no `settings.json` é `gameZoom`, porque o store usa `JsonSerializerDefaults.Web` (`src/LegendLauncher.Infrastructure/Persistence/AtomicJsonFileStore.cs:168-173`), que grava os nomes em camelCase.
+
+**XAML** — `src/LegendLauncher.App/Views/Game/GameWorkspaceView.xaml`
+
+- `WorkspaceZoomSelector` (`:286-297`) é um ComboBox de `Width="172"` (`:287`) com o estilo dos idiomas (`LanguageComboStyle`, `:289`). `ItemsSource` vem de `Workspace.ZoomOptions` (`:290`), a seleção é `Workspace.SelectedZoomOption` em modo TwoWay (`:291`), `DisplayMemberPath="DisplayName"` (`:292`), e a lista abre por clique e teclado com os handlers de `GameWorkspaceView.xaml.cs:87-117` (`:293-294`).
+- O seletor fica dentro de `WorkspaceActionGroup` (`:226`), que começa antes do controle de Cores (`:260`).
+- `ColorSaturationLabel` (`:274`) é o rótulo "Cores", que a barra estreita pode esconder.
+- Textos: `Workspace_ZoomAutomatic`, `Workspace_ZoomPercent`, `Workspace_ZoomTooltip` e `Workspace_ZoomAutomation` estão em `src/LegendLauncher.App/Localization/Resources/pt-BR.json:105-108`, com as mesmas chaves nas linhas 105-108 de `en-US.json`, `es-ES.json` e `tr-TR.json`.
+
+**Ajuste da barra estreita** — `src/LegendLauncher.App/Views/Game/GameWorkspaceView.xaml.cs`
+
+- A barra `CompactGameToolbar` (`GameWorkspaceView.xaml:140-144`) tem 8 colunas (`:145-154`), e o grupo de ações ocupa a coluna 6 (`:226-228`). O `SizeChanged` está na barra (`:144`) e no grupo (`:227`); os dois chamam `FitToolbarToWidth`.
+- Constantes: folgas de 3×8, slider compacto de 80 e slider completo de 110 (`GameWorkspaceView.xaml.cs:28-30`).
+- `FitToolbarToWidth` (`:42-71`) calcula o espaço livre: a largura da barra menos as colunas 0 e 4, as folgas e a reserva dos botões da janela (`MainWindowCaptionButtonReservedSpace`, `GameWorkspaceView.xaml:373`; `:52-56`). Testa os níveis 0, 1 e 2 (`:57-65`) e para no primeiro que cabe (`:60-63`). `_fittingToolbar` evita reentrância (`:32`, `:44`, `:49`, `:69`).
+- `ApplyToolbarLevel` (`:73-78`): o nível 1 esconde o seletor de idioma (`:75`); o nível 2 esconde o rótulo "Cores" (`:76`) e reduz o slider de 110 para 80 (`:77`). A cada mudança de tamanho o cálculo recomeça do nível 0, então os itens voltam quando há espaço.
+
+**Testes** — `tests/LegendLauncher.Tests/App/GameZoomTests.cs`: configurações de antes da 1.1.25 viram Automático e a escolha é salva (`:100`); opções e seleção do view model (`:129`); e o XAML do seletor, com `ItemsSource`, `SelectedItem` e a abertura explícita (`:146`).

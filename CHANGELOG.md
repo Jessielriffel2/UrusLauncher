@@ -2,6 +2,16 @@
 
 As mudanças relevantes do Urus Launcher são registradas aqui. As versões públicas seguem versionamento semântico e são publicadas em `vMAJOR.MINOR.PATCH`.
 
+## 1.1.25 — 05/11/2026
+
+### Adicionado
+
+- **Zoom do jogo** (seletor **Zoom** na barra do jogo, ao lado de **Cores**): o jogo ocupa melhor a tela de TV e de monitores 4K com escala alta do Windows. **Automático** (o padrão) acompanha a escala do Windows e nunca deixa o jogo menor que 1000×600; há também 100%, 125%, 150%, 175%, 200%, 250% e 300%. A escolha vale para todas as contas abertas, é aplicada na hora sem reabrir o jogo e fica salva em `settings.json` (arquivo antigo = Automático). O jogo não é alterado: o launcher amplia cada quadro do Flash (`GameZoom`, `FlashDisplayScale`, `GameWorkspaceViewModel.GameZoomChoice`).
+
+### Alterado
+
+- **Barra do jogo se ajusta à largura** (`GameWorkspaceView`): em janela estreita ou com escala alta, o seletor de idioma some primeiro e depois o rótulo "Cores", com o slider menor. Assim os botões de ação nunca ficam embaixo dos botões da janela; numa TV 4K a 300% a barra tem 1280 unidades (`FitToolbarToWidth`).
+
 ## 1.1.24 — 21/10/2026
 
 ### Adicionado

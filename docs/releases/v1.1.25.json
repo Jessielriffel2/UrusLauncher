@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "version": "1.1.25",
+  "title": {
+    "pt-BR": "Jogo ajustado à TV e a telas grandes",
+    "en-US": "Game fitted to TVs and large screens",
+    "es-ES": "Juego ajustado a TV y pantallas grandes",
+    "tr-TR": "Oyun TV'ye ve büyük ekranlara uyum sağlıyor"
+  },
+  "notes": {
+    "pt-BR": [
+      "Novo \"Zoom\" na barra do jogo, ao lado de Cores: em TV, monitor 4K ou com a escala do Windows alta, o jogo agora enche a tela como no navegador — batalha, mapa e interface aparecem grandes. Em \"Automático\" (o padrão) ele acompanha a escala do Windows sem deixar o jogo menor que 1000×600; num monitor a 100% nada muda. Também dá para escolher de 100% a 300%, e a troca vale na hora, para todas as contas.",
+      "A barra do jogo agora se ajusta quando fica estreita (por exemplo numa TV a 300%): o seletor de idioma sai da barra (continua na tela inicial) e os botões nunca ficam embaixo dos botões da janela."
+    ],
+    "en-US": [
+      "New \"Zoom\" on the game bar, next to Colors: on a TV, a 4K monitor or with a high Windows scale, the game now fills the screen like in a browser — battles, the map and the interface show up large. \"Automatic\" (the default) follows the Windows scale without making the game smaller than 1000×600; on a 100% monitor nothing changes. You can also pick 100% to 300%, and the change applies at once to every account.",
+      "The game bar now adapts when it gets narrow (for example on a TV at 300%): the language selector leaves the bar (it stays on the start screen) and the buttons never end up under the window buttons."
+    ],
+    "es-ES": [
+      "Nuevo \"Zoom\" en la barra del juego, al lado de Colores: en una TV, un monitor 4K o con la escala de Windows alta, el juego ahora llena la pantalla como en el navegador — la batalla, el mapa y la interfaz se ven grandes. En \"Automático\" (el predeterminado) sigue la escala de Windows sin dejar el juego más chico que 1000×600; en un monitor al 100% no cambia nada. También puedes elegir de 100% a 300%, y el cambio vale al instante para todas las cuentas.",
+      "La barra del juego ahora se ajusta cuando queda estrecha (por ejemplo en una TV al 300%): el selector de idioma sale de la barra (sigue en la pantalla de inicio) y los botones nunca quedan debajo de los botones de la ventana."
+    ],
+    "tr-TR": [
+      "Oyun çubuğunda Renkler'in yanında yeni \"Yakınlaştırma\": TV'de, 4K monitörde veya yüksek Windows ölçeğinde oyun artık tarayıcıdaki gibi ekranı dolduruyor — savaş, harita ve arayüz büyük görünüyor. \"Otomatik\" (varsayılan) oyunu 1000×600'den küçük yapmadan Windows ölçeğini izler; %100 monitörde hiçbir şey değişmez. %100 ile %300 arasında da seçebilirsin; değişiklik hemen tüm hesaplara uygulanır.",
+      "Oyun çubuğu artık daraldığında uyum sağlıyor (örneğin %300'deki bir TV'de): dil seçici çubuktan çıkar (başlangıç ekranında kalır) ve düğmeler hiçbir zaman pencere düğmelerinin altında kalmaz."
+    ]
+  }
+}

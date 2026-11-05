@@ -1,4 +1,5 @@
 using LegendLauncher.Core.GameColor;
+using LegendLauncher.Core.GameDisplay;
 using LegendLauncher.Infrastructure.Persistence;
 using LegendLauncher.App.Localization;
 using System.Text.Json;
@@ -12,7 +13,8 @@ internal sealed record LauncherSettingsSnapshot(
     string LanguageCode,
     DateTimeOffset? LastDonationPromptUtc,
     string? LastSeenFeatureCatalogVersion,
-    int ColorSaturation = GameColorChannel.Original)
+    int ColorSaturation = GameColorChannel.Original,
+    int GameZoomChoice = GameZoom.Automatic)
 {
     public static LauncherSettingsSnapshot Default { get; } =
         new(
@@ -68,7 +70,9 @@ internal sealed class LauncherSettingsService
             document.LastDonationPromptUtc,
             document.LastSeenFeatureCatalogVersion,
             // missing in files written before 1.1.22: original colors, never black and white
-            GameColorChannel.Clamp(document.ColorSaturation ?? GameColorChannel.Original));
+            GameColorChannel.Clamp(document.ColorSaturation ?? GameColorChannel.Original),
+            // missing in files written before 1.1.25: automatic (follows the Windows scale)
+            GameZoom.Normalize(document.GameZoom ?? GameZoom.Automatic));
     }
 
     public Task SaveLastSelectedProfileAsync(
@@ -82,6 +86,7 @@ internal sealed class LauncherSettingsService
         bool isMuted,
         GameLayoutMode layoutMode,
         int? colorSaturation = null,
+        int? gameZoom = null,
         CancellationToken cancellationToken = default) =>
         UpdateAsync(
             current => current with
@@ -91,6 +96,9 @@ internal sealed class LauncherSettingsService
                 ColorSaturation = colorSaturation is { } saturation
                     ? GameColorChannel.Clamp(saturation)
                     : current.ColorSaturation,
+                GameZoom = gameZoom is { } zoom
+                    ? GameZoom.Normalize(zoom)
+                    : current.GameZoom,
             },
             cancellationToken);
 
@@ -157,7 +165,8 @@ internal sealed class LauncherSettingsService
         string? LanguageCode,
         DateTimeOffset? LastDonationPromptUtc,
         string? LastSeenFeatureCatalogVersion,
-        int? ColorSaturation = null)
+        int? ColorSaturation = null,
+        int? GameZoom = null)
     {
         public static LauncherSettingsDocument Default { get; } =
             new(

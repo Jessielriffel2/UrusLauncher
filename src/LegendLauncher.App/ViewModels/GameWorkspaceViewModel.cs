@@ -7,6 +7,7 @@ using LegendLauncher.App.Localization;
 using LegendLauncher.App.MacroAssistant;
 using LegendLauncher.App.Services;
 using LegendLauncher.Core.GameColor;
+using LegendLauncher.Core.GameDisplay;
 using LegendLauncher.Core.Models;
 
 namespace LegendLauncher.App.ViewModels;
@@ -31,6 +32,10 @@ internal sealed class GameWorkspaceViewModel : ObservableObject, IDisposable
     private readonly GameColorChannel.Writer _colorChannel = new();
     private int _colorSaturation = GameColorChannel.Original;
     private CancellationTokenSource? _colorSaveDelay;
+    // Game zoom (1.1.25): one choice for every open session; each GameHost computes its own scale from its area.
+    private readonly GameZoom.Writer _zoomChannel = new();
+    private int _gameZoom = GameZoom.Automatic;
+    private IReadOnlyList<GameZoomOption> _zoomOptions = [];
 
     public GameWorkspaceViewModel(
         GameAudioService audioService,
@@ -70,6 +75,44 @@ internal sealed class GameWorkspaceViewModel : ObservableObject, IDisposable
         GridFourLayoutCommand = new RelayCommand(() => LayoutMode = GameLayoutMode.GridFour);
         ResetColorSaturationCommand = new RelayCommand(() => ColorSaturation = GameColorChannel.Original);
         _colorChannel.Publish(_colorSaturation);
+        _zoomChannel.Publish(_gameZoom);
+        _zoomOptions = BuildZoomOptions();
+    }
+
+    /// <summary>Zoom choices of the toolbar (Automatic, 100%..300%), labeled in the current language.</summary>
+    public IReadOnlyList<GameZoomOption> ZoomOptions => _zoomOptions;
+
+    /// <summary>
+    /// Game zoom: <see cref="GameZoom.Automatic"/> (follows the Windows scale, the default) or a percentage. Applied live by every
+    /// GameHost (no reload) and saved at once.
+    /// </summary>
+    public int GameZoomChoice
+    {
+        get => _gameZoom;
+        set
+        {
+            int normalized = GameZoom.Normalize(value);
+            if (!SetProperty(ref _gameZoom, normalized))
+            {
+                return;
+            }
+
+            _zoomChannel.Publish(normalized);
+            OnPropertyChanged(nameof(SelectedZoomOption));
+            _ = PersistGamePreferencesAsync();
+        }
+    }
+
+    public GameZoomOption? SelectedZoomOption
+    {
+        get => _zoomOptions.FirstOrDefault(option => option.Value == _gameZoom);
+        set
+        {
+            if (value is not null)
+            {
+                GameZoomChoice = value.Value;
+            }
+        }
     }
 
     public RelayCommand ResetColorSaturationCommand { get; }
@@ -251,6 +294,10 @@ internal sealed class GameWorkspaceViewModel : ObservableObject, IDisposable
         _audioService.SetMuted(_isMuted);
         _colorSaturation = GameColorChannel.Clamp(settings.ColorSaturation);
         _colorChannel.Publish(_colorSaturation);
+        _gameZoom = GameZoom.Normalize(settings.GameZoomChoice);
+        _zoomChannel.Publish(_gameZoom);
+        OnPropertyChanged(nameof(GameZoomChoice));
+        OnPropertyChanged(nameof(SelectedZoomOption));
         OnPropertyChanged(nameof(ColorSaturation));
         OnPropertyChanged(nameof(ColorSaturationText));
         OnPropertyChanged(nameof(IsColorFilterActive));
@@ -370,6 +417,7 @@ internal sealed class GameWorkspaceViewModel : ObservableObject, IDisposable
         _colorSaveDelay?.Cancel();
         _colorSaveDelay?.Dispose();
         _colorChannel.Dispose();
+        _zoomChannel.Dispose();
         MacroAssistant.Dispose();
         foreach (GameSessionViewModel session in Sessions.ToArray())
         {
@@ -463,8 +511,20 @@ internal sealed class GameWorkspaceViewModel : ObservableObject, IDisposable
         OnPropertyChanged(nameof(MuteLabel));
         OnPropertyChanged(nameof(FooterStatus));
         OnPropertyChanged(nameof(ColorSaturationText));
+        _zoomOptions = BuildZoomOptions();
+        OnPropertyChanged(nameof(ZoomOptions));
+        OnPropertyChanged(nameof(SelectedZoomOption));
         RefreshSidebarAvatars();
     }
+
+    private IReadOnlyList<GameZoomOption> BuildZoomOptions() =>
+        GameZoom.Choices
+            .Select(choice => new GameZoomOption(
+                choice,
+                choice == GameZoom.Automatic
+                    ? _localization.Get("Workspace_ZoomAutomatic")
+                    : _localization.Format("Workspace_ZoomPercent", choice)))
+            .ToArray();
 
     private void SessionOnExited(object? sender, EventArgs eventArgs)
     {
@@ -668,7 +728,7 @@ internal sealed class GameWorkspaceViewModel : ObservableObject, IDisposable
         try
         {
             await _settingsService
-                .SaveGamePreferencesAsync(IsMuted, LayoutMode, ColorSaturation)
+                .SaveGamePreferencesAsync(IsMuted, LayoutMode, ColorSaturation, GameZoomChoice)
                 .ConfigureAwait(false);
         }
         catch (IOException)
@@ -703,4 +763,11 @@ internal sealed class GameWorkspaceViewModel : ObservableObject, IDisposable
             // Preserve the attachment failure.
         }
     }
+}
+
+/// <summary>One entry of the toolbar zoom selector: the stored value (0 = automatic, else a percentage) and its label.</summary>
+internal sealed record GameZoomOption(int Value, string DisplayName)
+{
+    // The selection box of the combo template shows the item itself (like LanguageOption).
+    public override string ToString() => DisplayName;
 }

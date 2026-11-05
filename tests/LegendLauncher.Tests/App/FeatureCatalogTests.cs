@@ -39,8 +39,8 @@ public sealed class FeatureCatalogTests
             "pt-BR");
 
         Assert.NotEmpty(items);
-        Assert.Equal("v1.1.24", items[0].VersionText);
-        Assert.Equal("v1.1.23", items[1].VersionText);
+        Assert.Equal("v1.1.25", items[0].VersionText);
+        Assert.Equal("v1.1.24", items[1].VersionText);
         Assert.All(items, item =>
         {
             Assert.StartsWith("v", item.VersionText, StringComparison.Ordinal);

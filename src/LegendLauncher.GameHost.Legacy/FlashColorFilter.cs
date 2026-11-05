@@ -61,6 +61,12 @@ internal static class FlashColorFilter
     /// <summary>How many of the five drawing imports were redirected (diagnostics/tests).</summary>
     internal static int PatchedImports { get; private set; }
 
+    /// <summary>
+    /// True when Flash's frames reach the window through these hooks (BitBlt and StretchDIBits redirected): the game zoom
+    /// (<see cref="FlashDisplayScale"/>) enlarges them here, so it only turns on when this is true.
+    /// </summary>
+    internal static bool PresentsFrames { get; private set; }
+
     public static void Install(string flashOcxPath)
     {
         if (Interlocked.CompareExchange(ref s_installed, 1, 0) != 0)
@@ -83,12 +89,15 @@ internal static class FlashColorFilter
             s_alphaBlend = AlphaBlendHook;
             s_gdiAlphaBlend = GdiAlphaBlendHook;
             int patched = 0;
-            patched += ImportTablePatcher.Patch(module, "gdi32.dll", "BitBlt", Marshal.GetFunctionPointerForDelegate(s_bitBlt));
+            int frames = ImportTablePatcher.Patch(module, "gdi32.dll", "BitBlt", Marshal.GetFunctionPointerForDelegate(s_bitBlt));
+            patched += frames;
             patched += ImportTablePatcher.Patch(module, "gdi32.dll", "StretchBlt", Marshal.GetFunctionPointerForDelegate(s_stretchBlt));
-            patched += ImportTablePatcher.Patch(module, "gdi32.dll", "StretchDIBits", Marshal.GetFunctionPointerForDelegate(s_stretchDIBits));
+            int bits = ImportTablePatcher.Patch(module, "gdi32.dll", "StretchDIBits", Marshal.GetFunctionPointerForDelegate(s_stretchDIBits));
+            patched += bits;
             patched += ImportTablePatcher.Patch(module, "msimg32.dll", "AlphaBlend", Marshal.GetFunctionPointerForDelegate(s_alphaBlend));
             patched += ImportTablePatcher.Patch(module, "gdi32.dll", "GdiAlphaBlend", Marshal.GetFunctionPointerForDelegate(s_gdiAlphaBlend));
             PatchedImports = patched;
+            PresentsFrames = frames == 1 && bits == 1;
         }
         catch (Exception exception) when (
             exception is AccessViolationException or ArgumentException or InvalidOperationException or ExternalException)
@@ -129,6 +138,15 @@ internal static class FlashColorFilter
 
     private static bool BitBltHook(nint hdc, int x, int y, int cx, int cy, nint hdcSrc, int x1, int y1, uint rop)
     {
+        if (cx > 0 && cy > 0 && hdcSrc != nint.Zero)
+        {
+            int dx = x, dy = y, dw = cx, dh = cy;
+            if (FlashDisplayScale.TryMapDestination(hdc, ref dx, ref dy, ref dw, ref dh))
+            {
+                return ScaledBlt(hdc, dx, dy, dw, dh, hdcSrc, x1, y1, cx, cy, rop);
+            }
+        }
+
         if (cx <= 0 || cy <= 0 || hdcSrc == nint.Zero || !ShouldFilter(hdc, rop, out int saturation))
         {
             return BitBlt(hdc, x, y, cx, cy, hdcSrc, x1, y1, rop);
@@ -146,9 +164,42 @@ internal static class FlashColorFilter
         }
     }
 
+    /// <summary>
+    /// A frame (game pixels) going to the zoomed window: enlarged onto the physical rectangle, desaturated first when the
+    /// color slider asks for it.
+    /// </summary>
+    private static bool ScaledBlt(
+        nint hdcDest, int xDest, int yDest, int wDest, int hDest, nint hdcSrc, int xSrc, int ySrc, int wSrc, int hSrc, uint rop)
+    {
+        if (!ShouldFilter(hdcDest, rop, out int saturation))
+        {
+            return FlashDisplayScale.Stretch(hdcDest, xDest, yDest, wDest, hDest, hdcSrc, xSrc, ySrc, wSrc, hSrc, rop);
+        }
+
+        lock (s_gate)
+        {
+            if (!EnsureScratch(wSrc, hSrc) || !BitBlt(s_scratchDc, 0, 0, wSrc, hSrc, hdcSrc, xSrc, ySrc, SourceCopy))
+            {
+                return FlashDisplayScale.Stretch(hdcDest, xDest, yDest, wDest, hDest, hdcSrc, xSrc, ySrc, wSrc, hSrc, rop);
+            }
+
+            Desaturate(wSrc, hSrc, saturation);
+            return FlashDisplayScale.Stretch(hdcDest, xDest, yDest, wDest, hDest, s_scratchDc, 0, 0, wSrc, hSrc, SourceCopy);
+        }
+    }
+
     private static bool StretchBltHook(
         nint hdcDest, int xDest, int yDest, int wDest, int hDest, nint hdcSrc, int xSrc, int ySrc, int wSrc, int hSrc, uint rop)
     {
+        if (wSrc > 0 && hSrc > 0 && wDest > 0 && hDest > 0 && hdcSrc != nint.Zero)
+        {
+            int dx = xDest, dy = yDest, dw = wDest, dh = hDest;
+            if (FlashDisplayScale.TryMapDestination(hdcDest, ref dx, ref dy, ref dw, ref dh))
+            {
+                return ScaledBlt(hdcDest, dx, dy, dw, dh, hdcSrc, xSrc, ySrc, wSrc, hSrc, rop);
+            }
+        }
+
         if (wSrc <= 0 || hSrc <= 0 || hdcSrc == nint.Zero || !ShouldFilter(hdcDest, rop, out int saturation))
         {
             return StretchBlt(hdcDest, xDest, yDest, wDest, hDest, hdcSrc, xSrc, ySrc, wSrc, hSrc, rop);
@@ -170,6 +221,15 @@ internal static class FlashColorFilter
         nint hdc, int xDest, int yDest, int destWidth, int destHeight, int xSrc, int ySrc, int srcWidth, int srcHeight,
         nint bits, nint bitmapInfo, uint usage, uint rop)
     {
+        if (destWidth > 0 && destHeight > 0)
+        {
+            int dx = xDest, dy = yDest, dw = destWidth, dh = destHeight;
+            if (FlashDisplayScale.TryMapDestination(hdc, ref dx, ref dy, ref dw, ref dh))
+            {
+                return ScaledDIBits(hdc, dx, dy, dw, dh, xSrc, ySrc, srcWidth, srcHeight, bits, bitmapInfo, usage, rop, destWidth, destHeight);
+            }
+        }
+
         if (destWidth <= 0 || destHeight <= 0 || !ShouldFilter(hdc, rop, out int saturation))
         {
             return StretchDIBits(hdc, xDest, yDest, destWidth, destHeight, xSrc, ySrc, srcWidth, srcHeight, bits, bitmapInfo, usage, rop);
@@ -190,6 +250,39 @@ internal static class FlashColorFilter
         }
     }
 
+    /// <summary>DIB frame (game pixels) going to the zoomed window: same as <see cref="ScaledBlt"/> for StretchDIBits.</summary>
+    private static int ScaledDIBits(
+        nint hdc, int xDest, int yDest, int wDest, int hDest, int xSrc, int ySrc, int srcWidth, int srcHeight,
+        nint bits, nint bitmapInfo, uint usage, uint rop, int logicalWidth, int logicalHeight)
+    {
+        if (!ShouldFilter(hdc, rop, out int saturation))
+        {
+            int previous = FlashDisplayScale.UseSmoothStretch(hdc);
+            int lines = StretchDIBits(hdc, xDest, yDest, wDest, hDest, xSrc, ySrc, srcWidth, srcHeight, bits, bitmapInfo, usage, rop);
+            FlashDisplayScale.RestoreStretch(hdc, previous);
+            return lines;
+        }
+
+        lock (s_gate)
+        {
+            int lines = EnsureScratch(logicalWidth, logicalHeight)
+                ? StretchDIBits(s_scratchDc, 0, 0, logicalWidth, logicalHeight, xSrc, ySrc, srcWidth, srcHeight, bits, bitmapInfo, usage, SourceCopy)
+                : 0;
+            if (lines == 0)
+            {
+                int previous = FlashDisplayScale.UseSmoothStretch(hdc);
+                lines = StretchDIBits(hdc, xDest, yDest, wDest, hDest, xSrc, ySrc, srcWidth, srcHeight, bits, bitmapInfo, usage, rop);
+                FlashDisplayScale.RestoreStretch(hdc, previous);
+                return lines;
+            }
+
+            Desaturate(logicalWidth, logicalHeight, saturation);
+            return FlashDisplayScale.Stretch(hdc, xDest, yDest, wDest, hDest, s_scratchDc, 0, 0, logicalWidth, logicalHeight, SourceCopy)
+                ? lines
+                : 0;
+        }
+    }
+
     private static bool AlphaBlendHook(
         nint hdcDest, int xDest, int yDest, int wDest, int hDest, nint hdcSrc, int xSrc, int ySrc, int wSrc, int hSrc, uint blend) =>
         BlendFiltered(hdcDest, xDest, yDest, wDest, hDest, hdcSrc, xSrc, ySrc, wSrc, hSrc, blend, AlphaBlend);
@@ -206,6 +299,12 @@ internal static class FlashColorFilter
         nint hdcDest, int xDest, int yDest, int wDest, int hDest, nint hdcSrc, int xSrc, int ySrc, int wSrc, int hSrc, uint blend,
         AlphaBlendProc original)
     {
+        if (wDest > 0 && hDest > 0)
+        {
+            // Zoomed window: AlphaBlend stretches by itself, only the destination changes.
+            _ = FlashDisplayScale.TryMapDestination(hdcDest, ref xDest, ref yDest, ref wDest, ref hDest);
+        }
+
         // AlphaBlend has no raster operation: pass SRCCOPY so only the "is it a window?" and slider checks apply.
         if (wSrc <= 0 || hSrc <= 0 || hdcSrc == nint.Zero || !ShouldFilter(hdcDest, SourceCopy, out int saturation))
         {

@@ -9,6 +9,14 @@ namespace LegendLauncher.GameHost.Legacy;
 internal sealed class FlashActiveXControl : AxHost
 {
     private const string FlashClassId = "{D27CDB6E-AE6D-11CF-96B8-444553540000}";
+    private const int WindowMessagePrint = 0x0317;
+    private const int WindowMessagePrintClient = 0x0318;
+
+    // How often the launcher's zoom choice and the monitor scale are re-read (the change is applied live).
+    private const int ZoomRefreshMilliseconds = 300;
+
+    private System.Windows.Forms.Timer? _zoomRefresh;
+    private bool _zoomInstalled;
 
     public FlashActiveXControl()
         : base(FlashClassId)
@@ -35,6 +43,14 @@ internal sealed class FlashActiveXControl : AxHost
             FlashPointerIsolation.Install(flashOcxPath);
             // the launcher's color saturation slider (frames shown on the window only)
             FlashColorFilter.Install(flashOcxPath);
+            // the launcher's game zoom (GDI window mode only: Direct3D presents its frames without these calls)
+            if (options.WindowMode == GameWindowMode.Opaque)
+            {
+                FlashDisplayScale.Install(flashOcxPath, Handle, (object)flash);
+                _zoomInstalled = true;
+                ApplyZoom(force: true);
+                StartZoomRefresh();
+            }
         }
 
         FlashRuntimeConfiguration configuration = FlashRuntimeConfiguration.From(options);
@@ -45,5 +61,76 @@ internal sealed class FlashActiveXControl : AxHost
         // Validate again at the last possible point before COM receives the address.
         LegacyLaunchUriPolicy.EnsureAllowed(session.LaunchUri);
         flash.LoadMovie(0, session.LaunchUri.AbsoluteUri);
+    }
+
+    /// <summary>
+    /// Messages on their way to Flash's own window procedure (WinForms already used the originals): with the game zoom the mouse
+    /// coordinates become game pixels, and a PrintWindow capture is enlarged like the screen.
+    /// </summary>
+    protected override void DefWndProc(ref Message m)
+    {
+        if (!_zoomInstalled)
+        {
+            base.DefWndProc(ref m);
+            return;
+        }
+
+        if (m.Msg is WindowMessagePrint or WindowMessagePrintClient)
+        {
+            nint previous = FlashDisplayScale.BeginPrint(m.WParam);
+            try
+            {
+                base.DefWndProc(ref m);
+            }
+            finally
+            {
+                FlashDisplayScale.EndPrint(previous);
+            }
+
+            return;
+        }
+
+        nint translated = FlashDisplayScale.TranslateMessageParameter(m.Msg, m.LParam);
+        if (translated == m.LParam)
+        {
+            base.DefWndProc(ref m);
+            return;
+        }
+
+        Message forFlash = Message.Create(m.HWnd, m.Msg, m.WParam, translated);
+        base.DefWndProc(ref forFlash);
+        m.Result = forFlash.Result;
+    }
+
+    protected override void OnSizeChanged(EventArgs e)
+    {
+        base.OnSizeChanged(e);
+        ApplyZoom(force: false);
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _zoomRefresh?.Dispose();
+            _zoomRefresh = null;
+        }
+
+        base.Dispose(disposing);
+    }
+
+    private void StartZoomRefresh()
+    {
+        _zoomRefresh = new System.Windows.Forms.Timer { Interval = ZoomRefreshMilliseconds };
+        _zoomRefresh.Tick += (_, _) => ApplyZoom(force: false);
+        _zoomRefresh.Start();
+    }
+
+    private void ApplyZoom(bool force)
+    {
+        if (_zoomInstalled && IsHandleCreated && !IsDisposed)
+        {
+            FlashDisplayScale.Refresh(Left, Top, Width, Height, force);
+        }
     }
 }

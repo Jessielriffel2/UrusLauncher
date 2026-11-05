@@ -140,7 +140,8 @@
         <Grid x:Name="CompactGameToolbar"
               Grid.Row="0"
               VerticalAlignment="Center"
-              MouseLeftButtonDown="CompactGameToolbar_OnMouseLeftButtonDown">
+              MouseLeftButtonDown="CompactGameToolbar_OnMouseLeftButtonDown"
+              SizeChanged="CompactGameToolbar_OnSizeChanged">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="8" />
@@ -223,6 +224,7 @@
                     AutomationProperties.Name="{loc:Localize Accounts_Add}" />
 
             <StackPanel x:Name="WorkspaceActionGroup"
+                        SizeChanged="CompactGameToolbar_OnSizeChanged"
                         Grid.Column="6"
                         Orientation="Horizontal"
                         VerticalAlignment="Center">
@@ -269,7 +271,7 @@
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <TextBlock Text="&#xE790;" FontFamily="Segoe Fluent Icons" FontSize="14"
                                    Foreground="{StaticResource AccentBrush}" VerticalAlignment="Center" Margin="0,0,7,0" />
-                        <TextBlock Text="{loc:Localize Workspace_ColorSaturationLabel}" VerticalAlignment="Center" Margin="0,0,10,0" />
+                        <TextBlock x:Name="ColorSaturationLabel" Text="{loc:Localize Workspace_ColorSaturationLabel}" VerticalAlignment="Center" Margin="0,0,10,0" />
                         <Slider x:Name="ColorSaturationSlider"
                                 Width="110"
                                 VerticalAlignment="Center"
@@ -280,6 +282,19 @@
                                    VerticalAlignment="Center" Margin="8,0,0,0" Foreground="{StaticResource TextMutedBrush}" />
                     </StackPanel>
                 </Border>
+                <!-- Zoom do jogo (1.1.25): Automatico acompanha a escala do Windows (TV, 4K); cada GameHost amplia a propria sessao. -->
+                <ComboBox x:Name="WorkspaceZoomSelector"
+                          Width="172"
+                          Margin="0,0,8,0"
+                          Style="{StaticResource LanguageComboStyle}"
+                          ItemsSource="{Binding Workspace.ZoomOptions}"
+                          SelectedItem="{Binding Workspace.SelectedZoomOption, Mode=TwoWay}"
+                          DisplayMemberPath="DisplayName"
+                          PreviewMouseLeftButtonDown="ComboBoxSelector_OnPreviewMouseLeftButtonDown"
+                          PreviewKeyDown="ComboBoxSelector_OnPreviewKeyDown"
+                          ToolTip="{loc:Localize Workspace_ZoomTooltip}"
+                          AutomationProperties.Name="{loc:Localize Workspace_ZoomAutomation}"
+                          shell:WindowChrome.IsHitTestVisibleInChrome="True" />
                 <Button Command="{Binding Workspace.ToggleMuteCommand}"
                         Style="{StaticResource WorkspaceToolbarButtonStyle}"
                         Margin="0,0,8,0"

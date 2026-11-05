@@ -2,7 +2,7 @@
 
 Fonte da verdade para a estrutura e os módulos do projeto.
 
-- **Última atualização:** 2026-10-08
+- **Última atualização:** 2026-11-05
 - **Raiz:** `LegendLauncherNext/`
 - **Escopo da árvore:** fontes, testes e documentação; `bin/`, `obj/` e `artifacts/` são saídas geradas e ficam fora.
 
@@ -49,7 +49,16 @@ LegendLauncherNext/
 │   │   ├── v1.1.12.json
 │   │   ├── v1.1.13.json
 │   │   ├── v1.1.14.json
-│   │   └── v1.1.15.json
+│   │   ├── v1.1.15.json
+│   │   ├── v1.1.16.json
+│   │   ├── v1.1.18.json
+│   │   ├── v1.1.19.json
+│   │   ├── v1.1.20.json
+│   │   ├── v1.1.21.json
+│   │   ├── v1.1.22.json
+│   │   ├── v1.1.23.json
+│   │   ├── v1.1.24.json
+│   │   └── v1.1.25.json
 │   └── modulos/
 │       ├── atualizacao.md
 │       ├── branding.md
@@ -168,6 +177,8 @@ LegendLauncherNext/
 │   │   │   ├── IProfileStore.cs
 │   │   │   ├── IServerCatalogCache.cs
 │   │   │   └── IServerDirectory.cs
+│   │   ├── GameDisplay/
+│   │   │   └── GameZoom.cs
 │   │   └── Models/
 │   │       ├── AccountProfile.cs
 │   │       ├── AuthenticationFailureDiagnostic.cs
@@ -179,6 +190,8 @@ LegendLauncherNext/
 │   ├── LegendLauncher.GameHost.Legacy/
 │   │   ├── app.manifest
 │   │   ├── FlashActiveXControl.cs
+│   │   ├── FlashDisplayScale.cs
+│   │   ├── FlashDisplayScale.Imports.cs
 │   │   ├── FlashRuntimeConfiguration.cs
 │   │   ├── FlashSessionParameters.cs
 │   │   ├── GameHostLocalization.cs
@@ -292,6 +305,7 @@ LegendLauncherNext/
         │   ├── GameWorkspaceLocalizationTests.cs
         │   ├── GameWorkspaceViewModelTests.cs
         │   ├── GameWorkspaceXamlTests.cs
+        │   ├── GameZoomTests.cs
         │   ├── LauncherCompositionTests.cs
         │   ├── LauncherSettingsServiceTests.cs
         │   ├── LauncherUpdateLayoutTests.cs
