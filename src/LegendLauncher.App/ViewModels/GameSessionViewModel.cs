@@ -114,7 +114,10 @@ internal sealed class GameSessionViewModel : ObservableObject, IDisposable
 
     public string SurfaceTitle => $"{ProfileName} · {PlatformName} · {ServerCode}";
 
-    public string DetachedTitle => $"{ProfileName} · {ServerCode} {ServerName}";
+    // A name that already starts with its code ("S1 - Medivh" / "S1") is not repeated as "S1 S1 - Medivh".
+    public string DetachedTitle => ServerName.StartsWith(ServerCode, StringComparison.OrdinalIgnoreCase)
+        ? $"{ProfileName} · {ServerName}"
+        : $"{ProfileName} · {ServerCode} {ServerName}";
 
     public bool IsDetached
     {

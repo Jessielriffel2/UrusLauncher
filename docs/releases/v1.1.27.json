@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "version": "1.1.27",
+  "title": {
+    "pt-BR": "Servidor S1 - Medivh",
+    "en-US": "Server S1 - Medivh",
+    "es-ES": "Servidor S1 - Medivh",
+    "tr-TR": "S1 - Medivh sunucusu"
+  },
+  "notes": {
+    "pt-BR": [
+      "O servidor do SwordOnline agora se chama \"S1 - Medivh\", o mesmo nome que aparece no jogo e no site. No cartão do servidor ele vem com o selo S1, e a aba do jogo mostra \"Perfil · S1\".",
+      "Nada muda na sua conta: perfis salvos, senha lembrada e servidores recentes continuam iguais."
+    ],
+    "en-US": [
+      "The SwordOnline server is now called \"S1 - Medivh\", the same name shown in the game and on the website. The server card shows it with the S1 badge, and the game tab reads \"Profile · S1\".",
+      "Nothing changes in your account: saved profiles, remembered password and recent servers stay the same."
+    ],
+    "es-ES": [
+      "El servidor de SwordOnline ahora se llama \"S1 - Medivh\", el mismo nombre que aparece en el juego y en el sitio. En la tarjeta del servidor aparece con la insignia S1, y la pestaña del juego muestra \"Perfil · S1\".",
+      "Nada cambia en tu cuenta: los perfiles guardados, la contraseña recordada y los servidores recientes siguen igual."
+    ],
+    "tr-TR": [
+      "SwordOnline sunucusunun adı artık \"S1 - Medivh\"; oyunda ve sitede görünen adla aynı. Sunucu kartında S1 rozetiyle görünür ve oyun sekmesinde \"Profil · S1\" yazar.",
+      "Hesabında hiçbir şey değişmez: kayıtlı profiller, hatırlanan şifre ve son sunucular aynı kalır."
+    ]
+  }
+}

@@ -2,6 +2,12 @@
 
 As mudanças relevantes do Urus Launcher são registradas aqui. As versões públicas seguem versionamento semântico e são publicadas em `vMAJOR.MINOR.PATCH`.
 
+## 1.1.27 — 06/11/2026
+
+### Alterado
+
+- **Servidor do SwordOnline agora se chama "S1 - Medivh"**, o mesmo nome que o jogo mostra (CB Ranqueado, Lordes) e que o site mostra. No cartão do servidor aparece "S1 - Medivh" com o selo **S1**; a aba do jogo fica "Perfil · S1" e a janela solta "Perfil · S1 - Medivh", sem repetir o código (`SwordOnlineServerDirectory.ServerCode`/`ServerName`, `GameSessionViewModel.DetachedTitle`). O identificador interno continua `swordonline`: perfis e servidores recentes salvos seguem apontando para o mesmo servidor.
+
 ## 1.1.26 — 05/11/2026
 
 ### Adicionado

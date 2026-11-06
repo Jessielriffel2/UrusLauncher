@@ -14,6 +14,16 @@ public sealed class SwordOnlineServerDirectory : IServerDirectory
     /// <summary>Identifier of the one and only SwordOnline server.</summary>
     public const string ServerId = "swordonline";
 
+    /// <summary>Badge shown next to the server (also the tab title suffix).</summary>
+    public const string ServerCode = "S1";
+
+    /// <summary>
+    /// Name the player sees. It must match the game's own server registry (<c>t_u_servidor</c> on the
+    /// SwordOnline side, shown in the ranked battlefield and the Lords ranking). The identifier above
+    /// stays <c>swordonline</c> so saved profiles and recent servers keep pointing at the same server.
+    /// </summary>
+    public const string ServerName = "S1 - Medivh";
+
     public Task<ServerCatalog> GetServersAsync(
         PlatformDefinition platform,
         long userId = 0,
@@ -35,9 +45,9 @@ public sealed class SwordOnlineServerDirectory : IServerDirectory
         var server = new GameServer(
             ServerId,
             1L,
-            "swo",
-            "SwordOnline",
-            "SwordOnline (swordonline.tech)",
+            ServerCode,
+            ServerName,
+            ServerName,
             SwordOnlinePlatformCatalog.MovieUri,
             IsRecommended: true,
             IsValid: true,

@@ -187,9 +187,9 @@ public sealed class SwordOnlineAuthenticationServiceTests
     private static GameServer Server() => new(
         SwordOnlineServerDirectory.ServerId,
         1,
-        "swo",
-        "SwordOnline",
-        "SwordOnline (swordonline.tech)",
+        SwordOnlineServerDirectory.ServerCode,
+        SwordOnlineServerDirectory.ServerName,
+        SwordOnlineServerDirectory.ServerName,
         SwordOnlinePlatformCatalog.MovieUri,
         true,
         true,

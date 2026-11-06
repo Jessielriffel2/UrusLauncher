@@ -28,6 +28,10 @@ public sealed class SwordOnlineServerDirectoryTests
         GameServer server = Assert.Single(catalog.All);
         Assert.True(server.IsValid);
         Assert.True(server.IsRecommended);
+        Assert.Equal("swordonline", server.Id);
+        Assert.Equal("S1", server.Code);
+        Assert.Equal("S1 - Medivh", server.Name);
+        Assert.Equal("S1 - Medivh", server.DisplayName);
         Assert.Equal("https://swordonline.tech/Loading.swf", server.LaunchUri!.AbsoluteUri);
         Assert.Same(server, catalog.Current);
     }
