@@ -9,7 +9,7 @@ public sealed class LegacyLaunchUriPolicyTests
     public void FlashConfiguration_DefaultsToRestrictedScriptingAndFullscreen()
     {
         var configuration = FlashRuntimeConfiguration.From(
-            new GameRuntimeOptions(Path.GetTempPath()));
+            new GameRuntimeOptions(Path.GetTempPath(), GameWindowMode.Opaque));
 
         Assert.Equal("sameDomain", configuration.AllowScriptAccess);
         Assert.Equal("false", configuration.AllowFullScreen);
@@ -20,10 +20,23 @@ public sealed class LegacyLaunchUriPolicyTests
     }
 
     [Fact]
+    public void FlashConfiguration_GivesTheDirectXChoiceToFlashAsDirect()
+    {
+        var configuration = FlashRuntimeConfiguration.From(
+            new GameRuntimeOptions(Path.GetTempPath(), GameWindowMode.Direct));
+        var flash = new FakeFlashProperties();
+
+        configuration.ApplyTo(flash);
+
+        Assert.Equal("direct", configuration.WindowMode);
+        Assert.Equal("direct", flash.WMode);
+    }
+
+    [Fact]
     public void FlashConfiguration_AppliesTextQualityThroughQuality2()
     {
         var configuration = FlashRuntimeConfiguration.From(
-            new GameRuntimeOptions(Path.GetTempPath()));
+            new GameRuntimeOptions(Path.GetTempPath(), GameWindowMode.Opaque));
         var flash = new FakeFlashProperties();
 
         configuration.ApplyTo(flash);

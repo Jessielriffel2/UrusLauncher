@@ -43,6 +43,46 @@ public sealed class SessionLaunchCoordinatorTests
     }
 
     [Fact]
+    public async Task LaunchAsync_ReadsTheDrawingModeAgainForEverySession()
+    {
+        AccountProfile profile = AppTestData.Profile("player@example.test", 10, "1");
+        var store = new InMemoryProfileStore(profile);
+        var vault = new InMemoryCredentialVault();
+        var runtime = new StubGameRuntime();
+        GameWindowMode chosen = GameWindowMode.Direct;
+        SessionLaunchCoordinator coordinator = CreateCoordinator(
+            store,
+            vault,
+            SuccessfulAuthentication(providerUserId: 10),
+            runtime,
+            windowMode: () => chosen);
+
+        Assert.Equal(SessionLaunchState.Success, (await coordinator.LaunchAsync(Input(profile, "secret", rememberPassword: false, serverId: "1"))).State);
+        chosen = GameWindowMode.Opaque;
+        Assert.Equal(SessionLaunchState.Success, (await coordinator.LaunchAsync(Input(profile, "secret", rememberPassword: false, serverId: "1"))).State);
+
+        Assert.Equal([GameWindowMode.Direct, GameWindowMode.Opaque], runtime.Options.Select(options => options.WindowMode));
+        Assert.All(runtime.Options, options => Assert.Equal(Path.GetFullPath("C:\\legacy-runtime"), options.RuntimeRoot));
+    }
+
+    [Fact]
+    public async Task LaunchAsync_WithoutAModeSourceUsesTheNewPlayerDefault()
+    {
+        AccountProfile profile = AppTestData.Profile("player@example.test", 10, "1");
+        var runtime = new StubGameRuntime();
+        SessionLaunchCoordinator coordinator = CreateCoordinator(
+            new InMemoryProfileStore(profile),
+            new InMemoryCredentialVault(),
+            SuccessfulAuthentication(providerUserId: 10),
+            runtime);
+
+        await coordinator.LaunchAsync(Input(profile, "secret", rememberPassword: false, serverId: "1"));
+
+        Assert.Equal(LauncherSettingsSnapshot.Default.WindowMode, Assert.Single(runtime.Options).WindowMode);
+        Assert.Equal(GameWindowMode.Direct, LauncherSettingsSnapshot.Default.WindowMode);
+    }
+
+    [Fact]
     public async Task LaunchAsync_AuthenticationRejectionDoesNotStartRuntimeOrPersist()
     {
         AccountProfile profile = AppTestData.Profile("player@example.test", 10, "1");
@@ -373,7 +413,8 @@ public sealed class SessionLaunchCoordinatorTests
         InMemoryCredentialVault vault,
         StubAuthenticationService authentication,
         StubGameRuntime runtime,
-        Action<int>? terminateUnadoptedProcess = null) =>
+        Action<int>? terminateUnadoptedProcess = null,
+        Func<GameWindowMode>? windowMode = null) =>
         new(
             vault,
             authentication,
@@ -381,7 +422,8 @@ public sealed class SessionLaunchCoordinatorTests
             "C:\\legacy-runtime",
             store,
             new FixedTimeProvider(AppTestData.Now),
-            terminateUnadoptedProcess);
+            terminateUnadoptedProcess,
+            windowMode);
 
     private static StubAuthenticationService SuccessfulAuthentication(long providerUserId) =>
         new((request, cancellationToken) =>

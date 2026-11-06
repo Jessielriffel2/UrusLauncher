@@ -2,7 +2,7 @@
 
 Fonte da verdade para a estrutura e os módulos do projeto.
 
-- **Última atualização:** 2026-11-05
+- **Última atualização:** 2026-11-05 20:15 -03
 - **Raiz:** `LegendLauncherNext/`
 - **Escopo da árvore:** fontes, testes e documentação; `bin/`, `obj/` e `artifacts/` são saídas geradas e ficam fora.
 
@@ -78,6 +78,7 @@ LegendLauncherNext/
 ├── installer/
 │   └── UrusLauncher.iss
 ├── scripts/
+│   ├── build-urus-dev.ps1
 │   └── build-urus-distribution.ps1
 ├── src/
 │   ├── LegendLauncher.App/
@@ -140,6 +141,7 @@ LegendLauncherNext/
 │   │   │   ├── AsyncRelayCommand.cs
 │   │   │   ├── GameSessionViewModel.cs
 │   │   │   ├── GameWorkspaceViewModel.cs
+│   │   │   ├── GameWorkspaceViewModel.Display.cs
 │   │   │   ├── MainWindowViewModel.Catalog.cs
 │   │   │   ├── MainWindowViewModel.cs
 │   │   │   ├── MainWindowViewModel.Donation.cs
@@ -162,8 +164,11 @@ LegendLauncherNext/
 │   │       ├── Game/
 │   │       │   ├── DetachedGameWindow.xaml
 │   │       │   ├── DetachedGameWindow.xaml.cs
+│   │       │   ├── GameDisplayControls.xaml
+│   │       │   ├── GameDisplayControls.xaml.cs
 │   │       │   ├── GameWorkspaceView.xaml
-│   │       │   └── GameWorkspaceView.xaml.cs
+│   │       │   ├── GameWorkspaceView.xaml.cs
+│   │       │   └── ToolbarComboBoxOpening.cs
 │   │       └── Updates/
 │   │           ├── UpdateStatusView.xaml
 │   │           └── UpdateStatusView.xaml.cs
@@ -302,6 +307,7 @@ LegendLauncherNext/
         │   ├── GameAudioServiceTests.cs
         │   ├── GitHubReleaseContractTests.cs
         │   ├── GameWindowAttachmentTests.cs
+        │   ├── GameWindowModeTests.cs
         │   ├── GameWorkspaceLocalizationTests.cs
         │   ├── GameWorkspaceViewModelTests.cs
         │   ├── GameWorkspaceXamlTests.cs
@@ -375,8 +381,8 @@ LegendLauncherNext/
 | --- | --- | --- | --- |
 | `LegendLauncher.App` | Código-fonte WPF x64 do Urus Launcher, publicado como `UrusLauncher.App.exe`; oferece launcher de três colunas, runtime empacotado prioritário, instância única por sessão do Windows, conta compartilhada entre variantes OAS com estado por plataforma, catálogo ordenado, sessões por alvo exato, chrome taskbar/DPI-aware e integração não bloqueante com atualizações públicas. | `App.xaml.cs`, `MainWindow.xaml`, `Themes/Controls.xaml`, `Services/ProfilePlatformCompatibility.cs`, `Services/ServerCatalogPresentation.cs`, `MainWindowViewModel*.cs`, `SessionLaunchCoordinator.cs`, `LauncherComposition.cs` | [launcher-app.md](modulos/launcher-app.md) |
 | `LegendLauncher.App/Branding` | Identidade pública Urus Launcher: logo original transparente, ícone multirresolução, slogan localizado, metadados e remoção de marcadores Next/preview/teste da UI. | `Assets/Branding/*`, `LegendLauncher.App.csproj`, `app.manifest`, `MainWindow.xaml`, `Localization/Resources/*.json` | [branding.md](modulos/branding.md) |
-| `LegendLauncher.App/Game Session Workspace` | Barra única de 44 px com controles/abas de 34 px, avatares laterais com conta ativa destacada e par fundido no layout 2, busca de perfis no launcher, layouts 1/2/4, áudio global, detach/reattach, relogar e estacionamento oculto de HWND fora da grade. | `Views/Game/*`, `GameHosting/*.cs`, `GameHostParkingSurface.cs`, `GameWorkspaceViewModel.cs`, `WorkspaceAvatarItem.cs`, `GameSessionViewModel.cs`, `MainWindowViewModel.Relog.cs`, `GameAudioService.cs`, `LauncherSettingsService.cs`, `BorderlessWindowCommands.cs` | [game-session-workspace.md](modulos/game-session-workspace.md) |
-| `LegendLauncher.App/Localization` | Localização dinâmica por 211 chaves em `pt-BR`, `en-US` e `es-ES`, inclusive título/slogan, catálogo, doação, busca de perfis e todo o fluxo de atualização preparada, com recursos incorporados, bindings observáveis e persistência da cultura ativa. | `Localization/*.cs`, `Localization/Resources/*.json`, `MainWindowViewModel.Localization.cs`, `MainWindowViewModel.Updates.cs` | [localizacao.md](modulos/localizacao.md) |
+| `LegendLauncher.App/Game Session Workspace` | Barra única de 44 px com controles/abas de 34 px, avatares laterais com conta ativa destacada e par fundido no layout 2, busca de perfis no launcher, layouts 1/2/4, botão DirectX/Compatível, áudio global, detach/reattach, relogar e estacionamento oculto de HWND fora da grade. | `Views/Game/*`, `GameHosting/*.cs`, `GameHostParkingSurface.cs`, `GameWorkspaceViewModel.cs`, `GameWorkspaceViewModel.Display.cs`, `WorkspaceAvatarItem.cs`, `GameSessionViewModel.cs`, `MainWindowViewModel.Relog.cs`, `GameAudioService.cs`, `LauncherSettingsService.cs`, `BorderlessWindowCommands.cs` | [game-session-workspace.md](modulos/game-session-workspace.md) |
+| `LegendLauncher.App/Localization` | Localização dinâmica por 315 chaves em `pt-BR`, `en-US`, `es-ES` e `tr-TR`, inclusive título/slogan, catálogo, doação, busca de perfis e todo o fluxo de atualização preparada, com recursos incorporados, bindings observáveis e persistência da cultura ativa. | `Localization/*.cs`, `Localization/Resources/*.json`, `MainWindowViewModel.Localization.cs`, `MainWindowViewModel.Updates.cs` | [localizacao.md](modulos/localizacao.md) |
 | `LegendLauncher.App/Donation Prompt` | Pedido opcional PayPal/PIX, lembrete de cinco horas avaliado uma vez por abertura, acesso manual, QR imutável, cópia local do CNPJ e acessibilidade localizada. | `Views/Donation/*`, `MainWindowViewModel.Donation.cs`, `LauncherSettingsService.cs`, `paypal-donation-qr.jpeg` | [donation-prompt.md](modulos/donation-prompt.md) |
 | `LegendLauncher.App/Atualização` | Consulta antecipada do GitHub Releases na abertura, fallback público para `403`/`429`, download/validação automática por usuário com janela de uma hora, manifesto UTF-8 sem BOM, cache revalidado, cartão trilíngue pronto para instalar e execução somente após clique sem sessões ativas nem login em andamento. | `Updates/*.cs`, `Views/Updates/*`, `MainWindowViewModel.Updates.cs`, `AppPaths.UpdatesDirectory` | [atualizacao.md](modulos/atualizacao.md) |
 | `Distribuição Windows` | Publica App e GameHost self-contained para `win-x64`, injeta runtime registration-free fornecido/autorizado e gera setup/ZIP, manifestos, patch notes e checksums; o workflow automático por tag exige a mesma fonte autorizada no runner, enquanto a 1.1.4 foi publicada manualmente a partir do build local validado e autorizado. | `scripts/build-urus-distribution.ps1`, `installer/UrusLauncher.iss`, `.github/workflows/release.yml`, `docs/releases/*.json` | [distribuicao-windows.md](modulos/distribuicao-windows.md) |

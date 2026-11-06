@@ -46,11 +46,6 @@ internal sealed record FlashRuntimeConfiguration(
                 GameRenderQuality.High => "high",
                 _ => throw new ArgumentOutOfRangeException(nameof(options)),
             },
-            WindowMode: options.WindowMode switch
-            {
-                GameWindowMode.Opaque => "opaque",
-                GameWindowMode.Direct => "direct",
-                _ => throw new ArgumentOutOfRangeException(nameof(options)),
-            });
+            WindowMode: GameWindowModeText.Format(options.WindowMode));
     }
 }

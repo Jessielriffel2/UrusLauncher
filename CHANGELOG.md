@@ -2,6 +2,20 @@
 
 As mudanças relevantes do Urus Launcher são registradas aqui. As versões públicas seguem versionamento semântico e são publicadas em `vMAJOR.MINOR.PATCH`.
 
+## 1.1.26 — 05/11/2026
+
+### Adicionado
+
+- **Botão DirectX / Compatível** na barra do jogo, ao lado de **Cores** e **Zoom**: ligado, o Flash desenha pela placa de vídeo (`WMode=direct`), mais fluido; desligado (Compatível, `opaque`), **Cores** e **Zoom** funcionam. A escolha fica salva em `settings.json` (`gameWindowMode`). Sem escolha salva: DirectX, a não ser que o jogador já tenha mudado **Zoom** ou **Cores**. Vale para as abas abertas depois da troca; o rodapé avisa. No DirectX, **Cores** e **Zoom** ficam acinzentados (`GameWindowModeText`, `SessionLaunchCoordinator`, `GameDisplayControls`).
+
+### Alterado
+
+- **GameHost** só instala os ganchos de **Cores** e **Zoom** no modo Compatível.
+
+### Corrigido
+
+- A **barra do jogo** agora encolhe de verdade quando falta espaço: antes, na janela de 1420 px, "DESACOPLAR" ficava embaixo dos botões da janela (`FitToolbarToWidth` media a largura errada).
+
 ## 1.1.25 — 05/11/2026
 
 ### Adicionado

@@ -41,11 +41,14 @@ internal sealed class FlashActiveXControl : AxHost
         if (flashOcxPath is not null)
         {
             FlashPointerIsolation.Install(flashOcxPath);
-            // the launcher's color saturation slider (frames shown on the window only)
-            FlashColorFilter.Install(flashOcxPath);
-            // the launcher's game zoom (GDI window mode only: Direct3D presents its frames without these calls)
+            // The launcher's colors and zoom act on the GDI copies of the Compatible mode (opaque) only. In the DirectX mode
+            // (direct) Flash presents through Direct3D without those calls, so their hooks stay out (they would only add work
+            // to every internal copy) and the launcher greys both controls out.
             if (options.WindowMode == GameWindowMode.Opaque)
             {
+                // color saturation slider (frames shown on the window only)
+                FlashColorFilter.Install(flashOcxPath);
+                // game zoom
                 FlashDisplayScale.Install(flashOcxPath, Handle, (object)flash);
                 _zoomInstalled = true;
                 ApplyZoom(force: true);

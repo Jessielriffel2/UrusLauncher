@@ -145,12 +145,19 @@ public sealed class GameZoomTests
     [Fact]
     public void ZoomSelectorSitsInTheGameToolbarWithExplicitOpening()
     {
-        XDocument document = XDocument.Load(FindRepositoryFile("src", "LegendLauncher.App", "Views", "Game", "GameWorkspaceView.xaml"));
+        // the zoom lives in the display controls (DirectX, colors, zoom), which sit in the toolbar's action group
+        XDocument workspace = XDocument.Load(FindRepositoryFile("src", "LegendLauncher.App", "Views", "Game", "GameWorkspaceView.xaml"));
+        XElement displayControls = workspace
+            .Descendants()
+            .Single(element => element.Name.LocalName == "GameDisplayControls");
+        Assert.Equal("WorkspaceActionGroup", displayControls.Parent?.Attribute(Xaml + "Name")?.Value);
+
+        XDocument document = XDocument.Load(FindRepositoryFile("src", "LegendLauncher.App", "Views", "Game", "GameDisplayControls.xaml"));
         XElement selector = document
             .Descendants(Presentation + "ComboBox")
             .Single(element => element.Attribute(Xaml + "Name")?.Value == "WorkspaceZoomSelector");
 
-        Assert.Equal("WorkspaceActionGroup", selector.Parent?.Attribute(Xaml + "Name")?.Value);
+        Assert.Equal("DisplayControlsGroup", selector.Parent?.Attribute(Xaml + "Name")?.Value);
         Assert.Equal("{Binding Workspace.ZoomOptions}", selector.Attribute("ItemsSource")?.Value);
         Assert.Equal("{Binding Workspace.SelectedZoomOption, Mode=TwoWay}", selector.Attribute("SelectedItem")?.Value);
         Assert.Equal("DisplayName", selector.Attribute("DisplayMemberPath")?.Value);

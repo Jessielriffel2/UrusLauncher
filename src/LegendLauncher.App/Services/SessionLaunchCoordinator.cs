@@ -14,10 +14,15 @@ internal sealed class SessionLaunchCoordinator
     private readonly IGameAuthenticationService _authenticationService;
     private readonly IGameRuntime _gameRuntime;
     private readonly IProfileStore _profileStore;
-    private readonly GameRuntimeOptions? _runtimeOptions;
+    private readonly string? _runtimeRoot;
+    private readonly Func<GameWindowMode> _windowMode;
     private readonly Action<int> _terminateUnadoptedProcess;
     private readonly TimeProvider _timeProvider;
 
+    /// <param name="windowMode">
+    /// The player's drawing mode (DirectX button of the game toolbar), read again for every session because Flash takes it
+    /// before loading the game. Without one, the default of a new player.
+    /// </param>
     public SessionLaunchCoordinator(
         ICredentialVault credentialVault,
         IGameAuthenticationService authenticationService,
@@ -25,16 +30,16 @@ internal sealed class SessionLaunchCoordinator
         string? runtimeRoot,
         IProfileStore profileStore,
         TimeProvider? timeProvider = null,
-        Action<int>? terminateUnadoptedProcess = null)
+        Action<int>? terminateUnadoptedProcess = null,
+        Func<GameWindowMode>? windowMode = null)
     {
         _credentialVault = credentialVault ?? throw new ArgumentNullException(nameof(credentialVault));
         _authenticationService = authenticationService ??
             throw new ArgumentNullException(nameof(authenticationService));
         _gameRuntime = gameRuntime ?? throw new ArgumentNullException(nameof(gameRuntime));
         _profileStore = profileStore ?? throw new ArgumentNullException(nameof(profileStore));
-        _runtimeOptions = string.IsNullOrWhiteSpace(runtimeRoot)
-            ? null
-            : new GameRuntimeOptions(runtimeRoot);
+        _runtimeRoot = string.IsNullOrWhiteSpace(runtimeRoot) ? null : runtimeRoot;
+        _windowMode = windowMode ?? (static () => LauncherSettingsSnapshot.Default.WindowMode);
         _timeProvider = timeProvider ?? TimeProvider.System;
         _terminateUnadoptedProcess = terminateUnadoptedProcess ?? TryTerminateProcess;
     }
@@ -45,7 +50,7 @@ internal sealed class SessionLaunchCoordinator
     {
         ArgumentNullException.ThrowIfNull(input);
         cancellationToken.ThrowIfCancellationRequested();
-        if (_runtimeOptions is null)
+        if (_runtimeRoot is null)
         {
             throw new InvalidOperationException("The game compatibility runtime is unavailable.");
         }
@@ -74,8 +79,10 @@ internal sealed class SessionLaunchCoordinator
                 credential.Source);
         }
 
+        // Read the drawing mode only now: the player may have pressed the DirectX button while the login was running.
+        var runtimeOptions = new GameRuntimeOptions(_runtimeRoot, _windowMode());
         GameSession gameSession = await _gameRuntime
-            .LaunchAsync(input.Platform, authentication.Session, _runtimeOptions, cancellationToken)
+            .LaunchAsync(input.Platform, authentication.Session, runtimeOptions, cancellationToken)
             .ConfigureAwait(false);
         try
         {

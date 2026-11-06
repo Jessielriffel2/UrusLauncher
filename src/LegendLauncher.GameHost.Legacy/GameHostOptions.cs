@@ -11,7 +11,7 @@ internal sealed record GameHostOptions(
     GameRenderQuality Quality,
     GameWindowMode WindowMode)
 {
-    public GameRuntimeOptions RuntimeOptions => new(RuntimeRoot, Quality, WindowMode);
+    public GameRuntimeOptions RuntimeOptions => new(RuntimeRoot, WindowMode, Quality);
 
     public override string ToString() =>
         $"GameHostOptions {{ DiagnosticsOnly = {DiagnosticsOnly}, HasPipe = {PipeName is not null}, HasNonce = {Nonce is not null}, HasParentProcess = {ParentProcessId is not null}, Quality = {Quality}, WindowMode = {WindowMode} }}";
@@ -61,7 +61,7 @@ internal sealed record GameHostOptions(
                                       TryParseQuality(qualityValue, out quality):
                     break;
                 case "--wmode" when TryReadValue(args, ref index, out var windowModeValue) &&
-                                    TryParseWindowMode(windowModeValue, out windowMode):
+                                    GameWindowModeText.TryParse(windowModeValue, out windowMode):
                     break;
                 case "--diagnostics":
                     diagnosticsOnly = true;
@@ -142,16 +142,5 @@ internal sealed record GameHostOptions(
             _ => (GameRenderQuality)(-1),
         };
         return Enum.IsDefined(quality);
-    }
-
-    private static bool TryParseWindowMode(string value, out GameWindowMode windowMode)
-    {
-        windowMode = value.ToLowerInvariant() switch
-        {
-            "opaque" => GameWindowMode.Opaque,
-            "direct" => GameWindowMode.Direct,
-            _ => (GameWindowMode)(-1),
-        };
-        return Enum.IsDefined(windowMode);
     }
 }

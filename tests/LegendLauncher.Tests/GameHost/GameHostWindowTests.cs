@@ -18,7 +18,7 @@ public sealed class GameHostWindowTests
                 assets,
                 new LaunchSession(new Uri(
                     "https://lobr.creaction-network.com/client/Loading.swf")),
-                new GameRuntimeOptions(Path.GetTempPath()),
+                new GameRuntimeOptions(Path.GetTempPath(), GameWindowMode.Opaque),
                 static (_, _) => { });
             return (
                 form.FormBorderStyle,
@@ -45,7 +45,7 @@ public sealed class GameHostWindowTests
                 LegacyRuntimeAssets.Discover(Path.GetTempPath()),
                 new LaunchSession(new Uri(
                     "https://lobr.creaction-network.com/client/Loading.swf")),
-                new GameRuntimeOptions(Path.GetTempPath()),
+                new GameRuntimeOptions(Path.GetTempPath(), GameWindowMode.Opaque),
                 static (_, _) => { });
             _ = form.Handle;
             return (form.IsHiddenFromWindowSwitchers, GetExtendedStyle(form.Handle));

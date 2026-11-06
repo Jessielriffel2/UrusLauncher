@@ -38,14 +38,14 @@ O processo WPF nunca carrega o Adobe Flash ActiveX. Cada conta aberta permanece 
 | `src/LegendLauncher.App/MainWindow.xaml.cs:272` | Detach/reattach | Mantém uma janela desacoplada por sessão; criação/exibição têm rollback, e remoção, reattach e shutdown são idempotentes. |
 | `src/LegendLauncher.App/BorderlessWindowCommands.cs:5` | `BorderlessWindowCommands` | Centraliza minimizar (linha 10), maximizar/restaurar (linha 16), decisão de estado (linha 28) e glifo (linha 33) para a janela principal e as desacopladas. |
 | `src/LegendLauncher.App/BorderlessWindowWorkArea.cs:12` | `BorderlessWindowWorkArea` | Limita a maximização à work area e calcula o tamanho normal/restaurado em DIPs (linha 32). `RequiresNormalLimitsRefresh` (linha 58) reconhece mudanças de settings/display/DPI e a atualização coalescida começa na linha 122, inclusive com a janela parada. |
-| `src/LegendLauncher.App/LauncherComposition.cs:27` | `CreateMainWindowViewModel(...)` | Compõe paths, cache, perfis, cofre, providers, runtime, settings, localização, áudio, workspace e `LauncherUpdateService`. |
-| `src/LegendLauncher.App/LauncherComposition.cs:79` | `CreateHttpClient()` | Cliente compartilhado com redirects automáticos desativados, descompressão, timeout de conexão e User-Agent versionado. |
-| `src/LegendLauncher.App/LauncherComposition.cs:106` | `FindLegacyRuntimeCandidate(...)` | Prioriza `runtime\` ao lado do executável; depois aceita configuração explícita e nomes Brov conhecidos em Program Files/Program Files (x86). Entrada pura existe para testes. |
+| `src/LegendLauncher.App/LauncherComposition.cs:33` | `CreateMainWindowViewModel(...)` | Compõe paths, cache, perfis, cofre, providers, runtime, settings, localização, áudio, workspace e `LauncherUpdateService`. |
+| `src/LegendLauncher.App/LauncherComposition.cs:133` | `CreateHttpClient()` | Cliente compartilhado com redirects automáticos desativados, descompressão, timeout de conexão e User-Agent versionado. |
+| `src/LegendLauncher.App/LauncherComposition.cs:182` | `FindLegacyRuntimeCandidate(...)` | Prioriza `runtime\` ao lado do executável; depois aceita configuração explícita e nomes Brov conhecidos em Program Files/Program Files (x86). Entrada pura existe para testes. |
 | `src/LegendLauncher.App/Services/PlatformAdapterRegistry.cs:9` | `PlatformAdapterRegistry` | Resolve a combinação canônica de plataforma, diretório e autenticador; impede definições alteradas/duplicadas. |
 | `src/LegendLauncher.App/Services/ProfilePlatformCompatibility.cs:7` | `ShareAccountIdentity(...)` | Considera variantes `oas-*` parte da mesma identidade de conta para reutilizar a credencial; IDs exatos continuam compatíveis e nenhuma credencial OAS atravessa para `sevenwan-*`. |
-| `src/LegendLauncher.App/Services/SessionLaunchCoordinator.cs:41` | `LaunchAsync(...)` | Resolve senha digitada ou salva, autentica, inicia `IGameRuntime` e persiste perfil/UID/histórico/cofre. Saída: `SessionLaunchOutcome` com `GameSession`/perfil em sucesso ou diagnóstico limitado a fase/transporte/status em falha; se a etapa pós-runtime falhar, encerra o processo ainda não adotado. |
-| `src/LegendLauncher.App/Services/SessionLaunchCoordinator.cs:98` | `ResolveCredentialAsync(...)` | Aceita a credencial do mesmo login entre variantes OAS, mas exige família compatível e nunca compartilha com SevenWan. |
-| `src/LegendLauncher.App/Services/SessionLaunchCoordinator.cs:133` | Persistência pós-abertura | Atualiza UID e até cinco servidores recentes somente para a plataforma lançada, preserva os estados das demais variantes e devolve o mesmo perfil efetivo. |
+| `src/LegendLauncher.App/Services/SessionLaunchCoordinator.cs:47` | `LaunchAsync(...)` | Resolve senha digitada ou salva, autentica, inicia `IGameRuntime` e persiste perfil/UID/histórico/cofre. Saída: `SessionLaunchOutcome` com `GameSession`/perfil em sucesso ou diagnóstico limitado a fase/transporte/status em falha; se a etapa pós-runtime falhar, encerra o processo ainda não adotado. |
+| `src/LegendLauncher.App/Services/SessionLaunchCoordinator.cs:107` | `ResolveCredentialAsync(...)` | Aceita a credencial do mesmo login entre variantes OAS, mas exige família compatível e nunca compartilha com SevenWan. |
+| `src/LegendLauncher.App/Services/SessionLaunchCoordinator.cs:150` | Persistência pós-abertura | Atualiza UID e até cinco servidores recentes somente para a plataforma lançada, preserva os estados das demais variantes e devolve o mesmo perfil efetivo. |
 | `src/LegendLauncher.App/Services/ProfileStorageCoordinator.cs:27` | `SaveAsync(...)` | Separa metadados não secretos do cofre; editar o mesmo login entre variantes OAS preserva ID/chave e materializa o estado por plataforma, enquanto mudar login ou família rotaciona a chave opaca. A seleção atual nunca vira “último jogado”. |
 | `src/LegendLauncher.App/Services/ServerCatalogPresentation.cs:9` | `ResolveLastPlayedServerId(...)` | Resolve o histórico específico da plataforma, incluindo fallback legado apenas para a plataforma espelhada. Saída: ID normalizado ou nulo. |
 | `src/LegendLauncher.App/Services/ServerCatalogPresentation.cs:25` | `BuildRows(...)` | Fixa o último realmente usado no topo, calcula entre servidores válidos já abertos o lançamento mais recente por `StartTimeUtc`/`NumericId`, ordena o restante e devolve linhas prontas para exibição. |
@@ -77,7 +77,7 @@ O processo WPF nunca carrega o Adobe Flash ActiveX. Cada conta aberta permanece 
 | `src/LegendLauncher.App/ViewModels/MainWindowViewModel.Updates.cs:167` | `CheckForUpdatesAsync()` | Consulta cedo uma vez por abertura, baixa e valida automaticamente um release superior e chega a `ReadyToInstall` sem executar o setup. |
 | `src/LegendLauncher.App/ViewModels/MainWindowViewModel.Updates.cs:223` | `InstallUpdateAsync()` | Exige setup preparado, nenhuma sessão e clique explícito em **INSTALAR**; então sinaliza à janela para encerrar somente após iniciar o instalador. |
 | `src/LegendLauncher.App/Views/Updates/UpdateStatusView.xaml:19` | Cartão de status | Faixa compacta no canto inferior esquerdo: título e ação na mesma linha, detalhe em uma linha, progresso só quando há download. |
-| `src/LegendLauncher.App/Services/LauncherSettingsService.cs:115` | `SaveDonationPromptShownAsync(...)` | Atualiza atomicamente o instante UTC da última exibição sem apagar idioma, perfil, mudo ou layout. |
+| `src/LegendLauncher.App/Services/LauncherSettingsService.cs:140` | `SaveDonationPromptShownAsync(...)` | Atualiza atomicamente o instante UTC da última exibição sem apagar idioma, perfil, mudo ou layout. |
 | `src/LegendLauncher.App/Localization/LocalizeExtension.cs:7` | `LocalizeExtension` | Liga textos XAML ao indexador observável do serviço global para atualização sem recriar janelas. |
 
 ## Fluxos e dados
@@ -202,10 +202,10 @@ O seletor **Zoom** fica na barra do jogo, ao lado do controle de **Cores**. A es
 
 **Configurações** — `src/LegendLauncher.App/Services/LauncherSettingsService.cs`
 
-- `LauncherSettingsSnapshot.GameZoomChoice` (`:17`) começa em `GameZoom.Automatic`.
-- `LoadAsync` (`:43-76`) lê o campo `GameZoom` do documento e aplica `Normalize` (`:74-75`). Arquivo anterior à 1.1.25, sem o campo, fica em Automático.
-- `SaveGamePreferencesAsync` (`:85-103`) recebe `gameZoom` (`:89`) e normaliza (`:99-101`); sem valor, mantém o atual.
-- `LauncherSettingsDocument.GameZoom` (`:169`) é `int?`. A chave no `settings.json` é `gameZoom`, porque o store usa `JsonSerializerDefaults.Web` (`src/LegendLauncher.Infrastructure/Persistence/AtomicJsonFileStore.cs:168-173`), que grava os nomes em camelCase.
+- `LauncherSettingsSnapshot.GameZoomChoice` (`:18`) começa em `GameZoom.Automatic`.
+- `LoadAsync` (`:45-81`) lê o campo `GameZoom` do documento e aplica `Normalize` (`:70`). Arquivo anterior à 1.1.25, sem o campo, fica em Automático.
+- `SaveGamePreferencesAsync` (`:106-128`) recebe `gameZoom` (`:110`) e normaliza (`:121-123`); sem valor, mantém o atual.
+- `LauncherSettingsDocument.GameZoom` (`:194`) é `int?`. A chave no `settings.json` é `gameZoom`, porque o store usa `JsonSerializerDefaults.Web` (`src/LegendLauncher.Infrastructure/Persistence/AtomicJsonFileStore.cs:168-173`), que grava os nomes em camelCase.
 
 **XAML** — `src/LegendLauncher.App/Views/Game/GameWorkspaceView.xaml`
 
@@ -222,3 +222,26 @@ O seletor **Zoom** fica na barra do jogo, ao lado do controle de **Cores**. A es
 - `ApplyToolbarLevel` (`:73-78`): o nível 1 esconde o seletor de idioma (`:75`); o nível 2 esconde o rótulo "Cores" (`:76`) e reduz o slider de 110 para 80 (`:77`). A cada mudança de tamanho o cálculo recomeça do nível 0, então os itens voltam quando há espaço.
 
 **Testes** — `tests/LegendLauncher.Tests/App/GameZoomTests.cs`: configurações de antes da 1.1.25 viram Automático e a escolha é salva (`:100`); opções e seleção do view model (`:129`); e o XAML do seletor, com `ItemsSource`, `SelectedItem` e a abertura explícita (`:146`).
+
+## Modo DirectX ou Compatível (escolha salva)
+
+O jogador escolhe o modo de desenho do Flash no botão **DirectX** da barra do jogo. A escolha vai para `gameWindowMode` em `settings.json`. O coordenador não guarda cópia do valor: lê o modo de novo a cada sessão, e o processo do jogo recebe o resultado no argumento `--wmode`. Uma aba já aberta mantém o modo com que abriu.
+
+**Abertura** — `src/LegendLauncher.App/Services/SessionLaunchCoordinator.cs`
+
+- `_runtimeRoot` (`:17`) é fixo. `_windowMode` (`:18`) é um `Func<GameWindowMode>` recebido pelo parâmetro opcional `windowMode` (`:34`); sem ele, o padrão é `LauncherSettingsSnapshot.Default.WindowMode` (`:42`), que é DirectX.
+- As opções saem de `new GameRuntimeOptions(_runtimeRoot, _windowMode())` (`:83`), depois do login (`:70-72`) e antes de `_gameRuntime.LaunchAsync` (`:84-85`). Quem trocou o botão durante o login abre com o modo novo.
+- O argumento `--wmode` é montado em `src/LegendLauncher.GameHost.Legacy/LegacyGameRuntime.cs:129-130`.
+
+**Composição** — `src/LegendLauncher.App/LauncherComposition.cs`
+
+- `windowMode: () => workspace.WindowMode` (`:115`) liga o coordenador ao workspace.
+
+**Configurações** — `src/LegendLauncher.App/Services/LauncherSettingsService.cs`
+
+- `LauncherSettingsSnapshot.WindowMode` (`:19`) começa em `Direct`.
+- `ResolveWindowMode` (`:87-97`) decide quando não há modo salvo: DirectX, a não ser que Cores abaixo de 100% (`src/LegendLauncher.Core/GameColor/GameColorChannel.cs:12`) ou Zoom diferente de Automático (`src/LegendLauncher.Core/GameDisplay/GameZoom.cs:16`) já tenham sido mudados. Nesse caso, Compatível. Modo salvo sempre vence.
+- `LoadAsync` (`:80`) passa o campo `GameWindowMode` do documento (`:196`) por essa regra. O texto lido é o de `GameWindowModeText` ([Core](core.md)).
+- `SaveGamePreferencesAsync` (`:111`, `:124-126`) grava o modo quando recebe valor; sem valor, mantém o atual.
+
+**Testes** — `tests/LegendLauncher.Tests/App/SessionLaunchCoordinatorTests.cs` (`:46` relê o modo a cada sessão; `:69` usa o padrão sem fonte) e `tests/LegendLauncher.Tests/App/GameWindowModeTests.cs` (`:23` e `:35`).

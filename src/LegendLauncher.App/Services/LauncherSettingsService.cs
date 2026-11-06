@@ -1,5 +1,6 @@
 using LegendLauncher.Core.GameColor;
 using LegendLauncher.Core.GameDisplay;
+using LegendLauncher.Core.Models;
 using LegendLauncher.Infrastructure.Persistence;
 using LegendLauncher.App.Localization;
 using System.Text.Json;
@@ -14,7 +15,8 @@ internal sealed record LauncherSettingsSnapshot(
     DateTimeOffset? LastDonationPromptUtc,
     string? LastSeenFeatureCatalogVersion,
     int ColorSaturation = GameColorChannel.Original,
-    int GameZoomChoice = GameZoom.Automatic)
+    int GameZoomChoice = GameZoom.Automatic,
+    GameWindowMode WindowMode = GameWindowMode.Direct)
 {
     public static LauncherSettingsSnapshot Default { get; } =
         new(
@@ -62,6 +64,10 @@ internal sealed class LauncherSettingsService
         GameLayoutMode layout = Enum.IsDefined(typeof(GameLayoutMode), document.LayoutMode)
             ? (GameLayoutMode)document.LayoutMode
             : GameLayoutMode.GridFour;
+        // missing in files written before 1.1.22: original colors, never black and white
+        int colorSaturation = GameColorChannel.Clamp(document.ColorSaturation ?? GameColorChannel.Original);
+        // missing in files written before 1.1.25: automatic (follows the Windows scale)
+        int gameZoom = GameZoom.Normalize(document.GameZoom ?? GameZoom.Automatic);
         return new LauncherSettingsSnapshot(
             document.IsGameMuted,
             layout,
@@ -69,10 +75,25 @@ internal sealed class LauncherSettingsService
             LocalizationService.NormalizeLanguageCode(document.LanguageCode),
             document.LastDonationPromptUtc,
             document.LastSeenFeatureCatalogVersion,
-            // missing in files written before 1.1.22: original colors, never black and white
-            GameColorChannel.Clamp(document.ColorSaturation ?? GameColorChannel.Original),
-            // missing in files written before 1.1.25: automatic (follows the Windows scale)
-            GameZoom.Normalize(document.GameZoom ?? GameZoom.Automatic));
+            colorSaturation,
+            gameZoom,
+            ResolveWindowMode(document.GameWindowMode, colorSaturation, gameZoom));
+    }
+
+    /// <summary>
+    /// The saved drawing mode; with none saved yet (files written before the DirectX button), DirectX, unless the player already
+    /// changed the colors or the zoom: those only act in the Compatible mode, so that player stays there and keeps the setting.
+    /// </summary>
+    internal static GameWindowMode ResolveWindowMode(string? savedMode, int colorSaturation, int gameZoom)
+    {
+        if (GameWindowModeText.TryParse(savedMode, out GameWindowMode saved))
+        {
+            return saved;
+        }
+
+        bool usesCompatibleOnlySettings =
+            colorSaturation < GameColorChannel.Original || gameZoom != GameZoom.Automatic;
+        return usesCompatibleOnlySettings ? GameWindowMode.Opaque : GameWindowMode.Direct;
     }
 
     public Task SaveLastSelectedProfileAsync(
@@ -87,6 +108,7 @@ internal sealed class LauncherSettingsService
         GameLayoutMode layoutMode,
         int? colorSaturation = null,
         int? gameZoom = null,
+        GameWindowMode? windowMode = null,
         CancellationToken cancellationToken = default) =>
         UpdateAsync(
             current => current with
@@ -99,6 +121,9 @@ internal sealed class LauncherSettingsService
                 GameZoom = gameZoom is { } zoom
                     ? GameZoom.Normalize(zoom)
                     : current.GameZoom,
+                GameWindowMode = windowMode is { } mode
+                    ? GameWindowModeText.Format(mode)
+                    : current.GameWindowMode,
             },
             cancellationToken);
 
@@ -166,7 +191,9 @@ internal sealed class LauncherSettingsService
         DateTimeOffset? LastDonationPromptUtc,
         string? LastSeenFeatureCatalogVersion,
         int? ColorSaturation = null,
-        int? GameZoom = null)
+        int? GameZoom = null,
+        // "direct" or "opaque" (GameWindowModeText); missing in files written before the DirectX button
+        string? GameWindowMode = null)
     {
         public static LauncherSettingsDocument Default { get; } =
             new(

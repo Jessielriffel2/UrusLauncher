@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "version": "1.1.26",
+  "title": {
+    "pt-BR": "Jogo mais liso com o botão DirectX",
+    "en-US": "Smoother game with the DirectX button",
+    "es-ES": "Juego más fluido con el botón DirectX",
+    "tr-TR": "DirectX düğmesiyle daha akıcı oyun"
+  },
+  "notes": {
+    "pt-BR": [
+      "Novo botão \"DirectX\" na barra do jogo, ao lado de Cores e Zoom: ligado, o jogo é desenhado pela placa de vídeo e a imagem fica mais lisa, com menos quadros aparecendo pela metade. O jogo continua no ritmo dele (cerca de 25 quadros por segundo); o que melhora é a limpeza de cada quadro.",
+      "Desligado, o botão mostra \"Compatível\", o modo de antes: só nele funcionam Cores e Zoom, que ficam cinza no DirectX. Quem já usava Zoom ou Cores continua no Compatível; os demais começam no DirectX. A escolha fica salva e vale para as abas abertas depois da troca (o rodapé avisa).",
+      "A barra do jogo agora encolhe de verdade quando falta espaço: numa janela estreita o botão \"Desacoplar\" não fica mais embaixo dos botões da janela."
+    ],
+    "en-US": [
+      "New \"DirectX\" button on the game bar, beside Colors and Zoom: when it is on, the game is drawn by the graphics card and the picture is smoother, with fewer half-drawn frames. The game keeps its own pace (about 25 frames per second); what improves is how clean each frame looks.",
+      "When it is off, the button reads \"Compatible\", the previous mode: Colors and Zoom only work there and are greyed out in DirectX. Players who already used Zoom or Colors stay in Compatible; everyone else starts in DirectX. The choice is saved and applies to the tabs opened after the change (the footer says so).",
+      "The game bar now really shrinks when space runs out: in a narrow window the \"Detach\" button no longer ends up under the window buttons."
+    ],
+    "es-ES": [
+      "Nuevo botón \"DirectX\" en la barra del juego, al lado de Colores y Zoom: activado, el juego se dibuja con la tarjeta gráfica y la imagen se ve más fluida, con menos cuadros a medio dibujar. El juego sigue a su ritmo (unos 25 cuadros por segundo); lo que mejora es la limpieza de cada cuadro.",
+      "Desactivado, el botón muestra \"Compatible\", el modo de antes: solo ahí funcionan Colores y Zoom, que quedan en gris en DirectX. Quien ya usaba Zoom o Colores sigue en Compatible; los demás empiezan en DirectX. La elección queda guardada y vale para las pestañas abiertas después del cambio (el pie de la ventana lo avisa).",
+      "La barra del juego ahora se achica de verdad cuando falta espacio: en una ventana estrecha el botón \"Desacoplar\" ya no queda debajo de los botones de la ventana."
+    ],
+    "tr-TR": [
+      "Oyun çubuğunda Renkler ve Yakınlaştırma'nın yanında yeni \"DirectX\" düğmesi: açıkken oyun ekran kartıyla çizilir ve görüntü daha akıcıdır, yarım çizilmiş kareler azalır. Oyun kendi hızında kalır (saniyede yaklaşık 25 kare); iyileşen, her karenin temizliğidir.",
+      "Kapalıyken düğmede önceki mod olan \"Uyumlu\" yazar: Renkler ve Yakınlaştırma yalnızca bu modda çalışır, DirectX'te gri görünür. Yakınlaştırma veya Renkler'i zaten kullananlar Uyumlu'da kalır; diğer herkes DirectX ile başlar. Seçim kaydedilir ve değişiklikten sonra açılan sekmelerde geçerlidir (alt bilgi çubuğu bunu gösterir).",
+      "Oyun çubuğu artık yer kalmadığında gerçekten küçülüyor: dar bir pencerede \"Ayır\" düğmesi artık pencere düğmelerinin altında kalmıyor."
+    ]
+  }
+}

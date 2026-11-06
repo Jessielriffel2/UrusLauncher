@@ -111,7 +111,8 @@ internal static class LauncherComposition
             platformRegistry,
             gameRuntime,
             runtime.RuntimeDirectory,
-            profiles);
+            profiles,
+            windowMode: () => workspace.WindowMode);
 
         return new MainWindowViewModel(
             platformRegistry,

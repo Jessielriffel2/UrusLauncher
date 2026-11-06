@@ -127,7 +127,7 @@ public sealed class LegacyGameRuntime : IGameRuntime
         startInfo.ArgumentList.Add("--quality");
         startInfo.ArgumentList.Add(GetQualityArgument(options.Quality));
         startInfo.ArgumentList.Add("--wmode");
-        startInfo.ArgumentList.Add(GetWindowModeArgument(options.WindowMode));
+        startInfo.ArgumentList.Add(GameWindowModeText.Format(options.WindowMode));
         ConfigureLanguageEnvironment(startInfo, CultureInfo.CurrentUICulture);
 
         return Process.Start(startInfo) ??
@@ -151,13 +151,6 @@ public sealed class LegacyGameRuntime : IGameRuntime
         GameRenderQuality.AutoHigh => "autohigh",
         GameRenderQuality.High => "high",
         _ => throw new ArgumentOutOfRangeException(nameof(quality)),
-    };
-
-    private static string GetWindowModeArgument(GameWindowMode windowMode) => windowMode switch
-    {
-        GameWindowMode.Opaque => "opaque",
-        GameWindowMode.Direct => "direct",
-        _ => throw new ArgumentOutOfRangeException(nameof(windowMode)),
     };
 
     private static void TryTerminate(Process process)

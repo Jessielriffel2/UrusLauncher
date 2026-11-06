@@ -151,6 +151,8 @@ internal sealed class StubGameRuntime : IGameRuntime
 
     public List<string> PlatformIds { get; } = [];
 
+    public List<GameRuntimeOptions> Options { get; } = [];
+
     public Task<GameSession> LaunchAsync(
         PlatformDefinition platform,
         LaunchSession session,
@@ -160,6 +162,7 @@ internal sealed class StubGameRuntime : IGameRuntime
         cancellationToken.ThrowIfCancellationRequested();
         PlatformIds.Add(platform.Id);
         Sessions.Add(session);
+        Options.Add(options);
         return Task.FromResult(new GameSession(4242, new nint(0x1234), DateTimeOffset.UnixEpoch));
     }
 }

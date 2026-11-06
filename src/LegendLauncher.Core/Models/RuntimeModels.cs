@@ -31,12 +31,48 @@ public enum GameRenderQuality
 }
 
 /// <summary>
-/// Window composition mode understood by the isolated legacy game host.
+/// Window composition mode understood by the isolated legacy game host: how Flash presents its frames.
 /// </summary>
 public enum GameWindowMode
 {
+    /// <summary>"Compatible" in the launcher: GDI copies, which the color filter and the game zoom can intercept.</summary>
     Opaque,
+
+    /// <summary>"DirectX" in the launcher: Flash presents through Direct3D (smoother); color filter and zoom do not act.</summary>
     Direct,
+}
+
+/// <summary>
+/// The one text form of <see cref="GameWindowMode"/>: Flash's own <c>WMode</c> value, also used by the GameHost
+/// <c>--wmode</c> argument and by the launcher settings file.
+/// </summary>
+public static class GameWindowModeText
+{
+    public const string Opaque = "opaque";
+    public const string Direct = "direct";
+
+    public static string Format(GameWindowMode windowMode) => windowMode switch
+    {
+        GameWindowMode.Opaque => Opaque,
+        GameWindowMode.Direct => Direct,
+        _ => throw new ArgumentOutOfRangeException(nameof(windowMode)),
+    };
+
+    public static bool TryParse(string? value, out GameWindowMode windowMode)
+    {
+        switch (value?.ToLowerInvariant())
+        {
+            case Opaque:
+                windowMode = GameWindowMode.Opaque;
+                return true;
+            case Direct:
+                windowMode = GameWindowMode.Direct;
+                return true;
+            default:
+                windowMode = default;
+                return false;
+        }
+    }
 }
 
 /// <summary>
@@ -44,14 +80,22 @@ public enum GameWindowMode
 /// </summary>
 public sealed class GameRuntimeOptions
 {
+    /// <param name="runtimeRoot">Folder of the Flash runtime.</param>
+    /// <param name="windowMode">Always explicit: the player's choice comes from the launcher settings.</param>
+    /// <param name="quality">Flash rendering quality.</param>
     public GameRuntimeOptions(
         string runtimeRoot,
-        GameRenderQuality quality = GameRenderQuality.High,
-        GameWindowMode windowMode = GameWindowMode.Opaque)
+        GameWindowMode windowMode,
+        GameRenderQuality quality = GameRenderQuality.High)
     {
         if (string.IsNullOrWhiteSpace(runtimeRoot))
         {
             throw new ArgumentException("A runtime root is required.", nameof(runtimeRoot));
+        }
+
+        if (!Enum.IsDefined(windowMode))
+        {
+            throw new ArgumentOutOfRangeException(nameof(windowMode));
         }
 
         RuntimeRoot = Path.GetFullPath(runtimeRoot);
